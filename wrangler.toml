@@ -1,7 +1,12 @@
 name = "keronshans-blog"
+main = ".open-next/worker.js"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = ".open-next/assets"
 
 [assets]
 directory = ".open-next/assets"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "keronshans-blog-db"
+database_id = "2e57bb48-5078-4667-8b8b-1195a0d77af3"

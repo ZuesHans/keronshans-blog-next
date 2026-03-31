@@ -3,12 +3,13 @@
 import { useState, useEffect, useMemo } from "react";
 
 interface CheckinRecord {
-  id: string;
-  date: string; // YYYY-MM-DD
-  type: "practice" | "contest" | "vp" | "study";
+  id: number;
+  nickname: string;
+  content: string;
+  type: string;
   count: number;
   note: string;
-  timestamp: number;
+  created_at: string;
 }
 
 const TYPES = {
@@ -17,8 +18,6 @@ const TYPES = {
   vp: { label: "VP", emoji: "🏆", color: "#f59e0b" },
   study: { label: "学习", emoji: "📖", color: "#10b981" },
 } as const;
-
-const STORAGE_KEY = "keronshans_checkin";
 
 export default function CheckinPage() {
   const [records, setRecords] = useState<CheckinRecord[]>([]);
@@ -31,19 +30,21 @@ export default function CheckinPage() {
   const [hoveredCell, setHoveredCell] = useState<string | null>(null);
   const [viewYear, setViewYear] = useState(new Date().getFullYear());
 
+  const fetchRecords = async () => {
+    try {
+      const res = await fetch("/api/checkins");
+      const data = await res.json();
+      if (Array.isArray(data)) setRecords(data);
+    } catch {}
+  };
+
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) setRecords(JSON.parse(stored));
+    fetchRecords();
     if (sessionStorage.getItem("keronshans_auth") === "true") setIsAuth(true);
   }, []);
 
-  const saveRecords = (newRecords: CheckinRecord[]) => {
-    setRecords(newRecords);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newRecords));
-  };
-
   const handleLogin = () => {
-    if (password === "keronshans666") {
+    if (password === "zues1") {
       setIsAuth(true);
       sessionStorage.setItem("keronshans_auth", "true");
       setError("");
@@ -53,38 +54,47 @@ export default function CheckinPage() {
   };
 
   const today = new Date().toISOString().split("T")[0];
-  const todayRecords = records.filter((r) => r.date === today);
-  const todayTotalCount = todayRecords.reduce((sum, r) => sum + r.count, 0);
+  const todayRecords = records.filter((r) => r.created_at && r.created_at.startsWith(today));
+  const todayTotalCount = todayRecords.reduce((sum, r) => sum + (r.count || 1), 0);
   const checkedToday = todayRecords.length > 0;
 
-  const handleCheckin = () => {
+  const handleCheckin = async () => {
     if (todayCount < 1) return;
-    const newRecord: CheckinRecord = {
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2),
-      date: today,
-      type: todayType,
-      count: todayCount,
-      note: todayNote,
-      timestamp: Date.now(),
-    };
-    saveRecords([newRecord, ...records]);
-    setTodayCount(1);
-    setTodayNote("");
+    try {
+      const res = await fetch("/api/checkins", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-password": "zues1" },
+        body: JSON.stringify({ date: today, type: todayType, count: todayCount, note: todayNote }),
+      });
+      if (res.ok) {
+        await fetchRecords();
+        setTodayCount(1);
+        setTodayNote("");
+      }
+    } catch {}
   };
 
-  const handleDelete = (id: string) => {
-    saveRecords(records.filter((r) => r.id !== id));
+  const handleDelete = async (id: number) => {
+    try {
+      const res = await fetch(`/api/checkins?id=${id}`, {
+        method: "DELETE",
+        headers: { "x-admin-password": "zues1" },
+      });
+      if (res.ok) setRecords(records.filter((r) => r.id !== id));
+    } catch {}
   };
 
-  // Heatmap data - aggregate multiple records per day
+  // Build date->record map using created_at for heatmap
   const heatmapData = useMemo(() => {
     const map = new Map<string, { count: number; type: string; note: string }>();
     records.forEach((r) => {
-      const existing = map.get(r.date);
+      const dateStr = r.created_at ? r.created_at.split("T")[0] : "";
+      if (!dateStr) return;
+      const existing = map.get(dateStr);
       if (existing) {
-        existing.count += r.count;
+        existing.count += (r.count || 1);
       } else {
-        map.set(r.date, { count: r.count, type: r.type, note: r.note });
+        map.set(dateStr, { count: (r.count || 1), type: r.type || "practice", note: r.note || "" });
       }
     });
     return map;
@@ -92,7 +102,6 @@ export default function CheckinPage() {
 
   const yearDays = useMemo(() => {
     const start = new Date(viewYear, 0, 1);
-    // Adjust to Monday
     const startDay = start.getDay();
     const adjustedStart = new Date(start);
     adjustedStart.setDate(adjustedStart.getDate() - ((startDay + 6) % 7));
@@ -123,39 +132,31 @@ export default function CheckinPage() {
 
   // Stats
   const totalDays = records.length;
-  const totalCount = records.reduce((sum, r) => sum + r.count, 0);
+  const totalCount = records.reduce((sum, r) => sum + (r.count || 1), 0);
   const maxStreak = useMemo(() => {
     if (records.length === 0) return 0;
-    const sorted = [...records].sort((a, b) => a.date.localeCompare(b.date));
+    const dates = [...new Set(records.map((r) => r.created_at?.split("T")[0]).filter(Boolean))] as string[];
+    dates.sort();
     let max = 1, current = 1;
-    for (let i = 1; i < sorted.length; i++) {
-      const prev = new Date(sorted[i - 1].date);
-      const curr = new Date(sorted[i].date);
-      const diff = (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24);
-      if (diff === 1) {
-        current++;
-        max = Math.max(max, current);
-      } else if (diff > 1) {
-        current = 1;
-      }
+    for (let i = 1; i < dates.length; i++) {
+      const diff = (new Date(dates[i]).getTime() - new Date(dates[i - 1]).getTime()) / (1000 * 60 * 60 * 24);
+      if (diff === 1) { current++; max = Math.max(max, current); }
+      else if (diff > 1) { current = 1; }
     }
     return max;
   }, [records]);
 
   const currentStreak = useMemo(() => {
     if (records.length === 0) return 0;
-    const sorted = [...records].sort((a, b) => b.date.localeCompare(a.date));
+    const dates = [...new Set(records.map((r) => r.created_at?.split("T")[0]).filter(Boolean))] as string[];
+    dates.sort().reverse();
     let streak = 0;
     const checkDate = new Date(today);
-    for (let i = 0; i < sorted.length; i++) {
+    for (let i = 0; i < dates.length; i++) {
       const expected = new Date(checkDate);
       expected.setDate(expected.getDate() - i);
       const expectedStr = expected.toISOString().split("T")[0];
-      if (sorted[i].date === expectedStr) {
-        streak++;
-      } else {
-        break;
-      }
+      if (dates[i] === expectedStr) { streak++; } else { break; }
     }
     return streak;
   }, [records, today]);
@@ -177,7 +178,7 @@ export default function CheckinPage() {
     const stats: Record<string, { count: number; days: number }> = {};
     records.forEach((r) => {
       if (!stats[r.type]) stats[r.type] = { count: 0, days: 0 };
-      stats[r.type].count += r.count;
+      stats[r.type].count += (r.count || 1);
       stats[r.type].days += 1;
     });
     return stats;
@@ -280,10 +281,7 @@ export default function CheckinPage() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-mono text-gray-400">{today}</span>
-              <button
-                onClick={handleCheckin}
-                className="cyber-btn-blue px-6 py-2"
-              >
+              <button onClick={handleCheckin} className="cyber-btn-blue px-6 py-2">
                 {checkedToday ? `补录签到 (今日已${todayTotalCount}题)` : "打卡签到"}
               </button>
             </div>
@@ -302,7 +300,6 @@ export default function CheckinPage() {
           </div>
         </div>
 
-        {/* Month labels */}
         <div className="flex gap-0 mb-1 ml-8">
           {Array.from({ length: 12 }, (_, i) => {
             const monthStart = new Date(viewYear, i, 1);
@@ -316,7 +313,6 @@ export default function CheckinPage() {
         </div>
 
         <div className="flex gap-0">
-          {/* Day labels */}
           <div className="flex flex-col gap-0 mr-1">
             {dayLabels.map((label, i) => (
               <div key={i} className="h-[13px] leading-[13px] text-[10px] font-mono text-gray-400 w-4 text-right pr-1">
@@ -325,7 +321,6 @@ export default function CheckinPage() {
             ))}
           </div>
 
-          {/* Heatmap grid */}
           <div className="flex gap-[3px]">
             {weeks.map((week, wi) => (
               <div key={wi} className="flex flex-col gap-[3px]">
@@ -354,7 +349,6 @@ export default function CheckinPage() {
           </div>
         </div>
 
-        {/* Hover tooltip */}
         {hoveredCell && (
           <div className="mt-3 p-3 rounded-lg bg-gray-50 dark:bg-cyber-surface text-sm font-mono">
             {(() => {
@@ -368,7 +362,6 @@ export default function CheckinPage() {
           </div>
         )}
 
-        {/* Legend */}
         <div className="flex items-center justify-end gap-2 mt-4 text-xs font-mono text-gray-400">
           <span>少</span>
           <div className="w-[13px] h-[13px] rounded-[2px] bg-gray-100 dark:bg-cyber-surface/50" />
@@ -389,14 +382,14 @@ export default function CheckinPage() {
           ) : (
             records.slice(0, 80).map((record) => (
               <div key={record.id} className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-gray-50 dark:hover:bg-cyber-surface transition-all group">
-                <span className="text-xl">{TYPES[record.type].emoji}</span>
+                <span className="text-xl">{TYPES[record.type as keyof typeof TYPES]?.emoji || "💻"}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-mono font-bold">{record.date}</span>
-                    <span className="text-xs px-1.5 py-0.5 rounded font-mono" style={{ backgroundColor: TYPES[record.type].color + "20", color: TYPES[record.type].color }}>
-                      {TYPES[record.type].label}
+                    <span className="text-sm font-mono font-bold">{record.created_at?.split("T")[0] || ""}</span>
+                    <span className="text-xs px-1.5 py-0.5 rounded font-mono" style={{ backgroundColor: (TYPES[record.type as keyof typeof TYPES]?.color || "#00d4ff") + "20", color: TYPES[record.type as keyof typeof TYPES]?.color || "#00d4ff" }}>
+                      {TYPES[record.type as keyof typeof TYPES]?.label || record.type}
                     </span>
-                    <span className="text-sm font-mono text-neon-blue">+{record.count} 题</span>
+                    <span className="text-sm font-mono text-neon-blue">+{record.count || 1} 题</span>
                   </div>
                   {record.note && <p className="text-xs font-mono text-gray-400 mt-0.5 truncate">{record.note}</p>}
                 </div>

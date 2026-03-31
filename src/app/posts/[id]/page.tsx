@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import { getCategoryColorClass } from "@/lib/posts";
+import PostInteraction from "./PostInteraction";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +53,9 @@ export default async function PostPage({ params }: { params: { id: string } }) {
           <MarkdownRenderer content={post.content} />
         </div>
       </article>
+
+      {/* Comments & Likes */}
+      <PostInteraction postId={params.id} />
 
       {/* Footer */}
       <footer className="mt-8 pt-6 border-t border-gray-200 dark:border-cyber-border">

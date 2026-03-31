@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 
 interface Talk {
-  id: string;
+  id: number;
+  nickname: string;
   content: string;
-  timestamp: number;
   mood: string;
+  created_at: string;
 }
 
 const MOODS = [
@@ -24,10 +25,8 @@ const MOODS = [
   { emoji: "😋", label: "嘿嘿" },
   { emoji: "🥲", label: "伤心心" },
   { emoji: "🤡", label: "joker" },
-
 ];
 
-const STORAGE_KEY = "keronshans_talks";
 const AUTH_KEY = "keronshans_auth";
 
 export default function TalksPage() {
@@ -40,22 +39,19 @@ export default function TalksPage() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      setTalks(JSON.parse(stored));
-    }
-    const auth = sessionStorage.getItem(AUTH_KEY);
-    if (auth === "true") setIsAuth(true);
-    setLoaded(true);
-  }, []);
+    fetch("/api/talks")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setTalks(data);
+        setLoaded(true);
+      })
+      .catch(() => setLoaded(true));
 
-  const saveTalks = useCallback((newTalks: Talk[]) => {
-    setTalks(newTalks);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newTalks));
+    if (sessionStorage.getItem(AUTH_KEY) === "true") setIsAuth(true);
   }, []);
 
   const handleLogin = () => {
-    if (password === "keronshans666") {
+    if (password === "zues1") {
       setIsAuth(true);
       sessionStorage.setItem(AUTH_KEY, "true");
       setError("");
@@ -65,32 +61,46 @@ export default function TalksPage() {
     }
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     if (!content.trim()) return;
-    const newTalk: Talk = {
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2),
-      content: content.trim(),
-      timestamp: Date.now(),
-      mood,
-    };
-    saveTalks([newTalk, ...talks]);
-    setContent("");
-    setMood("😄");
+    try {
+      const res = await fetch("/api/talks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-password": "zues1" },
+        body: JSON.stringify({ content: content.trim(), mood }),
+      });
+      if (res.ok) {
+        const data = await fetch("/api/talks").then((r) => r.json());
+        if (Array.isArray(data)) setTalks(data);
+        setContent("");
+        setMood("😄");
+      }
+    } catch {
+      setError("发布失败");
+    }
   };
 
-  const handleDelete = (id: string) => {
-    saveTalks(talks.filter((t) => t.id !== id));
+  const handleDelete = async (id: number) => {
+    try {
+      const res = await fetch(`/api/talks?id=${id}`, {
+        method: "DELETE",
+        headers: { "x-admin-password": "zues1" },
+      });
+      if (res.ok) {
+        setTalks(talks.filter((t) => t.id !== id));
+      }
+    } catch {}
   };
 
-  const formatTime = (ts: number) => {
-    const d = new Date(ts);
-    return d.toLocaleString("zh-CN", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const formatTime = (dateStr: string) => {
+    try {
+      return new Date(dateStr).toLocaleString("zh-CN", {
+        year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit",
+      });
+    } catch {
+      return dateStr;
+    }
   };
 
   if (!loaded) {
@@ -191,13 +201,13 @@ export default function TalksPage() {
             <div key={talk.id} className="cyber-card p-5 group">
               <div className="flex items-start gap-3">
                 <div className="shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-neon-green to-neon-blue flex items-center justify-center text-xl">
-                  {talk.mood}
+                  {talk.mood || "😄"}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm text-gray-500 dark:text-gray-400 font-mono mb-2">
                     <span className="text-neon-green">#{talks.length - index}</span>
                     {" · "}
-                    {formatTime(talk.timestamp)}
+                    {formatTime(talk.created_at)}
                   </div>
                   <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap leading-relaxed">
                     {talk.content}
