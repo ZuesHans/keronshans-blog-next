@@ -2,7 +2,19 @@ import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
 
-const POSTS_DIR = path.join(process.cwd(), "content", "posts");
+// 兼容 Cloudflare Worker 环境：process.cwd() 可能不对，fallback 到 __dirname
+function getPostsDir(): string {
+  const p = path.join(process.cwd(), "content", "posts");
+  if (fs.existsSync(p)) return p;
+  // fallback: 尝试 __dirname 上两级
+  const p2 = path.join(__dirname, "..", "..", "content", "posts");
+  if (fs.existsSync(p2)) return p2;
+  // fallback: 尝试 server-functions 下的相对路径
+  const p3 = path.join(process.cwd(), "content", "posts");
+  return p3;
+}
+
+const POSTS_DIR = getPostsDir();
 
 export interface PostMeta {
   id: string;          // URL-safe id (e.g. "kh-dui-pai-xie-fa")
