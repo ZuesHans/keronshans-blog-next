@@ -34,3 +34,29 @@ CREATE TABLE IF NOT EXISTS likes (
   ip TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours'))
 );
+
+-- 代码片段
+CREATE TABLE IF NOT EXISTS snippets (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  code TEXT NOT NULL DEFAULT '',
+  language TEXT NOT NULL DEFAULT 'C++',
+  tags TEXT NOT NULL DEFAULT '[]',
+  created_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours'))
+);
+
+-- 题目收集
+CREATE TABLE IF NOT EXISTS problems (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  url TEXT NOT NULL DEFAULT '',
+  platform TEXT NOT NULL DEFAULT 'cf',
+  status TEXT NOT NULL DEFAULT 'AC',
+  tags TEXT NOT NULL DEFAULT '[]',
+  date TEXT NOT NULL DEFAULT '',
+  note TEXT NOT NULL DEFAULT '',
+  analysis TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours'))
+);

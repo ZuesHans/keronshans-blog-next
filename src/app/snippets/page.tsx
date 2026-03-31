@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { SITE_PASSWORD, verifyPassword, isAuthenticated, setAuthenticated } from "@/lib/auth";
 
 interface Snippet {
   id: string;
   title: string;
   code: string;
   language: string;
-  tags: string[];
-  createdAt: number;
-  updatedAt: number;
+  tags: string;
+  created_at: string;
+  updated_at: string;
 }
 
 const LANGUAGES = [
@@ -23,8 +24,9 @@ const DEFAULT_TAGS = [
   "STL", "位运算", "前缀和", "并查集", "线段树", "树状数组",
 ];
 
-const STORAGE_KEY = "keronshans_snippets";
-const AUTH_KEY = "keronshans_auth";
+function parseTags(tagsStr: string): string[] {
+  try { return JSON.parse(tagsStr); } catch { return []; }
+}
 
 export default function SnippetsPage() {
   const [snippets, setSnippets] = useState<Snippet[]>([]);
@@ -33,12 +35,10 @@ export default function SnippetsPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  // Filter & search
   const [searchQuery, setSearchQuery] = useState("");
   const [filterLang, setFilterLang] = useState("all");
   const [selectedTag, setSelectedTag] = useState("all");
 
-  // Form state
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formTitle, setFormTitle] = useState("");
@@ -47,23 +47,25 @@ export default function SnippetsPage() {
   const [formTags, setFormTags] = useState<string[]>([]);
   const [formTagInput, setFormTagInput] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) setSnippets(JSON.parse(stored));
-    if (sessionStorage.getItem(AUTH_KEY) === "true") setIsAuth(true);
+  const fetchSnippets = useCallback(async () => {
+    try {
+      const res = await fetch("/api/snippets");
+      if (res.ok) setSnippets(await res.json());
+    } catch {}
     setLoaded(true);
   }, []);
 
-  const saveSnippets = useCallback((newSnippets: Snippet[]) => {
-    setSnippets(newSnippets);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newSnippets));
-  }, []);
+  useEffect(() => {
+    fetchSnippets();
+    if (isAuthenticated()) setIsAuth(true);
+  }, [fetchSnippets]);
 
   const handleLogin = () => {
-    if (password === "keronshans666") {
+    if (verifyPassword(password)) {
+      setAuthenticated();
       setIsAuth(true);
-      sessionStorage.setItem(AUTH_KEY, "true");
       setError("");
     } else {
       setError("密码错误");
@@ -82,36 +84,53 @@ export default function SnippetsPage() {
     setFormTitle(s.title);
     setFormCode(s.code);
     setFormLang(s.language);
-    setFormTags([...s.tags]);
+    setFormTags(parseTags(s.tags));
     setFormTagInput("");
     setShowAdd(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formTitle.trim() || !formCode.trim()) return;
-    if (editingId) {
-      saveSnippets(snippets.map(s => s.id === editingId ? {
-        ...s, title: formTitle.trim(), code: formCode, language: formLang,
-        tags: formTags, updatedAt: Date.now(),
-      } : s));
-    } else {
-      const newSnippet: Snippet = {
-        id: Date.now().toString(36) + Math.random().toString(36).slice(2),
-        title: formTitle.trim(),
-        code: formCode,
-        language: formLang,
-        tags: formTags,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      };
-      saveSnippets([newSnippet, ...snippets]);
-    }
-    resetForm();
-    setShowAdd(false);
+    setSaving(true);
+    setError("");
+
+    const tags = formTags;
+    const genId = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
+
+    try {
+      let res: Response;
+      if (editingId) {
+        res = await fetch("/api/snippets", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", "x-admin-password": SITE_PASSWORD },
+          body: JSON.stringify({ id: editingId, title: formTitle.trim(), code: formCode, language: formLang, tags }),
+        });
+      } else {
+        res = await fetch("/api/snippets", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-admin-password": SITE_PASSWORD },
+          body: JSON.stringify({ id: genId(), title: formTitle.trim(), code: formCode, language: formLang, tags }),
+        });
+      }
+      if (res.ok) {
+        await fetchSnippets();
+        resetForm();
+        setShowAdd(false);
+      } else {
+        setError("保存失败");
+      }
+    } catch { setError("网络错误"); }
+    setSaving(false);
   };
 
-  const handleDelete = (id: string) => {
-    saveSnippets(snippets.filter(s => s.id !== id));
+  const handleDelete = async (id: string) => {
+    try {
+      const res = await fetch(`/api/snippets?id=${id}`, {
+        method: "DELETE",
+        headers: { "x-admin-password": SITE_PASSWORD },
+      });
+      if (res.ok) setSnippets(snippets.filter(s => s.id !== id));
+    } catch {}
   };
 
   const handleCopy = async (snippet: Snippet) => {
@@ -120,7 +139,6 @@ export default function SnippetsPage() {
       setCopiedId(snippet.id);
       setTimeout(() => setCopiedId(null), 2000);
     } catch {
-      // fallback
       const ta = document.createElement("textarea");
       ta.value = snippet.code;
       document.body.appendChild(ta);
@@ -138,14 +156,14 @@ export default function SnippetsPage() {
   };
   const removeTag = (tag: string) => setFormTags(formTags.filter(t => t !== tag));
 
-  // Filtered snippets
   const filtered = useMemo(() => {
     return snippets.filter(s => {
+      const tags = parseTags(s.tags);
       if (filterLang !== "all" && s.language !== filterLang) return false;
-      if (selectedTag !== "all" && !s.tags.includes(selectedTag)) return false;
+      if (selectedTag !== "all" && !tags.includes(selectedTag)) return false;
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
-        if (!s.title.toLowerCase().includes(q) && !s.code.toLowerCase().includes(q) && !s.tags.some(t => t.toLowerCase().includes(q))) return false;
+        if (!s.title.toLowerCase().includes(q) && !s.code.toLowerCase().includes(q) && !tags.some(t => t.toLowerCase().includes(q))) return false;
       }
       return true;
     });
@@ -153,7 +171,7 @@ export default function SnippetsPage() {
 
   const allTags = useMemo(() => {
     const m = new Map<string, number>();
-    snippets.forEach(s => s.tags.forEach(t => m.set(t, (m.get(t) || 0) + 1)));
+    snippets.forEach(s => parseTags(s.tags).forEach(t => m.set(t, (m.get(t) || 0) + 1)));
     return Array.from(m.entries()).sort((a, b) => b[1] - a[1]);
   }, [snippets]);
 
@@ -163,7 +181,6 @@ export default function SnippetsPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-4xl font-display font-bold mb-2">
@@ -185,7 +202,6 @@ export default function SnippetsPage() {
         )}
       </div>
 
-      {/* Auth */}
       {!isAuth && (
         <div className="cyber-card neon-border-pink p-5 mb-6">
           <p className="text-sm font-mono text-gray-500 mb-3">&gt; 需要密码才能新建/编辑/删除代码片段</p>
@@ -197,7 +213,6 @@ export default function SnippetsPage() {
         </div>
       )}
 
-      {/* Add/Edit Form */}
       {showAdd && isAuth && (
         <div className="cyber-card neon-border-pink p-6 mb-6 space-y-4">
           <h3 className="text-lg font-display font-bold text-neon-pink">
@@ -219,15 +234,7 @@ export default function SnippetsPage() {
           </div>
           <div>
             <label className="text-xs font-mono text-gray-500 mb-1 block">代码 *</label>
-            <textarea
-              value={formCode}
-              onChange={(e) => setFormCode(e.target.value)}
-              placeholder="粘贴你的代码片段..."
-              rows={12}
-              className="cyber-input resize-y font-mono text-sm"
-              style={{ tabSize: 2 }}
-              spellCheck={false}
-            />
+            <textarea value={formCode} onChange={(e) => setFormCode(e.target.value)} placeholder="粘贴你的代码片段..." rows={12} className="cyber-input resize-y font-mono text-sm" style={{ tabSize: 2 }} spellCheck={false} />
           </div>
           <div>
             <label className="text-xs font-mono text-gray-500 mb-1 block">标签</label>
@@ -249,14 +256,13 @@ export default function SnippetsPage() {
           </div>
           <div className="flex gap-2 justify-end">
             <button onClick={() => { resetForm(); setShowAdd(false); }} className="px-4 py-2 rounded font-mono text-sm text-gray-500 hover:text-gray-700 transition-all">取消</button>
-            <button onClick={handleSave} disabled={!formTitle.trim() || !formCode.trim()} className="cyber-btn-pink disabled:opacity-30 disabled:cursor-not-allowed">
-              {editingId ? "保存修改" : "创建片段"}
+            <button onClick={handleSave} disabled={!formTitle.trim() || !formCode.trim() || saving} className="cyber-btn-pink disabled:opacity-30 disabled:cursor-not-allowed">
+              {saving ? "保存中..." : editingId ? "保存修改" : "创建片段"}
             </button>
           </div>
         </div>
       )}
 
-      {/* Filters */}
       <div className="cyber-card p-4 mb-6 space-y-3">
         <div className="relative">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -285,7 +291,6 @@ export default function SnippetsPage() {
         )}
       </div>
 
-      {/* Snippet Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {filtered.length === 0 ? (
           <div className="col-span-full cyber-card p-12 text-center">
@@ -294,67 +299,53 @@ export default function SnippetsPage() {
             <p className="text-gray-500 font-mono text-sm mt-1">点击右上角 &quot;新建片段&quot; 开始添加</p>
           </div>
         ) : (
-          filtered.map(snippet => (
-            <div key={snippet.id} className="cyber-card neon-border-pink group">
-              <div className="p-4">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-neon-pink/10 text-neon-pink border border-neon-pink/30">
-                      {snippet.language}
-                    </span>
-                    <h3 className="font-bold text-sm group-hover:text-neon-pink transition-colors truncate">
-                      {snippet.title}
-                    </h3>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    {isAuth && (
-                      <>
-                        <button onClick={() => openEdit(snippet)} className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-neon-blue text-sm p-1 transition-all" title="编辑">
-                          ✎
-                        </button>
-                        <button onClick={() => handleDelete(snippet.id)} className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 text-sm p-1 transition-all" title="删除">
-                          ✕
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Code Block */}
-                <pre className="bg-gray-900 dark:bg-black rounded-lg p-4 text-sm font-mono text-gray-300 overflow-x-auto max-h-60 overflow-y-auto mb-3 scrollbar-thin">
-                  <code>{snippet.code}</code>
-                </pre>
-
-                {/* Footer */}
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-wrap gap-1">
-                    {snippet.tags.map(tag => (
-                      <span key={tag} className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-neon-pink/5 text-gray-400 border border-gray-100 dark:border-cyber-border">
-                        {tag}
+          filtered.map(snippet => {
+            const tags = parseTags(snippet.tags);
+            return (
+              <div key={snippet.id} className="cyber-card neon-border-pink group">
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-neon-pink/10 text-neon-pink border border-neon-pink/30">
+                        {snippet.language}
                       </span>
-                    ))}
+                      <h3 className="font-bold text-sm group-hover:text-neon-pink transition-colors truncate">
+                        {snippet.title}
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {isAuth && (
+                        <>
+                          <button onClick={() => openEdit(snippet)} className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-neon-blue text-sm p-1 transition-all" title="编辑">✎</button>
+                          <button onClick={() => handleDelete(snippet.id)} className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 text-sm p-1 transition-all" title="删除">✕</button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <button
-                    onClick={() => handleCopy(snippet)}
-                    className={`px-3 py-1 rounded text-xs font-mono transition-all border ${
-                      copiedId === snippet.id
-                        ? "border-neon-green bg-neon-green/10 text-neon-green"
-                        : "border-neon-pink/30 text-neon-pink hover:bg-neon-pink/10"
-                    }`}
-                  >
-                    {copiedId === snippet.id ? "✓ 已复制" : "复制代码"}
-                  </button>
-                </div>
-
-                {/* Timestamp */}
-                <div className="text-[10px] font-mono text-gray-500 mt-2">
-                  创建: {new Date(snippet.createdAt).toLocaleString("zh-CN")}
-                  {snippet.updatedAt !== snippet.createdAt && ` · 更新: ${new Date(snippet.updatedAt).toLocaleString("zh-CN")}`}
+                  <pre className="bg-gray-900 dark:bg-black rounded-lg p-4 text-sm font-mono text-gray-300 overflow-x-auto max-h-60 overflow-y-auto mb-3 scrollbar-thin">
+                    <code>{snippet.code}</code>
+                  </pre>
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap gap-1">
+                      {tags.map(tag => (
+                        <span key={tag} className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-neon-pink/5 text-gray-400 border border-gray-100 dark:border-cyber-border">{tag}</span>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => handleCopy(snippet)}
+                      className={`px-3 py-1 rounded text-xs font-mono transition-all border ${copiedId === snippet.id ? "border-neon-green bg-neon-green/10 text-neon-green" : "border-neon-pink/30 text-neon-pink hover:bg-neon-pink/10"}`}
+                    >
+                      {copiedId === snippet.id ? "✓ 已复制" : "复制代码"}
+                    </button>
+                  </div>
+                  <div className="text-[10px] font-mono text-gray-500 mt-2">
+                    创建: {snippet.created_at ? new Date(snippet.created_at).toLocaleString("zh-CN") : ""}
+                    {snippet.updated_at !== snippet.created_at && ` · 更新: ${snippet.updated_at ? new Date(snippet.updated_at).toLocaleString("zh-CN") : ""}`}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

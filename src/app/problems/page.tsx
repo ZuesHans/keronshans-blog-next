@@ -1,17 +1,20 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { SITE_PASSWORD, verifyPassword, isAuthenticated, setAuthenticated } from "@/lib/auth";
 
 interface ProblemRecord {
   id: string;
   title: string;
   url: string;
   platform: string;
-  status: "AC" | "WA" | "TLE" | "RE" | "REVIEW" | "TODO";
-  tags: string[];
+  status: string;
+  tags: string;
   date: string;
   note: string;
-  analysis: string;  // analysis notes for the problem
+  analysis: string;
+  created_at: string;
+  updated_at: string;
 }
 
 const PLATFORMS: Record<string, { label: string; icon: string; base: string }> = {
@@ -20,7 +23,7 @@ const PLATFORMS: Record<string, { label: string; icon: string; base: string }> =
   hd: { label: "HDU", icon: "🎈", base: "https://acm.hdu.edu.cn/contests/contest_list.php" },
   lg: { label: "洛谷", icon: "📖", base: "https://www.luogu.com.cn/problem/" },
   poj: { label: "POJ", icon: "🟢", base: "http://poj.org/problem?id=" },
-  uva: { label: "UVA", icon: "🟡", base: "https://onlinejudge.org/index.php?option=com_onlinejudge&Itemid=8&category=24&page=show_problem&problem=" },
+  uva: { label: "UVA", icon: "🟡", base: "https://onlinejudge.org/" },
   nc: { label: "牛客", icon: "🐂", base: "https://ac.nowcoder.com/acm/problem/" },
   spoj: { label: "SPOJ", icon: "🔵", base: "https://www.spoj.com/problems/" },
   lccn: { label: "力扣", icon: "🟡", base: "https://leetcode.cn/problems/" },
@@ -36,10 +39,11 @@ const STATUSES: Record<string, { label: string; color: string }> = {
   TODO: { label: "待做", color: "#64748b" },
 };
 
-const STORAGE_KEY = "keronshans_problems";
-const AUTH_KEY = "keronshans_auth";
-
 const DEFAULT_TAGS = ["贪心", "DP", "图论", "数据结构", "数学", "数论", "博弈", "字符串", "搜索", "构造", "网络流", "计算几何", "交互"];
+
+function parseTags(tagsStr: string): string[] {
+  try { return JSON.parse(tagsStr); } catch { return []; }
+}
 
 export default function ProblemsPage() {
   const [problems, setProblems] = useState<ProblemRecord[]>([]);
@@ -52,66 +56,95 @@ export default function ProblemsPage() {
   const [filterPlatform, setFilterPlatform] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string>("all");
-  const [expandedId, setExpandedId] = useState<string | null>(null); // which problem's analysis is expanded
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editingAnalysisId, setEditingAnalysisId] = useState<string | null>(null);
   const [editAnalysisText, setEditAnalysisText] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  // Form state
   const [formTitle, setFormTitle] = useState("");
   const [formUrl, setFormUrl] = useState("");
   const [formPlatform, setFormPlatform] = useState("cf");
-  const [formStatus, setFormStatus] = useState<ProblemRecord["status"]>("AC");
+  const [formStatus, setFormStatus] = useState<string>("AC");
   const [formTags, setFormTags] = useState<string[]>([]);
   const [formNote, setFormNote] = useState("");
   const [formTagInput, setFormTagInput] = useState("");
   const [formAnalysis, setFormAnalysis] = useState("");
 
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) setProblems(JSON.parse(stored));
-    if (sessionStorage.getItem(AUTH_KEY) === "true") setIsAuth(true);
+  const fetchProblems = useCallback(async () => {
+    try {
+      const res = await fetch("/api/problems");
+      if (res.ok) setProblems(await res.json());
+    } catch {}
     setLoaded(true);
   }, []);
 
-  const saveProblems = useCallback((newProblems: ProblemRecord[]) => {
-    setProblems(newProblems);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newProblems));
-  }, []);
+  useEffect(() => {
+    fetchProblems();
+    if (isAuthenticated()) setIsAuth(true);
+  }, [fetchProblems]);
 
   const handleLogin = () => {
-    if (password === "keronshans666") {
+    if (verifyPassword(password)) {
+      setAuthenticated();
       setIsAuth(true);
-      sessionStorage.setItem(AUTH_KEY, "true");
       setError("");
     } else {
       setError("密码错误");
     }
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!formTitle.trim() || !formUrl.trim()) return;
-    const newProblem: ProblemRecord = {
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2),
-      title: formTitle.trim(),
-      url: formUrl.trim(),
-      platform: formPlatform,
-      status: formStatus,
-      tags: formTags,
-      date: new Date().toISOString().split("T")[0],
-      note: formNote.trim(),
-      analysis: formAnalysis.trim(),
-    };
-    saveProblems([newProblem, ...problems]);
-    resetForm();
-    setShowAdd(false);
+    setSaving(true);
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2);
+    try {
+      const res = await fetch("/api/problems", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-password": SITE_PASSWORD },
+        body: JSON.stringify({ id, title: formTitle.trim(), url: formUrl.trim(), platform: formPlatform, status: formStatus, tags: formTags, date: new Date().toISOString().split("T")[0], note: formNote.trim(), analysis: formAnalysis.trim() }),
+      });
+      if (res.ok) {
+        await fetchProblems();
+        resetForm();
+        setShowAdd(false);
+      } else setError("添加失败");
+    } catch { setError("网络错误"); }
+    setSaving(false);
   };
 
-  const handleDelete = (id: string) => {
-    saveProblems(problems.filter((p) => p.id !== id));
+  const handleDelete = async (id: string) => {
+    try {
+      const res = await fetch(`/api/problems?id=${id}`, {
+        method: "DELETE",
+        headers: { "x-admin-password": SITE_PASSWORD },
+      });
+      if (res.ok) setProblems(problems.filter((p) => p.id !== id));
+    } catch {}
   };
 
-  const handleStatusChange = (id: string, newStatus: ProblemRecord["status"]) => {
-    saveProblems(problems.map((p) => (p.id === id ? { ...p, status: newStatus } : p)));
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    try {
+      const res = await fetch("/api/problems", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "x-admin-password": SITE_PASSWORD },
+        body: JSON.stringify({ id, status: newStatus }),
+      });
+      if (res.ok) setProblems(problems.map((p) => (p.id === id ? { ...p, status: newStatus } : p)));
+    } catch {}
+  };
+
+  const handleSaveAnalysis = async (id: string) => {
+    try {
+      const res = await fetch("/api/problems", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "x-admin-password": SITE_PASSWORD },
+        body: JSON.stringify({ id, analysis: editAnalysisText }),
+      });
+      if (res.ok) {
+        setProblems(problems.map((p) => (p.id === id ? { ...p, analysis: editAnalysisText } : p)));
+        setEditingAnalysisId(null);
+      }
+    } catch {}
   };
 
   const resetForm = () => {
@@ -120,50 +153,38 @@ export default function ProblemsPage() {
   };
 
   const addTag = (tag: string) => {
-    if (tag && !formTags.includes(tag)) {
-      setFormTags([...formTags, tag]);
-    }
+    if (tag && !formTags.includes(tag)) setFormTags([...formTags, tag]);
     setFormTagInput("");
   };
+  const removeTag = (tag: string) => setFormTags(formTags.filter((t) => t !== tag));
 
-  const removeTag = (tag: string) => {
-    setFormTags(formTags.filter((t) => t !== tag));
-  };
-
-  // Filter
   const filteredProblems = problems.filter((p) => {
+    const tags = parseTags(p.tags);
     if (filterStatus !== "all" && p.status !== filterStatus) return false;
     if (filterPlatform !== "all" && p.platform !== filterPlatform) return false;
-    if (selectedTag !== "all" && !p.tags.includes(selectedTag)) return false;
+    if (selectedTag !== "all" && !tags.includes(selectedTag)) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      if (!p.title.toLowerCase().includes(q) && !p.note.toLowerCase().includes(q) && !p.tags.some((t) => t.toLowerCase().includes(q))) return false;
+      if (!p.title.toLowerCase().includes(q) && !(p.note || "").toLowerCase().includes(q) && !tags.some((t) => t.toLowerCase().includes(q))) return false;
     }
     return true;
   });
 
-  // Archive by month
   const archive = useMemo(() => {
     const map = new Map<string, ProblemRecord[]>();
     filteredProblems.forEach((p) => {
-      const month = p.date.slice(0, 7);
+      const month = (p.date || "").slice(0, 7) || "unknown";
       if (!map.has(month)) map.set(month, []);
       map.get(month)!.push(p);
     });
     return Array.from(map.entries()).sort((a, b) => b[0].localeCompare(a[0]));
   }, [filteredProblems]);
 
-  // All tags
   const allTags = useMemo(() => {
     const tagMap = new Map<string, number>();
-    problems.forEach((p) => p.tags.forEach((t) => tagMap.set(t, (tagMap.get(t) || 0) + 1)));
+    problems.forEach((p) => parseTags(p.tags).forEach((t) => tagMap.set(t, (tagMap.get(t) || 0) + 1)));
     return Array.from(tagMap.entries()).sort((a, b) => b[1] - a[1]);
   }, [problems]);
-
-  const handleSaveAnalysis = (id: string) => {
-    saveProblems(problems.map((p) => (p.id === id ? { ...p, analysis: editAnalysisText } : p)));
-    setEditingAnalysisId(null);
-  };
 
   if (!loaded) {
     return <div className="max-w-6xl mx-auto px-4 py-8"><div className="animate-pulse h-10 bg-gray-200 dark:bg-cyber-surface rounded w-48" /></div>;
@@ -188,7 +209,6 @@ export default function ProblemsPage() {
         )}
       </div>
 
-      {/* Auth */}
       {!isAuth && (
         <div className="cyber-card neon-border-blue p-5 mb-6">
           <p className="text-sm font-mono text-gray-500 mb-3">&gt; 需要密码才能添加/管理题目</p>
@@ -200,7 +220,6 @@ export default function ProblemsPage() {
         </div>
       )}
 
-      {/* Add Form */}
       {showAdd && isAuth && (
         <div className="cyber-card neon-border-blue p-6 mb-6 space-y-4">
           <h3 className="text-lg font-display font-bold text-neon-blue">添加新题目</h3>
@@ -229,7 +248,7 @@ export default function ProblemsPage() {
               <label className="text-xs font-mono text-gray-500 mb-1 block">状态</label>
               <div className="flex flex-wrap gap-1.5">
                 {Object.entries(STATUSES).map(([key, val]) => (
-                  <button key={key} onClick={() => setFormStatus(key as ProblemRecord["status"])} className={`px-2.5 py-1 rounded text-xs font-mono transition-all border ${formStatus === key ? "border-opacity-50 text-white" : "border-transparent text-gray-500 hover:opacity-80"}`} style={formStatus === key ? { backgroundColor: val.color + "40", borderColor: val.color + "80", color: val.color } : {}}>
+                  <button key={key} onClick={() => setFormStatus(key)} className={`px-2.5 py-1 rounded text-xs font-mono transition-all border ${formStatus === key ? "border-opacity-50 text-white" : "border-transparent text-gray-500 hover:opacity-80"}`} style={formStatus === key ? { backgroundColor: val.color + "40", borderColor: val.color + "80", color: val.color } : {}}>
                     {val.label}
                   </button>
                 ))}
@@ -262,27 +281,18 @@ export default function ProblemsPage() {
           </div>
           <div>
             <label className="text-xs font-mono text-gray-500 mb-1 block">
-              题解笔记 <span className="text-gray-400">(思路分析、做法总结，不支持代码)</span>
+              题解笔记 <span className="text-gray-400">(思路分析、做法总结)</span>
             </label>
-            <textarea
-              value={formAnalysis}
-              onChange={(e) => setFormAnalysis(e.target.value)}
-              placeholder="写下你对这道题的分析..."
-              rows={5}
-              className="cyber-input resize-y text-sm"
-              maxLength={2000}
-            />
+            <textarea value={formAnalysis} onChange={(e) => setFormAnalysis(e.target.value)} placeholder="写下你对这道题的分析..." rows={5} className="cyber-input resize-y text-sm" maxLength={2000} />
           </div>
           <div className="flex gap-2 justify-end">
             <button onClick={() => { resetForm(); setShowAdd(false); }} className="px-4 py-2 rounded font-mono text-sm text-gray-500 hover:text-gray-700 transition-all">取消</button>
-            <button onClick={handleAdd} disabled={!formTitle.trim() || !formUrl.trim()} className="cyber-btn-blue disabled:opacity-30 disabled:cursor-not-allowed">添加</button>
+            <button onClick={handleAdd} disabled={!formTitle.trim() || !formUrl.trim() || saving} className="cyber-btn-blue disabled:opacity-30 disabled:cursor-not-allowed">{saving ? "添加中..." : "添加"}</button>
           </div>
         </div>
       )}
 
-      {/* Filters */}
       <div className="cyber-card p-4 mb-6 space-y-3">
-        {/* Search */}
         <div className="relative">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
@@ -306,7 +316,6 @@ export default function ProblemsPage() {
             </button>
           ))}
         </div>
-        {/* Tag filter */}
         {allTags.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             <button onClick={() => setSelectedTag("all")} className={`px-2 py-0.5 rounded text-xs font-mono transition-all ${selectedTag === "all" ? "bg-neon-blue/10 text-neon-blue" : "text-gray-400"}`}>全部标签</button>
@@ -319,7 +328,6 @@ export default function ProblemsPage() {
         )}
       </div>
 
-      {/* Problem Cards by Archive */}
       <div className="space-y-8">
         {archive.length === 0 ? (
           <div className="cyber-card p-12 text-center">
@@ -338,93 +346,54 @@ export default function ProblemsPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {monthProblems.map((problem) => {
                   const platform = PLATFORMS[problem.platform] || PLATFORMS.other;
-                  const status = STATUSES[problem.status];
+                  const status = STATUSES[problem.status] || STATUSES.TODO;
+                  const tags = parseTags(problem.tags);
                   return (
                     <div key={problem.id} className="cyber-card neon-border-blue group">
                       <div className="p-4">
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <div className="flex items-center gap-2 shrink-0">
                             <span className="text-sm">{platform.icon}</span>
-                            <span
-                              className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold text-white"
-                              style={{ backgroundColor: status.color + "80" }}
-                            >
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold text-white" style={{ backgroundColor: status.color + "80" }}>
                               {status.label}
                             </span>
                             {problem.analysis && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-neon-purple/20 text-neon-purple border border-neon-purple/30">
-                                有笔记
-                              </span>
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-neon-purple/20 text-neon-purple border border-neon-purple/30">有笔记</span>
                             )}
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
                             {isAuth && (
                               <>
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); setEditingAnalysisId(editingAnalysisId === problem.id ? null : problem.id); setEditAnalysisText(problem.analysis); }}
-                                  className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-neon-purple text-sm p-0.5 transition-all"
-                                  title="编辑笔记"
-                                >
-                                  ✎
-                                </button>
-                                <select
-                                  value={problem.status}
-                                  onChange={(e) => handleStatusChange(problem.id, e.target.value as ProblemRecord["status"])}
-                                  className="text-[10px] bg-transparent border border-transparent focus:border-neon-blue/30 rounded px-1 py-0.5 font-mono text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  {Object.entries(STATUSES).map(([key, val]) => (
-                                    <option key={key} value={key}>{val.label}</option>
-                                  ))}
+                                <button onClick={(e) => { e.stopPropagation(); setEditingAnalysisId(editingAnalysisId === problem.id ? null : problem.id); setEditAnalysisText(problem.analysis || ""); }} className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-neon-purple text-sm p-0.5 transition-all" title="编辑笔记">✎</button>
+                                <select value={problem.status} onChange={(e) => handleStatusChange(problem.id, e.target.value)} className="text-[10px] bg-transparent border border-transparent focus:border-neon-blue/30 rounded px-1 py-0.5 font-mono text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                                  {Object.entries(STATUSES).map(([key, val]) => (<option key={key} value={key}>{val.label}</option>))}
                                 </select>
                               </>
                             )}
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleDelete(problem.id); }}
-                              className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 text-sm p-0.5 transition-all"
-                            >
-                              ✕
-                            </button>
+                            <button onClick={(e) => { e.stopPropagation(); handleDelete(problem.id); }} className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 text-sm p-0.5 transition-all">✕</button>
                           </div>
                         </div>
                         <a href={problem.url} target="_blank" rel="noopener noreferrer" className="block">
-                          <h3 className="font-bold text-sm group-hover:text-neon-blue transition-colors mb-1 line-clamp-1">
-                            {problem.title}
-                          </h3>
+                          <h3 className="font-bold text-sm group-hover:text-neon-blue transition-colors mb-1 line-clamp-1">{problem.title}</h3>
                         </a>
                         <div className="flex flex-wrap gap-1 mb-2">
-                          {problem.tags.map((tag) => (
-                            <span key={tag} className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-neon-blue/5 text-gray-400 border border-gray-100 dark:border-cyber-border">
-                              {tag}
-                            </span>
+                          {tags.map((tag) => (
+                            <span key={tag} className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-neon-blue/5 text-gray-400 border border-gray-100 dark:border-cyber-border">{tag}</span>
                           ))}
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-[10px] font-mono text-gray-400">{problem.date}</span>
                           <div className="flex items-center gap-3">
                             {problem.analysis && (
-                              <button
-                                onClick={(e) => { e.stopPropagation(); setExpandedId(expandedId === problem.id ? null : problem.id); }}
-                                className="text-[10px] font-mono text-neon-purple hover:underline flex items-center gap-0.5"
-                              >
+                              <button onClick={(e) => { e.stopPropagation(); setExpandedId(expandedId === problem.id ? null : problem.id); }} className="text-[10px] font-mono text-neon-purple hover:underline flex items-center gap-0.5">
                                 {expandedId === problem.id ? "收起笔记 ▲" : "查看笔记 ▼"}
                               </button>
                             )}
-                            <a
-                              href={problem.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[10px] font-mono text-neon-blue hover:underline flex items-center gap-0.5"
-                            >
-                              访问原题 ↗
-                            </a>
+                            <a href={problem.url} target="_blank" rel="noopener noreferrer" className="text-[10px] font-mono text-neon-blue hover:underline flex items-center gap-0.5">访问原题 ↗</a>
                           </div>
                         </div>
-                        {problem.note && (
-                          <p className="text-[10px] font-mono text-gray-400 mt-1 truncate">{problem.note}</p>
-                        )}
+                        {problem.note && <p className="text-[10px] font-mono text-gray-400 mt-1 truncate">{problem.note}</p>}
 
-                        {/* Expanded analysis */}
                         {expandedId === problem.id && problem.analysis && (
                           <div className="mt-3 pt-3 border-t border-gray-100 dark:border-cyber-border">
                             <div className="text-xs font-mono text-gray-400 mb-1.5">{"// 题解笔记"}</div>
@@ -434,17 +403,9 @@ export default function ProblemsPage() {
                           </div>
                         )}
 
-                        {/* Inline edit analysis */}
                         {editingAnalysisId === problem.id && (
                           <div className="mt-3 pt-3 border-t border-gray-100 dark:border-cyber-border space-y-2">
-                            <textarea
-                              value={editAnalysisText}
-                              onChange={(e) => setEditAnalysisText(e.target.value)}
-                              placeholder="编辑题解笔记..."
-                              rows={4}
-                              className="cyber-input resize-y text-sm"
-                              maxLength={2000}
-                            />
+                            <textarea value={editAnalysisText} onChange={(e) => setEditAnalysisText(e.target.value)} placeholder="编辑题解笔记..." rows={4} className="cyber-input resize-y text-sm" maxLength={2000} />
                             <div className="flex gap-2 justify-end">
                               <button onClick={() => setEditingAnalysisId(null)} className="px-3 py-1 rounded text-xs font-mono text-gray-500 hover:text-gray-700 transition-all">取消</button>
                               <button onClick={() => handleSaveAnalysis(problem.id)} className="cyber-btn-blue text-xs px-3 py-1">保存</button>
@@ -463,5 +424,3 @@ export default function ProblemsPage() {
     </div>
   );
 }
-
-
