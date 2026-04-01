@@ -11,6 +11,8 @@ cover: /img/cover/picg_diary.png
 整了一整个通宵，起来还要vp，孩子们我能活着吗？
 这是一条test
 
+test2喵
+
 
 ## 2026年3月31日
 

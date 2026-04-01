@@ -2,7 +2,8 @@ import Link from "next/link";
 import { getAllPosts, getAllTags, getPostsByCategory, getCategoryColorClass } from "@/lib/posts";
 import HeroSubtitle from "@/components/HeroSubtitle";
 
-export const dynamic = "force-dynamic";
+// 首页使用静态生成（build 时读取文章），不要 force-dynamic
+// 因为 Cloudflare Worker 运行时无法使用 fs 模块读取本地文件
 
 const catColorMap: Record<string, string> = {
   "笔记": "bg-neon-pink",

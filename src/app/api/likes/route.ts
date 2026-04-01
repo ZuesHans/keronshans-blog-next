@@ -1,59 +1,61 @@
 import { NextResponse } from "next/server";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 // GET /api/likes?postId=xxx - Get like count for a post
 export async function GET(request: Request) {
-  const env = (process.env as unknown as { DB: D1Database }).DB;
-  if (!env) {
-    return NextResponse.json({ error: "Database not configured" }, { status: 500 });
-  }
-
   try {
+    const { env } = await getCloudflareContext({ async: true });
     const { searchParams } = new URL(request.url);
     const postId = searchParams.get("postId");
     if (!postId) {
       return NextResponse.json({ error: "postId is required" }, { status: 400 });
     }
 
-    const { count } = await env
+    const { count } = await env.DB
       .prepare("SELECT COUNT(*) as count FROM likes WHERE post_id = ?")
       .bind(postId)
       .first<{ count: number }>();
 
     return NextResponse.json({ likes: count || 0 });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error("GET /api/likes error:", error);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
 
 // POST /api/likes - Like a post
 export async function POST(request: Request) {
-  const env = (process.env as unknown as { DB: D1Database }).DB;
-  if (!env) {
-    return NextResponse.json({ error: "Database not configured" }, { status: 500 });
-  }
-
   try {
-    const { postId, ip } = await request.json();
+    const { env } = await getCloudflareContext({ async: true });
+    const { postId } = await request.json();
     if (!postId) {
       return NextResponse.json({ error: "postId is required" }, { status: 400 });
     }
 
-    // Check if already liked (same post_id + ip, or just post_id)
-    const existing = await env
+    // Use CF-Connecting-IP header for real IP, fallback to X-Forwarded-For, then "unknown"
+    // Access via env.ASSETS is not available; use request headers directly
+    const cfIP = request.headers.get("cf-connecting-ip");
+    const forwardedIP = request.headers.get("x-forwarded-for");
+    const ip = cfIP || (forwardedIP ? forwardedIP.split(",")[0].trim() : "unknown");
+
+    // Check duplicate
+    const existing = await env.DB
       .prepare("SELECT id FROM likes WHERE post_id = ? AND ip = ?")
-      .bind(postId, ip || "unknown")
+      .bind(postId, ip)
       .first();
 
     if (existing) {
       return NextResponse.json({ error: "Already liked" }, { status: 409 });
     }
 
-    await env.prepare(
-      "INSERT INTO likes (post_id, ip) VALUES (?, ?)"
-    ).bind(postId, ip || "unknown").run();
+    await env.DB
+      .prepare("INSERT INTO likes (post_id, ip) VALUES (?, ?)")
+      .bind(postId, ip)
+      .run();
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error("POST /api/likes error:", error);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

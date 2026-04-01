@@ -5,8 +5,6 @@ import MarkdownRenderer from "@/components/MarkdownRenderer";
 import { getCategoryColorClass } from "@/lib/posts";
 import PostInteraction from "./PostInteraction";
 
-export const dynamic = "force-dynamic";
-
 export async function generateStaticParams() {
   const posts = getAllPosts();
   return posts.map((post) => ({ id: post.id }));
