@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 
 interface CheckinRecord {
   id: number;
@@ -30,18 +30,18 @@ export default function CheckinPage() {
   const [hoveredCell, setHoveredCell] = useState<string | null>(null);
   const [viewYear, setViewYear] = useState(new Date().getFullYear());
 
-  const fetchRecords = async () => {
+  const fetchRecords = useCallback(async () => {
     try {
       const res = await fetch("/api/checkins");
       const data = await res.json();
       if (Array.isArray(data)) setRecords(data);
     } catch {}
-  };
+  }, []);
 
   useEffect(() => {
     fetchRecords();
     if (sessionStorage.getItem("keronshans_auth") === "true") setIsAuth(true);
-  }, []);
+  }, [fetchRecords]);
 
   const handleLogin = () => {
     if (password === "zues1") {

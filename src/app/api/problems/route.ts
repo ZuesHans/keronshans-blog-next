@@ -38,16 +38,30 @@ export async function POST(request: Request) {
   }
 }
 
-// PUT /api/problems - update a problem (auth required)
+// PUT /api/problems - update specific fields of a problem (auth required)
 export async function PUT(request: Request) {
   if (!authenticate(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const { env } = await getCloudflareContext({ async: true });
     const { id, title, url, platform, status, tags, date, note, analysis } = await request.json();
     if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 });
-    await env.DB.prepare(
-      "UPDATE problems SET title = ?, url = ?, platform = ?, status = ?, tags = ?, date = ?, note = ?, analysis = ?, updated_at = datetime('now', '+8 hours') WHERE id = ?"
-    ).bind(title?.trim() || "", url?.trim() || "", platform || "cf", status || "AC", JSON.stringify(tags || []), date || "", note || "", analysis || "", id).run();
+
+    // Build dynamic update query - only update fields that are explicitly provided
+    const updates: string[] = [];
+    const values: unknown[] = [];
+
+    if (title !== undefined) { updates.push("title = ?"); values.push(title.trim()); }
+    if (url !== undefined) { updates.push("url = ?"); values.push(url.trim()); }
+    if (platform !== undefined) { updates.push("platform = ?"); values.push(platform); }
+    if (status !== undefined) { updates.push("status = ?"); values.push(status); }
+    if (tags !== undefined) { updates.push("tags = ?"); values.push(JSON.stringify(tags)); }
+    if (date !== undefined) { updates.push("date = ?"); values.push(date); }
+    if (note !== undefined) { updates.push("note = ?"); values.push(note); }
+    if (analysis !== undefined) { updates.push("analysis = ?"); values.push(analysis); }
+    updates.push("updated_at = datetime('now', '+8 hours')");
+    values.push(id);
+
+    await env.DB.prepare(`UPDATE problems SET ${updates.join(", ")} WHERE id = ?`).bind(...values).run();
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("PUT /api/problems error:", error);
