@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTheme } from "next-themes";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 const NAV_ITEMS = [
@@ -17,6 +18,7 @@ const NAV_ITEMS = [
 ];
 
 export default function Navigation() {
+  const pathname = usePathname();
   const [active, setActive] = useState("home");
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -24,6 +26,14 @@ export default function Navigation() {
   const [searchQuery, setSearchQuery] = useState("");
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+
+  // Sync active tab with current URL pathname
+  useEffect(() => {
+    const segments = pathname.split("/").filter(Boolean);
+    const first = segments[0] || "home";
+    setActive(first);
+    setMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     setMounted(true);
