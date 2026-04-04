@@ -88,7 +88,7 @@ export default function CheckinPage() {
   const heatmapData = useMemo(() => {
     const map = new Map<string, { count: number; type: string; note: string }>();
     records.forEach((r) => {
-      const dateStr = r.created_at ? r.created_at.split("T")[0] : "";
+      const dateStr = r.created_at ? r.created_at.split(/[T ]/)[0] : "";
       if (!dateStr) return;
       const existing = map.get(dateStr);
       if (existing) {
@@ -135,7 +135,7 @@ export default function CheckinPage() {
   const totalCount = records.reduce((sum, r) => sum + (r.count || 1), 0);
   const maxStreak = useMemo(() => {
     if (records.length === 0) return 0;
-    const dates = [...new Set(records.map((r) => r.created_at?.split("T")[0]).filter(Boolean))] as string[];
+    const dates = [...new Set(records.map((r) => r.created_at?.split(/[T ]/)[0]).filter(Boolean))] as string[];
     dates.sort();
     let max = 1, current = 1;
     for (let i = 1; i < dates.length; i++) {
@@ -148,7 +148,7 @@ export default function CheckinPage() {
 
   const currentStreak = useMemo(() => {
     if (records.length === 0) return 0;
-    const dates = [...new Set(records.map((r) => r.created_at?.split("T")[0]).filter(Boolean))] as string[];
+    const dates = [...new Set(records.map((r) => r.created_at?.split(/[T ]/)[0]).filter(Boolean))] as string[];
     dates.sort().reverse();
     let streak = 0;
     const checkDate = new Date(today);
@@ -385,7 +385,7 @@ export default function CheckinPage() {
                 <span className="text-xl">{TYPES[record.type as keyof typeof TYPES]?.emoji || "💻"}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-mono font-bold">{record.created_at?.split("T")[0] || ""}</span>
+                    <span className="text-sm font-mono font-bold">{record.created_at?.split(/[T ]/)[0] || ""}</span>
                     <span className="text-xs px-1.5 py-0.5 rounded font-mono" style={{ backgroundColor: (TYPES[record.type as keyof typeof TYPES]?.color || "#00d4ff") + "20", color: TYPES[record.type as keyof typeof TYPES]?.color || "#00d4ff" }}>
                       {TYPES[record.type as keyof typeof TYPES]?.label || record.type}
                     </span>
