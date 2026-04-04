@@ -76,6 +76,31 @@ export default function DashboardPage() {
   const [snippetDesc, setSnippetDesc] = useState("");
   const [snippetSaving, setSnippetSaving] = useState(false);
 
+  // ====== Deploy ======
+  const [deploying, setDeploying] = useState(false);
+  const [deployLog, setDeployLog] = useState("");
+
+  const triggerDeploy = useCallback(async () => {
+    setDeploying(true);
+    setDeployLog("正在部署...");
+    try {
+      const res = await fetch("/api/deploy", {
+        method: "POST",
+        headers: { "x-admin-password": SITE_PASSWORD },
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDeployLog("部署成功! 网站已更新");
+        setTimeout(() => setDeployLog(""), 8000);
+      } else {
+        setDeployLog("部署失败: " + (data.error || "未知错误"));
+      }
+    } catch {
+      setDeployLog("部署失败: 网络错误");
+    }
+    setDeploying(false);
+  }, []);
+
   // ====== Auth ======
   const handleLogin = () => {
     if (verifyPassword(pwd)) {
@@ -147,7 +172,7 @@ export default function DashboardPage() {
           body: JSON.stringify({ filename, frontmatter, content: editContent }),
         });
       }
-      if (res.ok) { setMsg("保存成功"); fetchPosts(); setTimeout(() => setPostView("list"), 500); }
+      if (res.ok) { setMsg("保存成功，正在部署..."); fetchPosts(); setTimeout(() => setPostView("list"), 500); triggerDeploy(); }
       else { const d = await res.json(); setMsg("保存失败: " + d.error); }
     } catch { setMsg("保存失败: 网络错误"); }
     setSaving(false);
@@ -157,7 +182,7 @@ export default function DashboardPage() {
     if (!confirm(`确定删除 ${filename}？此操作不可恢复。`)) return;
     try {
       const res = await fetch(`/api/admin?filename=${encodeURIComponent(filename)}`, { method: "DELETE", headers: { "x-admin-password": SITE_PASSWORD } });
-      if (res.ok) { setMsg("已删除"); fetchPosts(); }
+      if (res.ok) { setMsg("已删除，正在部署..."); fetchPosts(); triggerDeploy(); }
     } catch {}
   };
 
@@ -222,7 +247,7 @@ export default function DashboardPage() {
           body: JSON.stringify({ title: snippetTitle.trim(), language: snippetLang, code: snippetCode, tags: snippetTags, description: snippetDesc.trim() }),
         });
       }
-      if (res.ok) { setMsg("保存成功"); fetchSnippets(); setTimeout(() => setSnippetView("list"), 500); }
+      if (res.ok) { setMsg("保存成功，正在部署..."); fetchSnippets(); setTimeout(() => setSnippetView("list"), 500); triggerDeploy(); }
       else { const d = await res.json(); setMsg("保存失败: " + d.error); }
     } catch { setMsg("保存失败: 网络错误"); }
     setSnippetSaving(false);
@@ -232,7 +257,7 @@ export default function DashboardPage() {
     if (!confirm(`确定删除代码片段 "${filename}"？`)) return;
     try {
       const res = await fetch(`/api/snippets?filename=${encodeURIComponent(filename)}`, { method: "DELETE", headers: { "x-admin-password": SITE_PASSWORD } });
-      if (res.ok) { setMsg("已删除"); fetchSnippets(); }
+      if (res.ok) { setMsg("已删除，正在部署..."); fetchSnippets(); triggerDeploy(); }
     } catch {}
   };
 
@@ -322,11 +347,35 @@ export default function DashboardPage() {
           <span className="mr-1">{"{ }"}</span> 代码片段
         </button>
         <div className="flex-1" />
+        <button
+          onClick={triggerDeploy}
+          disabled={deploying}
+          className="px-3 py-1.5 rounded text-xs font-mono border border-gray-200 dark:border-cyber-border text-gray-500 hover:text-neon-green hover:border-neon-green/30 transition-all disabled:opacity-50 cursor-pointer"
+          title="手动触发构建部署"
+        >
+          {deploying ? "..." : "Deploy"}
+        </button>
       </div>
 
       {msg && <MsgBanner msg={msg} />}
 
-      {/* ====== Posts Tab ====== */}
+      {/* Deploy status */}
+      {(deploying || deployLog) && (
+        <div className={`mb-4 p-3 rounded text-sm font-mono flex items-center gap-3 ${
+          deploying
+            ? "bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800"
+            : deployLog.includes("成功")
+            ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border border-green-200 dark:border-green-800"
+            : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-800"
+        }`}>
+          {deploying && (
+            <svg className="animate-spin h-4 w-4 shrink-0" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+          )}
+          <span>{deploying ? "部署中..." : deployLog}</span>
+        </div>
+      )}
+
+      {/* Manual deploy button */}
       {tab === "posts" && (
         <>
           <div className="flex items-center justify-between mb-4">
