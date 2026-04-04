@@ -4,6 +4,7 @@ import Link from "next/link";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import { getCategoryColorClass } from "@/lib/posts";
 import PostInteraction from "./PostInteraction";
+import TableOfContents from "@/components/TableOfContents";
 
 export async function generateStaticParams() {
   const posts = getAllPosts();
@@ -51,6 +52,9 @@ export default async function PostPage({ params }: { params: { id: string } }) {
           <MarkdownRenderer content={post.content} />
         </div>
       </article>
+
+      {/* Table of Contents */}
+      <TableOfContents />
 
       {/* Comments & Likes */}
       <PostInteraction postId={params.id} />
