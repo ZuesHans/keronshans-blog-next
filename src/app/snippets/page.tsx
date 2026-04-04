@@ -8,7 +8,7 @@ interface Snippet {
   title: string;
   code: string;
   language: string;
-  tags: string;
+  tags: string | string[];
   created_at: string;
   updated_at: string;
 }
@@ -24,8 +24,9 @@ const DEFAULT_TAGS = [
   "STL", "位运算", "前缀和", "并查集", "线段树", "树状数组",
 ];
 
-function parseTags(tagsStr: string): string[] {
-  try { return JSON.parse(tagsStr); } catch { return []; }
+function parseTags(tags: string | string[]): string[] {
+  if (Array.isArray(tags)) return tags;
+  try { return JSON.parse(tags); } catch { return []; }
 }
 
 export default function SnippetsPage() {
@@ -52,8 +53,13 @@ export default function SnippetsPage() {
   const fetchSnippets = useCallback(async () => {
     try {
       const res = await fetch("/api/snippets");
-      if (res.ok) setSnippets(await res.json());
-    } catch {}
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) setSnippets(data);
+      }
+    } catch {
+      console.error("Failed to fetch snippets");
+    }
     setLoaded(true);
   }, []);
 
