@@ -174,6 +174,21 @@ export default function CheckinPage() {
   const monthLabels = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
   const dayLabels = ["一", "", "三", "", "五", "", "日"];
 
+  // Compute month label positions based on actual week column indices
+  const monthPositions = useMemo(() => {
+    const positions: { label: string; col: number }[] = [];
+    for (let m = 0; m < 12; m++) {
+      const monthStart = new Date(viewYear, m, 1);
+      // Find which week column this month starts in
+      const jan1 = new Date(viewYear, 0, 1);
+      const jan1Offset = (jan1.getDay() + 6) % 7;
+      const dayIndex = Math.round((monthStart.getTime() - jan1.getTime()) / (1000 * 60 * 60 * 24));
+      const col = Math.floor((dayIndex + jan1Offset) / 7);
+      positions.push({ label: monthLabels[m], col });
+    }
+    return positions;
+  }, [viewYear]);
+
   const typeStats = useMemo(() => {
     const stats: Record<string, { count: number; days: number }> = {};
     records.forEach((r) => {
@@ -300,13 +315,18 @@ export default function CheckinPage() {
           </div>
         </div>
 
-        <div className="flex gap-0 mb-1 ml-8">
-          {Array.from({ length: 12 }, (_, i) => {
-            const monthStart = new Date(viewYear, i, 1);
-            const dayOffset = ((monthStart.getDay() + 6) % 7);
+        {/* Month labels - positioned relative to the heatmap grid */}
+        <div className="relative mb-1 ml-8" style={{ height: "16px" }}>
+          {monthPositions.map((mp, i) => {
+            const cellSize = 13;
+            const gap = 3;
             return (
-              <div key={i} className="text-[10px] font-mono text-gray-400" style={{ marginLeft: `${dayOffset * 13}px` }}>
-                {monthLabels[i]}
+              <div
+                key={i}
+                className="absolute text-[10px] font-mono text-gray-400 whitespace-nowrap"
+                style={{ left: `${mp.col * (cellSize + gap)}px`, top: 0 }}
+              >
+                {mp.label}
               </div>
             );
           })}

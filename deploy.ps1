@@ -42,32 +42,31 @@ Write-Host "[3/4] 修改 worker.js (静态资源优先)..." -ForegroundColor Yel
 $workerJs = Join-Path $BlogRoot ".open-next\worker.js"
 $content = Get-Content $workerJs -Raw
 
-if ($content -notmatch "PATCH") {
-    # 逐行构建 patch 内容，避免 PowerShell here-string 转义问题
-    $patchLines = @(
-        "            // PATCH: static asset priority",
-        "            try {",
-        "                const url = new URL(request.url);",
-        "                let assetPath = url.pathname;",
-        [char]34 + "                if (assetPath === " + [char]34 + "/" + [char]34 + ") assetPath = " + [char]34 + "/index.html" + [char]34 + ";",
-        "                if (!assetPath.includes(" + [char]34 + "." + [char]34 + ") && !assetPath.startsWith(" + [char]34 + "/api" + [char]34 + ") && !assetPath.startsWith(" + [char]34 + "/_next" + [char]34 + ")) {",
-        "                    assetPath += " + [char]34 + ".html" + [char]34 + ";",
-        "                }",
-        "                const assetUrl = new URL(assetPath, request.url);",
-        "                const assetResp = await env.ASSETS?.fetch?.(new Request(assetUrl, request));",
-        "                if (assetResp && assetResp.status === 200) {",
-        "                    return assetResp;",
-        "                }",
-        "            } catch (e) {}"
-    )
-    $patchInsert = $patchLines -join "`r`n"
+$patchPattern = "PATCH: static asset priority"
+if ($content -notmatch [regex]::Escape($patchPattern)) {
+    $q = [char]34
+    $line1 = "            // PATCH: static asset priority"
+    $line2 = "            try {"
+    $line3 = "                const url = new URL(request.url);"
+    $line4 = "                let assetPath = url.pathname;"
+    $line5 = "                if (assetPath === ${q}/${q}) assetPath = ${q}/index.html${q};"
+    $line6 = "                if (!assetPath.includes(${q}.${q}) && !assetPath.startsWith(${q}/api${q}) && !assetPath.startsWith(${q}/_next${q})) {"
+    $line7 = "                    assetPath += ${q}.html${q};"
+    $line8 = "                }"
+    $line9 = "                const assetUrl = new URL(assetPath, request.url);"
+    $line10 = "                const assetResp = await env.ASSETS?.fetch?.(new Request(assetUrl, request));"
+    $line11 = "                if (assetResp && assetResp.status === 200) {"
+    $line12 = "                    return assetResp;"
+    $line13 = "                }"
+    $line14 = "            } catch (e) {}"
+    $patchInsert = @($line1,$line2,$line3,$line4,$line5,$line6,$line7,$line8,$line9,$line10,$line11,$line12,$line13,$line14) -join "`r`n"
 
     $marker = "            const response = maybeGetSkewProtectionResponse(request);"
     $content = $content.Replace($marker, "$patchInsert`r`n$marker")
     Set-Content $workerJs -Value $content -NoNewline
-    Write-Host "  worker.js 已修改" -ForegroundColor Gray
+    Write-Host "  worker.js patched" -ForegroundColor Gray
 } else {
-    Write-Host "  worker.js 已包含 patch, skip" -ForegroundColor Gray
+    Write-Host "  worker.js already patched, skip" -ForegroundColor Gray
 }
 
 # 4. 部署

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { SITE_PASSWORD, verifyPassword, isAuthenticated, setAuthenticated } from "@/lib/auth";
 
 // ====== Types ======
@@ -15,14 +15,12 @@ interface PostItem {
 }
 
 interface SnippetItem {
-  filename: string;
   id: string;
   title: string;
   language: string;
-  tags: string[];
-  createdAt: string;
-  updatedAt: string;
-  description?: string;
+  tags: string | string[];
+  created_at: string;
+  updated_at: string;
 }
 
 const CATEGORY_PREFIXES: Record<string, string> = {
@@ -67,14 +65,18 @@ export default function DashboardPage() {
   const [snippetsLoading, setSnippetsLoading] = useState(false);
   const [snippetSearch, setSnippetSearch] = useState("");
   const [snippetView, setSnippetView] = useState<"list" | "edit" | "new">("list");
-  const [snippetFile, setSnippetFile] = useState<string | null>(null);
+  const [snippetEditId, setSnippetEditId] = useState<string | null>(null);
   const [snippetTitle, setSnippetTitle] = useState("");
   const [snippetLang, setSnippetLang] = useState("C++");
   const [snippetCode, setSnippetCode] = useState("");
   const [snippetTags, setSnippetTags] = useState<string[]>([]);
   const [snippetTagInput, setSnippetTagInput] = useState("");
-  const [snippetDesc, setSnippetDesc] = useState("");
   const [snippetSaving, setSnippetSaving] = useState(false);
+
+  function parseSnippetTags(tags: string | string[]): string[] {
+    if (Array.isArray(tags)) return tags;
+    try { return JSON.parse(tags); } catch { return []; }
+  }
 
   // ====== Deploy ======
   const [deploying, setDeploying] = useState(false);
@@ -191,38 +193,43 @@ export default function DashboardPage() {
     setSnippetsLoading(true);
     try {
       const res = await fetch("/api/snippets");
-      if (res.ok) setSnippets(await res.json());
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) setSnippets(data);
+      }
     } catch {}
     setSnippetsLoading(false);
   }, []);
 
   useEffect(() => { if (authed && tab === "snippets") fetchSnippets(); }, [authed, tab, fetchSnippets]);
 
-  const filteredSnippets = snippets.filter(
-    (s) => s.title.toLowerCase().includes(snippetSearch.toLowerCase()) || s.tags.some((t) => t.toLowerCase().includes(snippetSearch.toLowerCase()))
-  );
+  const filteredSnippets = useMemo(() => {
+    return snippets.filter(s => {
+      const q = snippetSearch.toLowerCase();
+      if (!q) return true;
+      const tags = parseSnippetTags(s.tags);
+      return s.title.toLowerCase().includes(q) || tags.some(t => t.toLowerCase().includes(q));
+    });
+  }, [snippets, snippetSearch]);
 
-  const openSnippetEditor = async (filename: string) => {
+  const openSnippetEditor = async (id: string) => {
     setMsg("");
     try {
-      const res = await fetch(`/api/snippets?filename=${encodeURIComponent(filename)}`, { headers: { "x-admin-password": SITE_PASSWORD } });
-      if (!res.ok) return;
-      const data = await res.json();
-      setSnippetFile(data.filename);
-      setSnippetTitle(data.title);
-      setSnippetLang(data.language);
-      setSnippetCode(data.code);
-      setSnippetTags(data.tags);
-      setSnippetDesc(data.description || "");
+      const snippet = snippets.find(s => s.id === id);
+      if (!snippet) { setMsg("未找到片段"); return; }
+      setSnippetEditId(id);
+      setSnippetTitle(snippet.title);
+      setSnippetLang(snippet.language);
+      setSnippetCode(snippet.code);
+      setSnippetTags(parseSnippetTags(snippet.tags));
       setSnippetTagInput("");
       setSnippetView("edit");
     } catch { setMsg("加载失败"); }
   };
 
   const openNewSnippet = () => {
-    setSnippetFile(null); setSnippetTitle(""); setSnippetLang("C++"); setSnippetCode("");
-    setSnippetTags([]); setSnippetTagInput(""); setSnippetDesc("");
-    setSnippetView("new"); setMsg("");
+    setSnippetEditId(null); setSnippetTitle(""); setSnippetLang("C++"); setSnippetCode("");
+    setSnippetTags([]); setSnippetTagInput(""); setSnippetView("new"); setMsg("");
   };
 
   const addSnippetTag = (tag: string) => {
@@ -236,15 +243,16 @@ export default function DashboardPage() {
     setSnippetSaving(true); setMsg("");
     try {
       let res: Response;
-      if (snippetFile) {
+      if (snippetEditId) {
         res = await fetch("/api/snippets", {
           method: "PUT", headers: { "Content-Type": "application/json", "x-admin-password": SITE_PASSWORD },
-          body: JSON.stringify({ filename: snippetFile, title: snippetTitle.trim(), language: snippetLang, code: snippetCode, tags: snippetTags, description: snippetDesc.trim() }),
+          body: JSON.stringify({ id: snippetEditId, title: snippetTitle.trim(), language: snippetLang, code: snippetCode, tags: snippetTags }),
         });
       } else {
+        const newId = Date.now().toString(36) + Math.random().toString(36).slice(2);
         res = await fetch("/api/snippets", {
           method: "POST", headers: { "Content-Type": "application/json", "x-admin-password": SITE_PASSWORD },
-          body: JSON.stringify({ title: snippetTitle.trim(), language: snippetLang, code: snippetCode, tags: snippetTags, description: snippetDesc.trim() }),
+          body: JSON.stringify({ id: newId, title: snippetTitle.trim(), language: snippetLang, code: snippetCode, tags: snippetTags }),
         });
       }
       if (res.ok) { setMsg("保存成功，正在部署..."); fetchSnippets(); setTimeout(() => setSnippetView("list"), 500); triggerDeploy(); }
@@ -253,10 +261,10 @@ export default function DashboardPage() {
     setSnippetSaving(false);
   };
 
-  const deleteSnippet = async (filename: string) => {
-    if (!confirm(`确定删除代码片段 "${filename}"？`)) return;
+  const deleteSnippet = async (id: string) => {
+    if (!confirm(`确定删除代码片段？此操作不可恢复。`)) return;
     try {
-      const res = await fetch(`/api/snippets?filename=${encodeURIComponent(filename)}`, { method: "DELETE", headers: { "x-admin-password": SITE_PASSWORD } });
+      const res = await fetch(`/api/snippets?id=${encodeURIComponent(id)}`, { method: "DELETE", headers: { "x-admin-password": SITE_PASSWORD } });
       if (res.ok) { setMsg("已删除，正在部署..."); fetchSnippets(); triggerDeploy(); }
     } catch {}
   };
@@ -309,7 +317,7 @@ export default function DashboardPage() {
           <button onClick={saveSnippet} disabled={snippetSaving} className="cyber-btn-green text-sm">{snippetSaving ? "保存中..." : "保存"}</button>
         </div>
         {msg && <MsgBanner msg={msg} />}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div><label className="text-xs font-mono text-gray-500 block mb-1">标题 *</label><input value={snippetTitle} onChange={(e) => setSnippetTitle(e.target.value)} className="cyber-input" placeholder="例: 线段树模板" /></div>
           <div>
             <label className="text-xs font-mono text-gray-500 block mb-1">语言</label>
@@ -317,7 +325,6 @@ export default function DashboardPage() {
               {LANGUAGES.map(l => <option key={l}>{l}</option>)}
             </select>
           </div>
-          <div><label className="text-xs font-mono text-gray-500 block mb-1">描述</label><input value={snippetDesc} onChange={(e) => setSnippetDesc(e.target.value)} className="cyber-input" placeholder="简短描述（可选）" /></div>
         </div>
         <div className="mb-4">
           <label className="text-xs font-mono text-gray-500 block mb-1">标签</label>
@@ -330,7 +337,7 @@ export default function DashboardPage() {
           <div className="flex flex-wrap gap-1">{SNIPPET_TAGS.map(tag => <button key={tag} onClick={() => addSnippetTag(tag)} className="px-1.5 py-0.5 rounded text-[10px] font-mono text-gray-400 bg-gray-50 dark:bg-cyber-surface hover:text-neon-pink hover:bg-neon-pink/10 transition-all">+{tag}</button>)}</div>
         </div>
         <div className="cyber-card p-1"><textarea value={snippetCode} onChange={(e) => setSnippetCode(e.target.value)} className="w-full min-h-[50vh] p-4 bg-gray-900 dark:bg-black font-mono text-sm text-gray-200 resize-y focus:outline-none" placeholder="粘贴代码..." spellCheck={false} /></div>
-        <p className="text-xs text-gray-400 font-mono mt-2">代码将保存为 Markdown 文件: {snippetFile || "(新建)"}</p>
+        <p className="text-xs text-gray-400 font-mono mt-2">ID: {snippetEditId || "(新建)"}</p>
       </div>
     );
   }
@@ -414,23 +421,25 @@ export default function DashboardPage() {
           <div className="text-xs font-mono text-gray-500 mb-3">共 {filteredSnippets.length} 个片段 | 文件目录: content/snippets/</div>
           {snippetsLoading ? <div className="cyber-card p-8 text-center text-gray-500">加载中...</div> : (
             <div className="space-y-2">
-              {filteredSnippets.map(snippet => (
-                <div key={snippet.filename} className="cyber-card p-4 flex items-center gap-4 group">
+              {filteredSnippets.map(snippet => {
+                const tags = parseSnippetTags(snippet.tags);
+                return (
+                <div key={snippet.id} className="cyber-card p-4 flex items-center gap-4 group">
                   <span className="shrink-0 px-2 py-0.5 rounded text-xs font-mono bg-neon-blue/10 text-neon-blue border border-neon-blue/30">{snippet.language}</span>
                   <div className="flex-1 min-w-0">
                     <div className="font-mono text-sm font-medium truncate">{snippet.title}</div>
                     <div className="flex items-center gap-3 text-xs text-gray-400 mt-0.5">
-                      <span>{snippet.filename}</span>
-                      <span>{snippet.updatedAt || snippet.createdAt}</span>
-                      <span>{snippet.tags.slice(0, 4).map(t => `#${t}`).join(" ")}</span>
+                      <span>{snippet.updated_at}</span>
+                      <span>{tags.slice(0, 4).map(t => `#${t}`).join(" ")}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => openSnippetEditor(snippet.filename)} className="cyber-btn text-xs px-3 py-1">编辑</button>
-                    <button onClick={() => deleteSnippet(snippet.filename)} className="text-xs px-3 py-1 rounded border border-red-300 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all">删除</button>
+                    <button onClick={() => openSnippetEditor(snippet.id)} className="cyber-btn text-xs px-3 py-1">编辑</button>
+                    <button onClick={() => deleteSnippet(snippet.id)} className="text-xs px-3 py-1 rounded border border-red-300 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all">删除</button>
                   </div>
                 </div>
-              ))}
+                );
+              })}
               {filteredSnippets.length === 0 && <div className="cyber-card p-8 text-center text-gray-500">{snippetSearch ? "没有匹配的片段" : "暂无代码片段"}</div>}
             </div>
           )}
