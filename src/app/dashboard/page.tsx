@@ -98,6 +98,7 @@ export default function DashboardPage() {
   // ====== Deploy ======
   const [deploying, setDeploying] = useState(false);
   const [deployLog, setDeployLog] = useState("");
+  const [showDeployHelp, setShowDeployHelp] = useState(false);
 
   const triggerDeploy = useCallback(async () => {
     setDeploying(true);
@@ -111,8 +112,11 @@ export default function DashboardPage() {
       if (data.success) {
         setDeployLog("部署成功! 网站已更新");
         setTimeout(() => setDeployLog(""), 8000);
+      } else if (data.hint === "running_deploy_script") {
+        setDeployLog(""); // clear the brief message, show modal instead
+        setShowDeployHelp(true);
       } else if (data.error === "deploy_locally") {
-        setDeployLog("需要在本地运行: cd C:\\Users\\31802\\Documents\\keronshans_blogsorce && powershell -File deploy.ps1");
+        setShowDeployHelp(true);
       } else {
         setDeployLog("部署失败: " + (data.error || "未知错误"));
       }
@@ -382,6 +386,41 @@ export default function DashboardPage() {
           {deploying ? "..." : "Deploy"}
         </button>
       </div>
+
+      {/* Deploy Help Modal */}
+      {showDeployHelp && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowDeployHelp(false)}>
+          <div className="bg-white dark:bg-cyber-surface border border-cyber-border rounded-lg p-6 max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-display font-bold neon-text">部署到 keronshans.top</h3>
+              <button onClick={() => setShowDeployHelp(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl">&times;</button>
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              文章已保存到本地文件。需要运行以下命令将更改同步到线上：
+            </p>
+            <div className="bg-gray-900 dark:bg-black rounded p-4 font-mono text-sm text-green-400 mb-4 overflow-x-auto">
+              <div className="mb-1"># 1. 进入项目目录</div>
+              <div className="mb-3">cd C:\Users\31802\Documents\keronshans_blogsorce</div>
+              <div className="mb-1"># 2. 运行部署脚本</div>
+              <div>powershell -File deploy.ps1</div>
+            </div>
+            <p className="text-xs text-gray-400 mb-4">
+              部署脚本会自动构建、部署到 Cloudflare，并推送到 GitHub。
+            </p>
+            <div className="border-t border-gray-200 dark:border-cyber-border pt-4">
+              <p className="text-sm font-medium mb-2">自动化部署（推荐）</p>
+              <p className="text-xs text-gray-500 mb-3">
+                在 GitHub 仓库设置以下 Secrets 后，每次 push 到 main 分支会自动部署：
+              </p>
+              <ul className="text-xs text-gray-400 font-mono space-y-1">
+                <li>• CLOUDFLARE_API_TOKEN</li>
+                <li>• CLOUDFLARE_ACCOUNT_ID</li>
+              </ul>
+            </div>
+            <button onClick={() => setShowDeployHelp(false)} className="cyber-btn w-full mt-4">好的</button>
+          </div>
+        </div>
+      )}
 
       {msg && <MsgBanner msg={msg} />}
 

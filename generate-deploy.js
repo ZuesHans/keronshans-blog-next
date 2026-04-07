@@ -1,4 +1,8 @@
-# deploy.ps1 - build and deploy script
+// generate-deploy.js - generates deploy.ps1 with proper UTF-8 encoding
+const fs = require('fs');
+const path = require('path');
+
+const content = `# deploy.ps1 - build and deploy script
 # Usage: powershell -File deploy.ps1
 param([switch]$SkipGit,[switch]$SkipBuild)
 
@@ -27,8 +31,8 @@ if(-not $SkipBuild){
 
 Write-Host ""
 Write-Host "[2/6] Copy pre-rendered HTML..." -ForegroundColor Yellow
-$sa=Join-Path $BlogRoot ".next\server\app"
-$ad=Join-Path $BlogRoot ".open-next\assets"
+$sa=Join-Path $BlogRoot ".next\\server\\app"
+$ad=Join-Path $BlogRoot ".open-next\\assets"
 if(Test-Path $sa){
   robocopy $sa $ad *.html /s /njh /njs /ndl /np /nfl /ndl|Out-Null
   Write-Host "  HTML files copied" -ForegroundColor Gray
@@ -39,7 +43,7 @@ if(Test-Path $sa){
 
 Write-Host ""
 Write-Host "[3/6] Patch worker.js..." -ForegroundColor Yellow
-$wj=Join-Path $BlogRoot ".open-next\worker.js"
+$wj=Join-Path $BlogRoot ".open-next\\worker.js"
 $wc=Get-Content $wj -Raw
 if($wc -notmatch "PATCH: static asset priority"){
   $q=[char]34
@@ -87,3 +91,11 @@ if(-not $SkipGit){
 Pop-Location
 Write-Host ""
 Write-Host "===== Done! =====" -ForegroundColor Green
+`;
+
+fs.writeFileSync(
+  path.join(__dirname, 'deploy.ps1'),
+  content,
+  { encoding: 'utf8' }
+);
+console.log('deploy.ps1 generated');
