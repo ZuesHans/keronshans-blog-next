@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
-import matter from "gray-matter";
+import { getAllPostsFromKV, saveAllPostsToKV, KvPost } from "../kv";
 
-const POSTS_DIR = path.join(process.cwd(), "content", "posts");
 const ADMIN_PASSWORD = "zues1";
 
 function authenticate(request: Request): boolean {
@@ -15,22 +12,29 @@ export async function GET(request: Request, { params }: { params: { filename: st
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const filename = decodeURIComponent(params.filename);
-  const filePath = path.join(POSTS_DIR, filename);
+  try {
+    const filename = decodeURIComponent(params.filename);
+    const posts = await getAllPostsFromKV();
+    const post = posts.find(p => p.filename === filename);
 
-  if (!fs.existsSync(filePath)) {
-    return NextResponse.json({ error: "File not found" }, { status: 404 });
+    if (!post) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    // Return in the format the dashboard expects
+    return NextResponse.json({
+      filename,
+      frontmatter: {
+        title: post.title,
+        date: post.date,
+        tags: post.tags,
+        category: post.category,
+      },
+      content: post.content,
+    });
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to load post: " + String(error) }, { status: 500 });
   }
-
-  const fileContent = fs.readFileSync(filePath, "utf-8");
-  const { data, content } = matter(fileContent);
-
-  return NextResponse.json({
-    filename,
-    frontmatter: data,
-    content,
-    raw: fileContent,
-  });
 }
 
 export async function PUT(request: Request, { params }: { params: { filename: string } }) {
@@ -40,33 +44,40 @@ export async function PUT(request: Request, { params }: { params: { filename: st
 
   try {
     const filename = decodeURIComponent(params.filename);
-    const filePath = path.join(POSTS_DIR, filename);
+    const posts = await getAllPostsFromKV();
+    const idx = posts.findIndex(p => p.filename === filename);
 
-    if (!fs.existsSync(filePath)) {
-      return NextResponse.json({ error: "File not found" }, { status: 404 });
+    if (idx === -1) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
     const body = await request.json();
     const { frontmatter, content, newFilename } = body;
 
+    const now = new Date().toISOString();
+    const updatedPost: KvPost = {
+      ...posts[idx],
+      filename: newFilename && newFilename !== filename ? newFilename : filename,
+      title: frontmatter?.title || posts[idx].title,
+      date: frontmatter?.date ? String(frontmatter.date).slice(0, 10) : posts[idx].date,
+      tags: Array.isArray(frontmatter?.tags) ? frontmatter.tags.map(String) : posts[idx].tags,
+      category: frontmatter?.category || posts[idx].category,
+      content,
+      size: new Blob([content]).size,
+      updatedAt: now,
+    };
+
     if (newFilename && newFilename !== filename) {
-      const newPath = path.join(POSTS_DIR, newFilename);
-      fs.renameSync(filePath, newPath);
-      const yamlContent = Object.entries(frontmatter || {}).map(([k, v]) => {
-        if (Array.isArray(v)) return `${k}:\n${v.map((item) => `  - "${item}"`).join("\n")}`;
-        return `${k}: ${typeof v === "string" ? `"${v}"` : v}`;
-      }).join("\n");
-      fs.writeFileSync(newPath, `---\n${yamlContent}\n---\n\n${content}`, "utf-8");
-      return NextResponse.json({ success: true, filename: newFilename });
+      // Remove old filename entry, add with new filename
+      posts.splice(idx, 1);
+      posts.push(updatedPost);
+    } else {
+      posts[idx] = updatedPost;
     }
 
-    const yamlContent = Object.entries(frontmatter || {}).map(([k, v]) => {
-      if (Array.isArray(v)) return `${k}:\n${v.map((item) => `  - "${item}"`).join("\n")}`;
-      return `${k}: ${typeof v === "string" ? `"${v}"` : v}`;
-    }).join("\n");
-    fs.writeFileSync(filePath, `---\n${yamlContent}\n---\n\n${content}`, "utf-8");
-    return NextResponse.json({ success: true, filename });
+    await saveAllPostsToKV(posts);
+    return NextResponse.json({ success: true, filename: updatedPost.filename });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    return NextResponse.json({ error: "Failed to update post: " + String(error) }, { status: 500 });
   }
 }

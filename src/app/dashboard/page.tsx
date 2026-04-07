@@ -10,8 +10,10 @@ interface PostItem {
   date: string;
   tags: string[];
   category: string;
-  excerpt: string;
   size: number;
+  content?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface SnippetItem {
@@ -38,6 +40,21 @@ const SNIPPET_TAGS = [
   "网络流", "计算几何", "博弈", "搜索", "贪心", "暴力",
   "STL", "位运算", "前缀和", "并查集", "线段树", "树状数组", "对拍", "调试",
 ];
+
+// ====== Shared components ======
+function MsgBanner({ msg }: { msg: string }) {
+  if (!msg) return null;
+  const isOk = msg.includes("成功") || msg.includes("已删除") || msg.includes("部署");
+  return (
+    <div className={`mb-4 p-3 rounded text-sm font-mono ${
+      isOk
+        ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border border-green-200 dark:border-green-800"
+        : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-800"
+    }`}>
+      {msg}
+    </div>
+  );
+}
 
 // ====== Component ======
 export default function DashboardPage() {
@@ -84,7 +101,7 @@ export default function DashboardPage() {
 
   const triggerDeploy = useCallback(async () => {
     setDeploying(true);
-    setDeployLog("正在部署...");
+    setDeployLog("正在请求部署...");
     try {
       const res = await fetch("/api/deploy", {
         method: "POST",
@@ -94,6 +111,8 @@ export default function DashboardPage() {
       if (data.success) {
         setDeployLog("部署成功! 网站已更新");
         setTimeout(() => setDeployLog(""), 8000);
+      } else if (data.error === "deploy_locally") {
+        setDeployLog("需要在本地运行: cd C:\\Users\\31802\\Documents\\keronshans_blogsorce && powershell -File deploy.ps1");
       } else {
         setDeployLog("部署失败: " + (data.error || "未知错误"));
       }
@@ -160,7 +179,7 @@ export default function DashboardPage() {
     setSaving(true); setMsg("");
     const prefix = CATEGORY_PREFIXES[editCategory] || "";
     const filename = editFile || `${prefix}${editTitle.trim()}.md`;
-    const frontmatter = { title: editTitle.trim(), date: editDate, tags: editTags.split(",").map(t => t.trim()).filter(Boolean), categories: [editCategory] };
+    const frontmatter = { title: editTitle.trim(), date: editDate, tags: editTags.split(",").map(t => t.trim()).filter(Boolean), category: editCategory };
     try {
       let res: Response;
       if (editFile) {
@@ -449,12 +468,4 @@ export default function DashboardPage() {
   );
 }
 
-// Shared message banner
-function MsgBanner({ msg }: { msg: string }) {
-  const isOk = msg.includes("成功") || msg.includes("已删除");
-  return (
-    <div className={`mb-4 p-3 rounded text-sm font-mono ${isOk ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border border-green-200 dark:border-green-800" : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-800"}`}>
-      {msg}
-    </div>
-  );
-}
+

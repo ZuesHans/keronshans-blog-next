@@ -1,14 +1,10 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
-import matter from "gray-matter";
+import { getAllPostsFromKV, saveAllPostsToKV, KvPost } from "./kv";
 
-const POSTS_DIR = path.join(process.cwd(), "content", "posts");
 const ADMIN_PASSWORD = "zues1";
 
 function authenticate(request: Request): boolean {
-  const auth = request.headers.get("x-admin-password");
-  return auth === ADMIN_PASSWORD;
+  return request.headers.get("x-admin-password") === ADMIN_PASSWORD;
 }
 
 export async function GET(request: Request) {
@@ -16,35 +12,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!fs.existsSync(POSTS_DIR)) return NextResponse.json([]);
-
-  const files = fs.readdirSync(POSTS_DIR).filter((f) => f.endsWith(".md"));
-  const posts = files.map((filename) => {
-    const filePath = path.join(POSTS_DIR, filename);
-    const fileContent = fs.readFileSync(filePath, "utf-8");
-    const { data, content } = matter(fileContent);
-    const excerpt = content.slice(0, 200).replace(/[#*`\[\]]/g, "").trim();
-    return {
-      filename,
-      title: data.title || filename.replace(/\.md$/, ""),
-      date: data.date ? String(data.date) : "",
-      tags: Array.isArray(data.tags) ? data.tags.map(String) : [],
-      category: data.category || inferCategory(filename),
-      excerpt,
-      size: fs.statSync(filePath).size,
-    };
-  });
-
-  posts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  return NextResponse.json(posts);
-}
-
-function inferCategory(filename: string): string {
-  if (filename.startsWith("KH_")) return "笔记";
-  if (filename.startsWith("ZU_")) return "模板";
-  if (filename.startsWith("wp_")) return "题解";
-  if (filename.startsWith("sp_")) return "专题";
-  return "其他";
+  try {
+    const posts = await getAllPostsFromKV();
+    // Sort by date descending
+    posts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return NextResponse.json(posts);
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to load posts: " + String(error) }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
@@ -61,19 +36,34 @@ export async function POST(request: Request) {
     }
 
     if (!filename.endsWith(".md")) filename = filename + ".md";
-    const filePath = path.join(POSTS_DIR, filename);
 
-    const yamlContent = Object.entries(frontmatter || {}).map(([k, v]) => {
-      if (Array.isArray(v)) return `${k}:\n${v.map((item) => `  - "${item}"`).join("\n")}`;
-      return `${k}: ${typeof v === "string" ? `"${v}"` : v}`;
-    }).join("\n");
+    const now = new Date().toISOString();
+    const newPost: KvPost = {
+      filename,
+      title: frontmatter?.title || filename.replace(/\.md$/, ""),
+      date: frontmatter?.date ? String(frontmatter.date).slice(0, 10) : now.slice(0, 10),
+      tags: Array.isArray(frontmatter?.tags) ? frontmatter.tags.map(String) : [],
+      category: frontmatter?.category || inferCategory(filename),
+      content,
+      size: new Blob([content]).size,
+      createdAt: now,
+      updatedAt: now,
+    };
 
-    const fullContent = `---\n${yamlContent}\n---\n\n${content}`;
+    const posts = await getAllPostsFromKV();
+    // Remove existing post with same filename
+    const existing = posts.findIndex(p => p.filename === filename);
+    if (existing >= 0) {
+      newPost.createdAt = posts[existing].createdAt;
+      posts[existing] = newPost;
+    } else {
+      posts.push(newPost);
+    }
 
-    fs.writeFileSync(filePath, fullContent, "utf-8");
+    await saveAllPostsToKV(posts);
     return NextResponse.json({ success: true, filename });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    return NextResponse.json({ error: "Failed to save post: " + String(error) }, { status: 500 });
   }
 }
 
@@ -89,14 +79,24 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "filename is required" }, { status: 400 });
     }
 
-    const filePath = path.join(POSTS_DIR, filename);
-    if (!fs.existsSync(filePath)) {
-      return NextResponse.json({ error: "File not found" }, { status: 404 });
+    const posts = await getAllPostsFromKV();
+    const idx = posts.findIndex(p => p.filename === filename);
+    if (idx === -1) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    fs.unlinkSync(filePath);
+    posts.splice(idx, 1);
+    await saveAllPostsToKV(posts);
     return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    return NextResponse.json({ error: "Failed to delete post: " + String(error) }, { status: 500 });
   }
+}
+
+function inferCategory(filename: string): string {
+  if (filename.startsWith("KH_")) return "笔记";
+  if (filename.startsWith("ZU_")) return "模板";
+  if (filename.startsWith("wp_")) return "题解";
+  if (filename.startsWith("sp_")) return "专题";
+  return "其他";
 }
