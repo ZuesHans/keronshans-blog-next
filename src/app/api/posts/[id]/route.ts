@@ -3,9 +3,10 @@ import { getPostById } from "@/lib/posts";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const post = getPostById(params.id);
+  const { id } = await params;
+  const post = await getPostById(id);
   if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(post);
 }

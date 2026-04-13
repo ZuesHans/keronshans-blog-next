@@ -7,12 +7,13 @@ import PostInteraction from "./PostInteraction";
 import TableOfContents from "@/components/TableOfContents";
 
 export async function generateStaticParams() {
-  const posts = getAllPosts();
+  const posts = await getAllPosts();
   return posts.map((post) => ({ id: post.id }));
 }
 
-export default async function PostPage({ params }: { params: { id: string } }) {
-  const post = getPostById(params.id);
+export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const post = await getPostById(id);
   if (!post) notFound();
 
   return (
@@ -57,7 +58,7 @@ export default async function PostPage({ params }: { params: { id: string } }) {
       <TableOfContents />
 
       {/* Comments & Likes */}
-      <PostInteraction postId={params.id} />
+      <PostInteraction postId={id} />
 
       {/* Footer */}
       <footer className="mt-8 pt-6 border-t border-gray-200 dark:border-cyber-border">

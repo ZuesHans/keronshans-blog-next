@@ -1,24 +1,11 @@
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
-
-// 兼容 Cloudflare Worker 环境：process.cwd() 可能不对，fallback 到 __dirname
-function getPostsDir(): string {
-  const p = path.join(process.cwd(), "content", "posts");
-  if (fs.existsSync(p)) return p;
-  // fallback: 尝试 __dirname 上两级
-  const p2 = path.join(__dirname, "..", "..", "content", "posts");
-  if (fs.existsSync(p2)) return p2;
-  // fallback: 尝试 server-functions 下的相对路径
-  const p3 = path.join(process.cwd(), "content", "posts");
-  return p3;
-}
-
-const POSTS_DIR = getPostsDir();
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 export interface PostMeta {
-  id: string;          // URL-safe id (e.g. "kh-dui-pai-xie-fa")
-  slug: string;        // original filename without .md (e.g. "KH_对拍写法")
+  id: string;
+  slug: string;
   title: string;
   date: string;
   tags: string[];
@@ -33,7 +20,6 @@ export interface PostData extends PostMeta {
 
 function toUrlSafeId(filename: string): string {
   const name = filename.replace(/\.md$/, "");
-  // Transliterate common Chinese characters for algorithm terms
   const map: Record<string, string> = {
     "三国杀武将": "sanguosha-jiangjiang",
     "对拍写法": "duipai-write",
@@ -64,11 +50,10 @@ function toUrlSafeId(filename: string): string {
   };
   for (const [cn, en] of Object.entries(map)) {
     if (name.includes(cn)) {
-      const prefix = name.split(cn)[0]; // e.g. "KH_"
+      const prefix = name.split(cn)[0];
       return prefix.toLowerCase().replace(/[^a-z0-9-]/g, "") + "-" + en;
     }
   }
-  // Fallback: use a hash-based id
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = ((hash << 5) - hash + name.charCodeAt(i)) | 0;
@@ -86,26 +71,56 @@ function parseCategory(filename: string): string {
   return "其他";
 }
 
-function getCategoryColor(category: string): string {
+export function getCategoryColorClass(category: string): string {
   switch (category) {
-    case "笔记": return "neon-pink";
-    case "模板": return "neon-blue";
-    case "题解": return "neon-green";
-    case "专题": return "neon-purple";
-    case "日记": return "neon-yellow";
-    default: return "neon-pink";
+    case "笔记": return "bg-neon-pink/10 text-neon-pink border-neon-pink/30";
+    case "模板": return "bg-neon-blue/10 text-neon-blue border-neon-blue/30";
+    case "题解": return "bg-neon-green/10 text-neon-green border-neon-green/30";
+    case "专题": return "bg-neon-purple/10 text-neon-purple border-neon-purple/30";
+    case "日记": return "bg-neon-yellow/10 text-neon-yellow border-neon-yellow/30";
+    default: return "bg-neon-pink/10 text-neon-pink border-neon-pink/30";
   }
 }
 
-export function getAllPosts(): PostMeta[] {
-  if (!fs.existsSync(POSTS_DIR)) return [];
-  const files = fs.readdirSync(POSTS_DIR).filter((f) => f.endsWith(".md"));
-  const posts = files.map((filename) => {
-    const filePath = path.join(POSTS_DIR, filename);
+// D1-first: try Cloudflare D1, fallback to local files
+async function getPostsFromD1(): Promise<PostMeta[] | null> {
+  try {
+    const { env } = await getCloudflareContext({ async: true });
+    if (!env?.DB) return null;
+    const { results } = await env.DB.prepare(
+      "SELECT filename, title, content, date, tags, category FROM posts ORDER BY created_at DESC"
+    ).all();
+    if (!results || results.length === 0) return null;
+    return results.map((row: Record<string, unknown>) => {
+      const slug = String(row.filename || "");
+      const tags = (() => { try { return JSON.parse(String(row.tags || "[]")); } catch { return []; } })();
+      const content = String(row.content || "");
+      const excerpt = content.replace(/^---[\s\S]*?---\n/, "").slice(0, 200).replace(/[#*`\[\]]/g, "").trim();
+      return {
+        id: toUrlSafeId(slug),
+        slug,
+        title: String(row.title || slug),
+        date: String(row.date || ""),
+        tags: Array.isArray(tags) ? tags.map(String) : [],
+        cover: "",
+        excerpt,
+        category: String(row.category || parseCategory(slug)),
+      };
+    });
+  } catch {
+    return null;
+  }
+}
+
+function getPostsFromFiles(): PostMeta[] {
+  const p = path.join(process.cwd(), "content", "posts");
+  if (!fs.existsSync(p)) return [];
+  const files = fs.readdirSync(p).filter((f) => f.endsWith(".md"));
+  return files.map((filename) => {
+    const filePath = path.join(p, filename);
     const fileContent = fs.readFileSync(filePath, "utf-8");
     const { data, content } = matter(fileContent);
     const excerpt = content.replace(/^---[\s\S]*?---/, "").slice(0, 200).replace(/[#*`\[\]]/g, "").trim();
-
     return {
       id: toUrlSafeId(filename),
       slug: filename.replace(/\.md$/, ""),
@@ -117,16 +132,49 @@ export function getAllPosts(): PostMeta[] {
       category: parseCategory(filename),
     };
   });
+}
 
+// Server Component: async, tries D1 first then local files
+export async function getAllPosts(): Promise<PostMeta[]> {
+  const d1Posts = await getPostsFromD1();
+  if (d1Posts && d1Posts.length > 0) return d1Posts;
+  const posts = getPostsFromFiles();
   posts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   return posts;
 }
 
-export function getPostById(id: string): PostData | null {
-  const posts = getAllPosts();
+export async function getPostById(id: string): Promise<PostData | null> {
+  const posts = await getAllPosts();
   const post = posts.find((p) => p.id === id);
   if (!post) return null;
-  const filePath = path.join(POSTS_DIR, `${post.slug}.md`);
+
+  // Try D1 for content first
+  try {
+    const { env } = await getCloudflareContext({ async: true });
+    if (env?.DB) {
+      const { results } = await env.DB.prepare(
+        "SELECT filename, title, content, date, tags, category FROM posts WHERE filename = ?"
+      ).bind(post.slug).all();
+      if (results && results.length > 0) {
+        const row = results[0] as Record<string, unknown>;
+        const tags = (() => { try { return JSON.parse(String(row.tags || "[]")); } catch { return []; } })();
+        return {
+          id: post.id,
+          slug: String(row.filename || post.slug),
+          title: String(row.title || post.title),
+          date: String(row.date || post.date),
+          tags: Array.isArray(tags) ? tags.map(String) : [],
+          cover: "",
+          excerpt: post.excerpt,
+          category: String(row.category || post.category),
+          content: String(row.content || ""),
+        };
+      }
+    }
+  } catch {}
+
+  // Fallback to local file
+  const filePath = path.join(process.cwd(), "content", "posts", `${post.slug}.md`);
   if (!fs.existsSync(filePath)) return null;
   const fileContent = fs.readFileSync(filePath, "utf-8");
   const { data, content } = matter(fileContent);
@@ -141,7 +189,8 @@ export function getPostById(id: string): PostData | null {
 }
 
 export function getAllTags(): { tag: string; count: number }[] {
-  const posts = getAllPosts();
+  // For sync context (module level), use files only
+  const posts = getPostsFromFiles();
   const tagMap = new Map<string, number>();
   posts.forEach((post) => {
     post.tags.forEach((tag) => {
@@ -154,19 +203,7 @@ export function getAllTags(): { tag: string; count: number }[] {
 }
 
 export function getPostsByCategory(category: string): PostMeta[] {
-  return getAllPosts().filter((post) => post.category === category);
+  return getPostsFromFiles().filter((post) => post.category === category);
 }
 
-export function getCategoryColorClass(category: string): string {
-  const color = getCategoryColor(category);
-  switch (color) {
-    case "neon-pink": return "bg-neon-pink/10 text-neon-pink border-neon-pink/30";
-    case "neon-blue": return "bg-neon-blue/10 text-neon-blue border-neon-blue/30";
-    case "neon-green": return "bg-neon-green/10 text-neon-green border-neon-green/30";
-    case "neon-purple": return "bg-neon-purple/10 text-neon-purple border-neon-purple/30";
-    case "neon-yellow": return "bg-neon-yellow/10 text-neon-yellow border-neon-yellow/30";
-    default: return "bg-neon-pink/10 text-neon-pink border-neon-pink/30";
-  }
-}
-
-export { getCategoryColor };
+export { getCategoryColorClass as getCategoryColor };

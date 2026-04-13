@@ -1,3 +1,15 @@
+-- 博客文章
+CREATE TABLE IF NOT EXISTS posts (
+  filename TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL DEFAULT '',
+  date TEXT NOT NULL DEFAULT '',
+  tags TEXT NOT NULL DEFAULT '[]',
+  category TEXT NOT NULL DEFAULT '笔记',
+  created_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours'))
+);
+
 -- 说说/留言
 CREATE TABLE IF NOT EXISTS talks (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

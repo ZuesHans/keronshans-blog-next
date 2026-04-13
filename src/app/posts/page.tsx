@@ -1,10 +1,8 @@
 import { getAllPosts, getAllTags } from "@/lib/posts";
 import PostsClient from "./PostsClient";
 
-// 服务端静态生成，build 时读取所有文章
-const posts = getAllPosts();
-const tags = getAllTags();
-
-export default function PostsPage() {
+export default async function PostsPage() {
+  // D1 优先读取（Workers 运行时），本地构建时 fallback 到文件系统
+  const [posts, tags] = await Promise.all([getAllPosts(), getAllTags()]);
   return <PostsClient initialPosts={posts} initialTags={tags} />;
 }

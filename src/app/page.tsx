@@ -1,9 +1,6 @@
 import Link from "next/link";
-import { getAllPosts, getAllTags, getPostsByCategory, getCategoryColorClass } from "@/lib/posts";
+import { getAllPosts, getAllTags, getCategoryColorClass } from "@/lib/posts";
 import HeroSubtitle from "@/components/HeroSubtitle";
-
-// 首页使用静态生成（build 时读取文章），不要 force-dynamic
-// 因为 Cloudflare Worker 运行时无法使用 fs 模块读取本地文件
 
 const catColorMap: Record<string, string> = {
   "笔记": "bg-neon-pink",
@@ -13,13 +10,13 @@ const catColorMap: Record<string, string> = {
   "日记": "bg-neon-yellow",
 };
 
-export default function HomePage() {
-  const posts = getAllPosts();
-  const tags = getAllTags();
+export default async function HomePage() {
+  const [posts, tags] = await Promise.all([getAllPosts(), getAllTags()]);
   const recentPosts = posts.slice(0, 6);
-  const categories = ["笔记", "模板", "题解", "专题", "日记"].filter(
-    (cat) => getPostsByCategory(cat).length > 0
+  const catCounts = Object.fromEntries(
+    ["笔记", "模板", "题解", "专题", "日记"].map((cat) => [cat, posts.filter((p) => p.category === cat).length])
   );
+  const categories = ["笔记", "模板", "题解", "专题", "日记"].filter((cat) => catCounts[cat] > 0);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -68,9 +65,9 @@ export default function HomePage() {
       <section className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
         {[
           { label: "文章", value: posts.length, icon: "◈", colorClass: "text-neon-pink" },
-          { label: "模板", value: getPostsByCategory("模板").length + getPostsByCategory("笔记").length, icon: "◻", colorClass: "text-neon-blue" },
+          { label: "模板", value: catCounts["模板"] + catCounts["笔记"], icon: "◻", colorClass: "text-neon-blue" },
           { label: "标签", value: tags.length, icon: "#", colorClass: "text-neon-green" },
-          { label: "题解", value: getPostsByCategory("题解").length, icon: "◈", colorClass: "text-neon-purple" },
+          { label: "题解", value: catCounts["题解"], icon: "◈", colorClass: "text-neon-purple" },
         ].map((stat) => (
           <div key={stat.label} className="cyber-card p-4 text-center">
             <div className={`text-2xl font-display font-bold ${stat.colorClass}`}>
@@ -172,24 +169,21 @@ export default function HomePage() {
           <div className="cyber-card p-5">
             <h3 className="font-display font-bold mb-3 text-neon-blue">分类</h3>
             <div className="space-y-2">
-              {categories.map((cat) => {
-                const count = getPostsByCategory(cat).length;
-                return (
-                  <Link
-                    key={cat}
-                    href={`/posts?category=${cat}`}
-                    className="flex items-center justify-between py-1.5 hover:text-neon-pink transition-colors group"
-                  >
-                    <span className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${catColorMap[cat] || "bg-neon-pink"}`} />
-                      <span className="text-sm font-mono">{cat}</span>
-                    </span>
-                    <span className="text-xs font-mono text-gray-400 bg-gray-100 dark:bg-cyber-surface px-2 py-0.5 rounded group-hover:text-neon-pink">
-                      {count}
-                    </span>
-                  </Link>
-                );
-              })}
+              {categories.map((cat) => (
+                <Link
+                  key={cat}
+                  href={`/posts?category=${cat}`}
+                  className="flex items-center justify-between py-1.5 hover:text-neon-pink transition-colors group"
+                >
+                  <span className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${catColorMap[cat] || "bg-neon-pink"}`} />
+                    <span className="text-sm font-mono">{cat}</span>
+                  </span>
+                  <span className="text-xs font-mono text-gray-400 bg-gray-100 dark:bg-cyber-surface px-2 py-0.5 rounded group-hover:text-neon-pink">
+                    {catCounts[cat]}
+                  </span>
+                </Link>
+              ))}
             </div>
           </div>
         </aside>
