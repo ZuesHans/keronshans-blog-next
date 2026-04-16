@@ -5,7 +5,7 @@
 
 #### [区间异或第k大](https://ac.nowcoder.com/acm/contest/132045/A)
 
-- **修正逻辑 (Patch)**:求异或第k大->线性基
+- **修正逻辑 (Patch)**:求异或第k大->线性基 这里有不rebuild的做法
 - **关键代码**:
 
 ```cpp

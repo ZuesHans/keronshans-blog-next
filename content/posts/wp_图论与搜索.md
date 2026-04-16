@@ -1199,6 +1199,218 @@ void solve()
   - `priority_queue` : 自动维护堆的“插入+弹出最大/最小”工具，“贪心/最短路/Top-K/滑动窗口最大值” 都能靠它快速实现
   - 注意优先队列没办法删除除了堆顶以外的元素,所以**注意**`if (d > dist[u]) continue;`
 
+#### [冲向黄金城](https://jiang.ly/download.php?type=attachments&id=1802&r=1)
+
+- **解法**: 题目要求求出每个点是否可达->到达每个点的代价越小最后能够遍历到的点的数量越多->dijkstra-> 普通dij是靠距离作为key（代价）来排序，我们这里的代价一个是“到达的时间”一个是“距离”->哪种状态能给我未来留下最大的操作空间？->在这道题里，“未来的操作空间”是由剩下的车票数量决定的，所以“到达的车票序号”自然就成了至高无上的第一关键字
+- **优化**： 这里为了快速找到下一次用到的车票和时间需要做一个RMQ问题来确定。我们用dij'均摊了m的复杂度就需要想办法优化k的复杂度了->静态的就用st表
+- **关键代码**:
+
+```cpp
+struct STTable
+{
+    vector<vector<long long>> st;
+
+    // 默认构造函数（必须有，不然外层没法开 vector）
+    STTable() {}
+
+    // 给入一个一维数组，直接建表
+    void build(const vector<long long> &arr)
+    {
+        int n = arr.size();
+        if (n == 0)
+            return;
+
+        // __lg(x) 是 C++ 自带的底层宏，直接求以 2 为底的对数，极快！
+        int max_log = __lg(n) + 1;
+
+        // 分配空间并初始化第一层
+        st.assign(max_log, vector<long long>(n));
+        for (int i = 0; i < n; i++)
+        {
+            st[0][i] = arr[i];
+        }
+
+        // 核心建表逻辑
+        for (int j = 1; j < max_log; j++)
+        {
+            for (int i = 0; i + (1 << j) <= n; i++)
+            {
+                st[j][i] = max(st[j - 1][i], st[j - 1][i + (1 << (j - 1))]);
+            }
+        }
+    }
+
+    // 查询区间 [L, R] 的最大值
+    long long query(int L, int R)
+    {
+        if (L > R)
+            return -1; // 防御性编程
+        int j = __lg(R - L + 1);
+        return max(st[j][L], st[j][R - (1 << j) + 1]);
+    }
+};
+
+struct info
+{
+    int tp;
+    int c, l;
+};
+
+void solve()
+{
+    int n, m;
+    cin >> n >> m;
+    int k;
+    cin >> k;
+    vector<vector<info>> mp(n + 1);
+    for (int i = 0; i < m; i++)
+    {
+        int u, v, c, l;
+        cin >> u >> v >> c >> l;
+        mp[u].push_back({v, c, l});
+        mp[v].push_back({u, c, l});
+    }
+    map<int, int> fd;
+    vector<info> piao(k + 1);
+    vector<vi> oc(m + 1);
+    vector<vi> oc2(m + 1);
+    for (int i = 1; i <= k; i++)
+    {
+        int c, l;
+        cin >> c >> l;
+        piao[i] = {0,c, l};
+        oc[c].push_back(i);
+        fd[i] = c;
+        oc2[c].push_back(l);
+    }
+
+    vector<STTable> st(m + 1);
+    for (int i = 1; i <= m; i++)
+    {
+        if (!oc[i].empty())
+        {
+            st[i].build(oc2[i]);
+        }
+    }
+
+    using strt = pair<pair<int, long long>, int>;
+    priority_queue<strt, vector<strt>, greater<>> pq;
+    vector<pii> dist(n + 1, {INF, INF});
+    dist[1] = {0, 0};
+    vector<bool> ans(n + 1);
+    ans[1]=1;
+    pii y = make_pair(0ll, 0ll);
+    strt w = make_pair(y, 1);
+    pq.emplace(w);
+    while (!pq.empty())
+    {
+        auto [key, pt] = pq.top();
+        pq.pop();
+        int idx = key.first;
+        int color = fd[key.first];
+        int dis = key.second;
+        if (idx > dist[pt].first || (idx == dist[pt].first && dis > dist[pt].second))
+            continue;
+        for (auto it : mp[pt])
+        {
+            if (dis + it.l <= piao[idx].l && color == it.c)
+            {
+                ans[it.tp] = 1;
+                int nxt_idx = idx;
+                ll nxt_dis = dis + it.l;
+                if (make_pair(nxt_idx, nxt_dis) <= dist[it.tp])
+                {
+                    pii kkey = make_pair(nxt_idx, nxt_dis);
+                    pq.emplace(make_pair(kkey, it.tp));
+                    dist[it.tp] = kkey;
+                }
+            }
+
+            auto ub = upper_bound(oc[it.c].begin(), oc[it.c].end(), idx);
+            if (ub == oc[it.c].end())
+                continue;
+
+            int lo = distance(oc[it.c].begin(), ub);
+            int hi = (int)oc[it.c].size() - 1;
+
+            int search_start = lo;
+            int ans_pos = -1;
+
+            while (lo <= hi)
+            {
+                int mid = (lo + hi) / 2;
+
+                if (st[it.c].query(search_start, mid) >= it.l)
+                {
+                    ans_pos = mid;
+                    hi = mid - 1;
+                }
+                else
+                {
+                    lo = mid + 1;
+                }
+            }
+
+            if (ans_pos != -1)
+            {
+                ans[it.tp] = 1;
+                int nxt_idx = oc[it.c][ans_pos];
+                ll nxt_dis = it.l;
+                if (make_pair(nxt_idx, nxt_dis) < dist[it.tp])
+                {
+                    pii kkey = make_pair(nxt_idx, nxt_dis);
+                    pq.emplace(make_pair(kkey, it.tp));
+                    dist[it.tp] = kkey;
+                }
+            }
+            // ==================================================
+            // int lo = idx;
+            // int hi = (int)oc[it.c].size();
+            // while (lo < hi)
+            // {
+            //     int mid = (lo + hi) / 2;
+            //     if (st[it.c].query(idx, mid) >= it.l)
+            //     {
+            //         hi = mid;
+            //     }
+            //     else
+            //     {
+            //         lo = mid + 1;
+            //     }
+            // }
+            // if (lo < (int)oc[it.c].size())
+            // {
+            //     ans[it.tp] = 1;
+            //     int nxt_idx = lo;
+            //     ll nxt_dis = it.l;
+            //     if (make_pair(nxt_idx, nxt_dis) <= dist[it.tp])
+            //     {
+            //         pii kkey = make_pair(nxt_idx, nxt_dis);
+            //         pq.emplace(make_pair(kkey, it.tp));
+            //         dist[it.tp] = kkey;
+            //     }
+            // }
+        }
+    }
+
+    for (int i = 1; i <= n; i++)
+    {
+        if (ans[i])
+        {
+            cout << 1;
+        }
+        else
+        {
+            cout << 0;
+        }
+    }
+    cout << '\n';
+}
+
+```
+
+---
+
 ### 分层图
 
 #### [逃出生天](https://codeforces.com/gym/106210/problem/C)
