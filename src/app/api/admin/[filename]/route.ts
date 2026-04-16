@@ -67,10 +67,11 @@ export async function PUT(request: Request, { params }: { params: Promise<{ file
     const { env } = await getCloudflareContext({ async: true });
     const { filename: rawFilename } = await params;
     const filename = decodeURIComponent(rawFilename).replace(/\.md$/, "");
-    const { title, content, date, tags, category, newFilename } = await request.json();
+    const { frontmatter, content, newFilename } = await request.json();
+    const { title, date, tags, category } = frontmatter || {};
 
     const now = new Date().toISOString().replace("T", " ").slice(0, 19);
-    const postDate = date || now.slice(0, 10);
+    const postDate = (date || now.slice(0, 10)).toString().slice(0, 10);
     const postTags = JSON.stringify(Array.isArray(tags) ? tags : []);
     const postCategory = category || inferCategory(filename);
 

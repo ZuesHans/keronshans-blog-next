@@ -18,7 +18,14 @@ export async function GET(request: Request) {
     const { results } = await env.DB.prepare(
       "SELECT filename, title, date, tags, category, created_at, updated_at FROM posts ORDER BY created_at DESC"
     ).all();
-    return NextResponse.json(results);
+    // Parse tags JSON string to array for frontend compatibility
+    const posts = results.map((r: Record<string, unknown>) => ({
+      ...r,
+      tags: (() => {
+        try { return JSON.parse(r.tags as string); } catch { return []; }
+      })(),
+    }));
+    return NextResponse.json(posts);
   } catch (error) {
     console.error("GET /api/admin error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
@@ -33,7 +40,8 @@ export async function POST(request: Request) {
 
   try {
     const { env } = await getCloudflareContext({ async: true });
-    const { filename, title, content, date, tags, category } = await request.json();
+    const { filename, frontmatter, content } = await request.json();
+    const { title, date, tags, category } = frontmatter || {};
 
     if (!filename || !content) {
       return NextResponse.json({ error: "filename and content are required" }, { status: 400 });
@@ -42,7 +50,7 @@ export async function POST(request: Request) {
     // Strip .md if provided
     const slug = filename.replace(/\.md$/, "");
     const now = new Date().toISOString().replace("T", " ").slice(0, 19);
-    const postDate = date || now.slice(0, 10);
+    const postDate = (date || now.slice(0, 10)).toString().slice(0, 10);
     const postTags = JSON.stringify(Array.isArray(tags) ? tags : []);
     const postCategory = category || inferCategory(slug);
 
