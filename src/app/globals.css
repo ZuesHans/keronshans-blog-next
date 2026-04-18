@@ -168,7 +168,7 @@
     @apply border border-owl-border bg-owl-bgCard;
   }
   .cyber-btn-blue:hover {
-    @apply border-owl-accent;
+    border-color: var(--neon-accent);
     background: rgba(130, 170, 255, 0.08);
   }
   .cyber-btn-green {
