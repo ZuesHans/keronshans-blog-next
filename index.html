@@ -1,0 +1,301 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>ZuesHans's little bag - a coding cat_with love in its heart</title><meta name="author" content="KeronsHans"><meta name="copyright" content="KeronsHans"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta property="og:type" content="website">
+<meta property="og:title" content="ZuesHans&#39;s little bag">
+<meta property="og:url" content="https://zueshans.github.io/index.html">
+<meta property="og:site_name" content="ZuesHans&#39;s little bag">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://zueshans.github.io/img/cover_2.jpg">
+<meta property="article:author" content="KeronsHans">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://zueshans.github.io/img/cover_2.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "ZuesHans's little bag",
+  "alternateName": [
+    "a coding cat_with love in its heart",
+    "zueshans.github.io"
+  ],
+  "url": "https://zueshans.github.io/"
+}</script><link rel="shortcut icon" href="/img/cover_2.jpg"><link rel="canonical" href="https://zueshans.github.io/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.5.1"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.12.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'ZuesHans\'s little bag',
+  isHighlightShrink: true,
+  isToc: false,
+  pageType: 'home'
+}</script><!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/cover_2.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">29</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">21</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">0</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> links</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 關於</span></a></div><div class="menus_item"><a class="site-page" href="/music/"><i class="fa-fw fas fa-music"></i><span> 音樂</span></a></div></div></div></div><div class="page" id="body-wrap"><header class="full_page" id="page-header" style="background-image: url(/img/cover_1.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">ZuesHans's little bag</span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> links</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 關於</span></a></div><div class="menus_item"><a class="site-page" href="/music/"><i class="fa-fw fas fa-music"></i><span> 音樂</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="site-info"><h1 id="site-title">ZuesHans's little bag</h1><div id="site-subtitle"><span id="subtitle"></span></div><div id="site_social_icons"><a class="social-icon" href="mailto:kai779@qq.com" target="_blank" title="最正经的联系我的方式"><i class="fas fa-envelope"></i></a><a class="social-icon" href="https://github.com/ZuesHans" target="_blank" title="GitHub"><i class="fab fa-github"></i></a><a class="social-icon" href="https://codeforces.com/profile/keronshans" target="_blank" title="不要时间我啊555"><i class="fas fa-code"></i></a></div></div><div id="scroll-down"><i class="fas fa-angle-down scroll-down-effects"></i></div></header><main class="layout" id="content-inner"><div class="recent-posts nc masonry" id="recent-posts"><div class="recent-post-items"><div class="recent-post-item"><div class="recent-post-info no-cover"><a class="article-title" href="/KH_%E6%A0%91/" title="无标题">无标题</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="fas fa-history"></i><span class="article-meta-label">更新于</span><time datetime="2026-04-18T15:57:08.890Z" title="更新于 2026-04-18 15:57:08">2026-04-18</time></span></div><div class="content"> 最小生成树   </div></div></div><div class="recent-post-item"><div class="post_cover"><a href="/ZU_%E5%9F%BA%E7%A1%80%E7%AE%97%E6%B3%95/" title="ZU_基础算法"><img class="post-bg" src="/img/cover/picg_19.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="ZU_基础算法"></a></div><div class="recent-post-info"><a class="article-title" href="/ZU_%E5%9F%BA%E7%A1%80%E7%AE%97%E6%B3%95/" title="ZU_基础算法">ZU_基础算法</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="fas fa-history"></i><span class="article-meta-label">更新于</span><time datetime="2026-04-18T15:57:08.890Z" title="更新于 2026-04-18 15:57:08">2026-04-18</time></span><span class="article-meta tags"><span class="article-meta-separator">|</span><i class="fas fa-tag"></i><a class="article-meta__tags" href="/tags/%E7%AE%97%E6%B3%95/">算法</a><span class="article-meta-link">•</span><i class="fas fa-tag"></i><a class="article-meta__tags" href="/tags/C/">C++</a><span class="article-meta-link">•</span><i class="fas fa-tag"></i><a class="article-meta__tags" href="/tags/%E6%A8%A1%E6%9D%BF/">模板</a></span></div><div class="content"> 交互模板  C++ 代码:  1234567891011121314151617181920#include &lt;cstdio&gt;#include &lt;iostream&gt;int main() &#123;  for (int l = 1, r = 1000000000, mid = (l + r) &gt;&gt; 1, res; l &lt;= r; mid = (l + r) &gt;&gt; 1) &#123;    std::cout &lt;&lt; mid &lt;&lt; std::endl;    std::cin &gt;&gt; res;    if (res == 0) &#123;      return 0;    &#125; else if (res == -1) &#123;      l = mid + 1;    &#125; else if (res == 1) &#123;      r = mid - 1;    &#125; else &#123;      puts(&quot;OvO, I AK IOI&quot...</div></div></div><div class="recent-post-item"><div class="post_cover"><a href="/KH_%E5%AE%9E%E7%8E%B0%E5%90%88%E9%9B%86/" title="KH_实现合集"><img class="post-bg" src="/img/cover/picg_5.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="KH_实现合集"></a></div><div class="recent-post-info"><a class="article-title" href="/KH_%E5%AE%9E%E7%8E%B0%E5%90%88%E9%9B%86/" title="KH_实现合集">KH_实现合集</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="fas fa-history"></i><span class="article-meta-label">更新于</span><time datetime="2026-04-18T15:57:08.890Z" title="更新于 2026-04-18 15:57:08">2026-04-18</time></span><span class="article-meta tags"><span class="article-meta-separator">|</span><i class="fas fa-tag"></i><a class="article-meta__tags" href="/tags/%E7%AE%97%E6%B3%95/">算法</a></span></div><div class="content"> 实现二进制拼凑某个数字  用代码表达就是从高位到低位扫描：  123456ll R = 0;for(int d = 29; d &gt;= 0; d--)&#123;    if(n &amp; (1ll &lt;&lt; d))&#123;  // 如果第d位是1        R = R * ten[d] + rli[d];    &#125;&#125; </div></div></div><div class="recent-post-item"><div class="post_cover"><a href="/sp_%E5%A5%87%E6%80%9D%E5%A6%99%E6%83%B3%E5%B0%8F%E9%A2%98%E7%9B%AE/" title="sp_奇思妙想小题目"><img class="post-bg" src="/img/cover/picg_20.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="sp_奇思妙想小题目"></a></div><div class="recent-post-info"><a class="article-title" href="/sp_%E5%A5%87%E6%80%9D%E5%A6%99%E6%83%B3%E5%B0%8F%E9%A2%98%E7%9B%AE/" title="sp_奇思妙想小题目">sp_奇思妙想小题目</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="fas fa-history"></i><span class="article-meta-label">更新于</span><time datetime="2026-04-18T15:57:08.890Z" title="更新于 2026-04-18 15:57:08">2026-04-18</time></span><span class="article-meta tags"><span class="article-meta-separator">|</span><i class="fas fa-tag"></i><a class="article-meta__tags" href="/tags/%E6%9D%82%E8%B0%88/">杂谈</a><span class="article-meta-link">•</span><i class="fas fa-tag"></i><a class="article-meta__tags" href="/tags/%E7%AE%97%E6%B3%95/">算法</a></span></div><div class="content">这里记录着我对题目的奇思妙想。因为我找不到oj，但是我又觉得这种题目很典，所以就搞了一个专门记录的帖子。不保证代码和分析全对，正确性由gemini3 pro支持…  1  题目描述  给出长度为n的数组ai（均为正整数），给出m，选择子序列使得子序列里面的乘积==n   解法解答：使用拆因子dp做法-&gt;在已经有的因子里面选择（这里一个实现难点是不能重复，而愚蠢的zues一开始没实现这个），跑背包dp 跑过随机数据代码：  12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455void solve()&#123;    int n;    cin &gt;&gt; n;    int m;    cin &gt;&gt; m;    // m = 67;    map&lt;int, int&gt; mp;    for (int i = 0; i &lt; n; i++)    &#123;        int d;     ...</div></div></div><div class="recent-post-item"><div class="post_cover"><a href="/KH_%E6%9C%9F%E6%9C%9BDP/" title="KH_期望DP与概率论"><img class="post-bg" src="/img/cover/picg_14.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="KH_期望DP与概率论"></a></div><div class="recent-post-info"><a class="article-title" href="/KH_%E6%9C%9F%E6%9C%9BDP/" title="KH_期望DP与概率论">KH_期望DP与概率论</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="fas fa-history"></i><span class="article-meta-label">更新于</span><time datetime="2026-04-18T15:57:08.890Z" title="更新于 2026-04-18 15:57:08">2026-04-18</time></span><span class="article-meta tags"><span class="article-meta-separator">|</span><i class="fas fa-tag"></i><a class="article-meta__tags" href="/tags/%E7%AE%97%E6%B3%95/">算法</a><span class="article-meta-link">•</span><i class="fas fa-tag"></i><a class="article-meta__tags" href="/tags/DP/">DP</a></span></div><div class="content"> 对于期望 DP，我们一般采用逆序来定义状态，即考虑从当前状态到达终点的期望代价。 根据期望的线性性质计算出数学期望表达式   注意点   E[X^2] \neq (E[X])^2$$ -&gt; 正确的代入姿势：展开全平方公式      收集邮票  核心模型:期望dp 思维误区 (Bug):展开完全平方式，x-&gt;f(x) x^2-&gt;g(x)注意一一映射关系 理解递推公式:  当前状态的期望 = ∑[转移到下一个状态的概率×(下一个状态的期望+本次转移的代价)]\sum [ \text{转移到下一个状态的概率} \times (\text{下一个状态的期望} + \text{本次转移的代价}) ]∑[转移到下一个状态的概率×(下一个状态的期望+本次转移的代价)] 一维初始方程：$$E(i) = P \cdot (E(i+1) + 1) + (1-P) \cdot (E(i) + 1)$$  g(x)=P⋅(g(x+1)+2f(x+1)+1)⏟抽到新票的贡献+(1−P)⋅(g(x)+2f(x)+1)⏟抽到旧票的贡献g(x) = P \cdot \underbrace{(...</div></div></div><div class="recent-post-item"><div class="post_cover"><a href="/KH_%E5%AF%B9%E6%8B%8D%E5%86%99%E6%B3%95/" title="KH_对拍写法"><img class="post-bg" src="/img/cover/picg_17.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="KH_对拍写法"></a></div><div class="recent-post-info"><a class="article-title" href="/KH_%E5%AF%B9%E6%8B%8D%E5%86%99%E6%B3%95/" title="KH_对拍写法">KH_对拍写法</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="fas fa-history"></i><span class="article-meta-label">更新于</span><time datetime="2026-04-18T15:57:08.890Z" title="更新于 2026-04-18 15:57:08">2026-04-18</time></span><span class="article-meta tags"><span class="article-meta-separator">|</span><i class="fas fa-tag"></i><a class="article-meta__tags" href="/tags/%E6%9D%82%E8%B0%88/">杂谈</a><span class="article-meta-link">•</span><i class="fas fa-tag"></i><a class="article-meta__tags" href="/tags/%E7%AE%97%E6%B3%95/">算法</a></span></div><div class="content"> python 的随机数生成器写法  基础常见语法   import random随机库   random.randint(a, b): 生成一个 [a,b][a, b][a,b] 范围内的整数（包含 aaa 和 bbb）。   random.choice(seq): 从列表或字符串中随机选择一个元素。   random.uniform(a, b): 生成一个 [a,b][a, b][a,b] 范围内的浮点数。   示例代码   1234567891011121314import randomdef solve():    n = random.randint(1,1000000)    print(n)    for i in range (n):        c=random.randint(1,10)        w=random.randint(1,10)        print(c,w)# end=&quot; &quot; 表示打印后不换行，而是加个空格    print()# 最后换个行if __name__ == &quot;__main__&quot;: ...</div></div></div><div class="recent-post-item"><div class="post_cover"><a href="/wp_sp%E7%89%9B%E5%AE%A2%E5%AF%92%E5%81%87%E8%90%A5%E5%85%B8%E9%A2%98/" title="wp_spţ牛客寒假营典题"><img class="post-bg" src="/img/cover/picg_5.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="wp_spţ牛客寒假营典题"></a></div><div class="recent-post-info"><a class="article-title" href="/wp_sp%E7%89%9B%E5%AE%A2%E5%AF%92%E5%81%87%E8%90%A5%E5%85%B8%E9%A2%98/" title="wp_spţ牛客寒假营典题">wp_spţ牛客寒假营典题</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="fas fa-history"></i><span class="article-meta-label">更新于</span><time datetime="2026-04-18T15:57:08.891Z" title="更新于 2026-04-18 15:57:08">2026-04-18</time></span><span class="article-meta tags"><span class="article-meta-separator">|</span><i class="fas fa-tag"></i><a class="article-meta__tags" href="/tags/%E7%AE%97%E6%B3%95/">算法</a></span></div><div class="content">  补题所得，按照知识板块分，可能加上其他地方找到的题    代码实现  [乘法逆元] (https://oi-wiki.org/math/number-theory/inverse/)  快速幂法求逆元  12345678910111213inline ll qpow(ll a, ll b, ll mod = MOD) &#123;    ll res = 1;    while (b) &#123;        if (b &amp; 1) res = res * a % mod;        a = a * a % mod;        b &gt;&gt;= 1;    &#125;    return res;&#125;ll inv(ll a, ll mod) &#123;    return qpow(a, mod - 2, mod);&#125;  乘法原理（独立事件同时发生） 加法原理（互斥事件）   A+B problem   核心模型: 题目给出一群概率如何打表？如何转化题目条件   题目条件转化 这道题我认为最难的是读懂同时满足的三条条件  最终所有...</div></div></div><div class="recent-post-item"><div class="post_cover"><a href="/wp_adhoc/" title="wp_优化"><img class="post-bg" src="/img/cover/picg_12.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="wp_优化"></a></div><div class="recent-post-info"><a class="article-title" href="/wp_adhoc/" title="wp_优化">wp_优化</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="fas fa-history"></i><span class="article-meta-label">更新于</span><time datetime="2026-04-18T15:57:08.891Z" title="更新于 2026-04-18 15:57:08">2026-04-18</time></span><span class="article-meta tags"><span class="article-meta-separator">|</span><i class="fas fa-tag"></i><a class="article-meta__tags" href="/tags/%E7%AE%97%E6%B3%95/">算法</a></span></div><div class="content"> gcd相关  gcd构造性质：知道  矩阵  核心模型:左右互质性质：相邻自然数必然互质。余数非零性质：跨越边界的质数选择 思维误区 (Bug):上下互质性质：质数步长 + 辗转相除法。元素唯一性质：带余除法的唯一性。数学表达： 在 n 较小（如 2500 以内）时，大于 n 的第一个质数 PPP 与 n 的距离非常近，最大差值不超过 34。 修正逻辑 (Patch): 关键代码:  1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859606162636465666768697071const int N = 1e7 + 10; // 10^7 级别int primes[N], cnt;     // primes存质数，cnt存质数个数bool st[N];             // st[i]为true表示i是合数(被筛掉了)，false表示是质数void get_primes(int n)&#123;  ...</div></div></div><div class="recent-post-item"><div class="post_cover"><a href="/wp_%E4%BC%98%E5%8C%96/" title="wp_优化"><img class="post-bg" src="/img/cover/picg_12.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="wp_优化"></a></div><div class="recent-post-info"><a class="article-title" href="/wp_%E4%BC%98%E5%8C%96/" title="wp_优化">wp_优化</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="fas fa-history"></i><span class="article-meta-label">更新于</span><time datetime="2026-04-18T15:57:08.891Z" title="更新于 2026-04-18 15:57:08">2026-04-18</time></span><span class="article-meta tags"><span class="article-meta-separator">|</span><i class="fas fa-tag"></i><a class="article-meta__tags" href="/tags/%E7%AE%97%E6%B3%95/">算法</a></span></div><div class="content"> 基于数据范围打表预处理  筛法枚举  F. Easy Demon Problem  核心模型:调和级数枚举预处理 思维误区 (Bug):首先是对于题目负因数case没写上。其次是复杂度。这道题错解是n√nlogn，注意到数据范围会变成1e8，加上map常数大会tle。第一步优化换了unorded_set （O(1)查询最坏on）题目卡哈希冲突。 修正逻辑 (Patch):看到多次查询&amp;&amp;因子||倍数||最大公约数，在数据范围允许的条件下可以对值域内所有数有的性质进行打表。 关键逻辑：双重循环，但是内层循环是按倍数增长，这一块的复杂度实际上是nlogn的 关键代码:  1  Codeforces 1154G - Minimum Possible LCM  核心模型:枚举gcd 思维误区 (Bug):记录第一直觉为什么错了 (如: 以为是DP其实是贪心 / 读错题) 修正逻辑 (Patch):下次看到什么特征，要修正为正确思路 关键代码:  1// 只贴最核心的 3-5 行逻辑或 Check 函数，不要贴 main   根号分治   是一种通过将问题按规模分类并结合...</div></div></div><div class="recent-post-item"><div class="post_cover"><a href="/wp_%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%AE%97%E6%B3%95/" title="wo_字符串算法"><img class="post-bg" src="/img/cover/picg_12.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="wo_字符串算法"></a></div><div class="recent-post-info"><a class="article-title" href="/wp_%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%AE%97%E6%B3%95/" title="wo_字符串算法">wo_字符串算法</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="fas fa-history"></i><span class="article-meta-label">更新于</span><time datetime="2026-04-18T15:57:08.892Z" title="更新于 2026-04-18 15:57:08">2026-04-18</time></span><span class="article-meta tags"><span class="article-meta-separator">|</span><i class="fas fa-tag"></i><a class="article-meta__tags" href="/tags/%E7%AE%97%E6%B3%95/">算法</a></span></div><div class="content"> 字符串  字典树  检索字符串 维护异或极值 维护异或和 在处理异或（XOR）问题时，如果题目的核心逻辑能转化为**“在某个集合中，为当前数字 xxx 寻找一个匹配对象 yyy，使得 x⊕yx \oplus yx⊕y 的值最大（或最小）”，那么01字典树（0-1 Trie）**几乎就是标准答案。   双生魔咒  核心模型:一个维护前缀字符串，要做匹配/拆贡献的算法-&gt;字典树 思维误区 (Bug):没想到可以将前缀长度*数量的贡献拆分为字典树上每一个位置节点的贡献//想写非常难以维护的搜索或者魔改但其实思维绕了远路//看不懂字典树在做什么 修正逻辑 (Patch):拆贡献思维， 关键代码:  1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859606162636465666768697071727374757677struct Trie&#123;    int tre[MAXN][70];    int cn...</div></div></div><div class="recent-post-item"><div class="post_cover"><a href="/ZU_Constructive%20Algorithms/" title="ZU_Constructive Algorithms"><img class="post-bg" src="/img/cover/picg_16.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="ZU_Constructive Algorithms"></a></div><div class="recent-post-info"><a class="article-title" href="/ZU_Constructive%20Algorithms/" title="ZU_Constructive Algorithms">ZU_Constructive Algorithms</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="fas fa-history"></i><span class="article-meta-label">更新于</span><time datetime="2026-04-18T15:57:08.890Z" title="更新于 2026-04-18 15:57:08">2026-04-18</time></span><span class="article-meta tags"><span class="article-meta-separator">|</span><i class="fas fa-tag"></i><a class="article-meta__tags" href="/tags/%E7%AE%97%E6%B3%95/">算法</a><span class="article-meta-link">•</span><i class="fas fa-tag"></i><a class="article-meta__tags" href="/tags/C/">C++</a><span class="article-meta-link">•</span><i class="fas fa-tag"></i><a class="article-meta__tags" href="/tags/%E6%80%BB%E7%BB%93/">总结</a></span></div><div class="content"> 构造算法  这个文章主要针对cf div2 cd题难度的做题感想   题目类型   去看题目要求的输出：  如果要求你输出构造的具体条目  有输出要求（字典序之类的）：那这个构造一定有一个或者一群比较优的算法，在这些算法里面一定能按某种贪心来找到正确的构造 没有输出要求：一般贪心之类的   如果要求你输出最大/最小和…一般不需要直接构造答案。  此时关注数据范围，如果要求你多次输出（或者求最优，可能需要每一种构造方案都比较一下）大概率是O1或者Ologn算法 O1常用前缀和/后缀和/推理数学性质构造式子      排列数的组合是阶乘级别的   </div></div></div><div class="recent-post-item"><div class="post_cover"><a href="/%E4%B8%89%E5%9B%BD%E6%9D%80%E6%AD%A6%E5%B0%86/" title="三国杀自制武将"><img class="post-bg" src="/img/cover/picg_17.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="三国杀自制武将"></a></div><div class="recent-post-info"><a class="article-title" href="/%E4%B8%89%E5%9B%BD%E6%9D%80%E6%AD%A6%E5%B0%86/" title="三国杀自制武将">三国杀自制武将</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="fas fa-history"></i><span class="article-meta-label">更新于</span><time datetime="2026-04-18T15:57:08.892Z" title="更新于 2026-04-18 15:57:08">2026-04-18</time></span><span class="article-meta tags"><span class="article-meta-separator">|</span><i class="fas fa-tag"></i><a class="article-meta__tags" href="/tags/%E6%9D%82%E8%B0%88/">杂谈</a></span></div><div class="content"> 谋·王基 </div></div></div></div><nav id="pagination"><div class="pagination"><span class="page-number current">1</span><a class="page-number" href="/page/2/#content-inner">2</a><a class="page-number" href="/page/3/#content-inner">3</a><a class="extend next" rel="next" href="/page/2/#content-inner"><i class="fas fa-chevron-right fa-fw"></i></a></div></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/cover_2.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">KeronsHans</div><div class="author-info-description"></div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">29</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">21</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">0</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="mailto:kai779@qq.com" target="_blank" title="最正经的联系我的方式"><i class="fas fa-envelope"></i></a><a class="social-icon" href="https://github.com/ZuesHans" target="_blank" title="GitHub"><i class="fab fa-github"></i></a><a class="social-icon" href="https://codeforces.com/profile/keronshans" target="_blank" title="不要时间我啊555"><i class="fas fa-code"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">这里是一只会打字的小猫<br>
+欢迎来找我玩！<br>
+小猫永远喜欢unk大人/小声<br>
+<a href="https://codeforces.com/profile/keronshans" target="_blank">
+  <img src="https://codeforces-readme-stats.vercel.app/api/card?username=keronshans&theme=radical" style="width:100%; border-radius: 8px;" alt="Codeforces Stats">
+</a>
+</div></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/KH_%E6%A0%91/" title="无标题">无标题</a><time datetime="2026-04-18T15:57:08.890Z" title="发表于 2026-04-18 15:57:08">2026-04-18</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/ZU_%E5%9F%BA%E7%A1%80%E7%AE%97%E6%B3%95/" title="ZU_基础算法"><img src="/img/cover/picg_19.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="ZU_基础算法"/></a><div class="content"><a class="title" href="/ZU_%E5%9F%BA%E7%A1%80%E7%AE%97%E6%B3%95/" title="ZU_基础算法">ZU_基础算法</a><time datetime="2026-04-18T15:57:08.890Z" title="发表于 2026-04-18 15:57:08">2026-04-18</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/KH_%E5%AE%9E%E7%8E%B0%E5%90%88%E9%9B%86/" title="KH_实现合集"><img src="/img/cover/picg_5.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="KH_实现合集"/></a><div class="content"><a class="title" href="/KH_%E5%AE%9E%E7%8E%B0%E5%90%88%E9%9B%86/" title="KH_实现合集">KH_实现合集</a><time datetime="2026-03-07T00:00:00.000Z" title="发表于 2026-03-07 00:00:00">2026-03-07</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/sp_%E5%A5%87%E6%80%9D%E5%A6%99%E6%83%B3%E5%B0%8F%E9%A2%98%E7%9B%AE/" title="sp_奇思妙想小题目"><img src="/img/cover/picg_20.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="sp_奇思妙想小题目"/></a><div class="content"><a class="title" href="/sp_%E5%A5%87%E6%80%9D%E5%A6%99%E6%83%B3%E5%B0%8F%E9%A2%98%E7%9B%AE/" title="sp_奇思妙想小题目">sp_奇思妙想小题目</a><time datetime="2026-02-16T00:00:00.000Z" title="发表于 2026-02-16 00:00:00">2026-02-16</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/KH_%E6%9C%9F%E6%9C%9BDP/" title="KH_期望DP与概率论"><img src="/img/cover/picg_14.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="KH_期望DP与概率论"/></a><div class="content"><a class="title" href="/KH_%E6%9C%9F%E6%9C%9BDP/" title="KH_期望DP与概率论">KH_期望DP与概率论</a><time datetime="2026-02-15T00:00:00.000Z" title="发表于 2026-02-15 00:00:00">2026-02-15</time></div></div></div></div><div class="card-widget card-tags"><div class="item-headline"><i class="fas fa-tags"></i><span>标签</span></div><div class="card-tag-cloud"><a href="/tags/%E8%AE%A1%E7%AE%97%E5%87%A0%E4%BD%95/" style="font-size: 1.1em; color: #999">计算几何</a> <a href="/tags/%E6%9D%82%E9%A1%B9/" style="font-size: 1.1em; color: #999">杂项</a> <a href="/tags/%E8%B4%AA%E5%BF%83/" style="font-size: 1.1em; color: #999">贪心</a> <a href="/tags/%E6%95%B0%E5%AD%A6/" style="font-size: 1.1em; color: #999">数学</a> <a href="/tags/%E4%BA%8C%E8%BF%9B%E5%88%B6/" style="font-size: 1.1em; color: #999">二进制</a> <a href="/tags/C/" style="font-size: 1.42em; color: #99a6b7">C++</a> <a href="/tags/%E7%AE%97%E6%B3%95/" style="font-size: 1.5em; color: #99a9bf">算法</a> <a href="/tags/%E6%9C%80%E7%9F%AD%E8%B7%AF/" style="font-size: 1.1em; color: #999">最短路</a> <a href="/tags/%E8%B4%AA%E5%BF%83%E7%AE%97%E6%B3%95/" style="font-size: 1.1em; color: #999">贪心算法</a> <a href="/tags/%E6%80%BB%E7%BB%93/" style="font-size: 1.1em; color: #999">总结</a> <a href="/tags/STL/" style="font-size: 1.1em; color: #999">STL</a> <a href="/tags/DP/" style="font-size: 1.18em; color: #999ca1">DP</a> <a href="/tags/%E6%A8%A1%E6%9D%BF/" style="font-size: 1.1em; color: #999">模板</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" style="font-size: 1.18em; color: #999ca1">数据结构</a> <a href="/tags/Trick/" style="font-size: 1.26em; color: #999fa8">Trick</a> <a href="/tags/Problems/" style="font-size: 1.42em; color: #99a6b7">Problems</a> <a href="/tags/%E6%9D%82%E8%B0%88/" style="font-size: 1.34em; color: #99a3b0">杂谈</a> <a href="/tags/tricks/" style="font-size: 1.1em; color: #999">tricks</a> <a href="/tags/%E5%89%8D%E7%BC%80%E5%92%8C%E4%B8%8E%E5%B7%AE%E5%88%86/" style="font-size: 1.1em; color: #999">前缀和与差分</a> <a href="/tags/SCC/" style="font-size: 1.1em; color: #999">SCC</a> <a href="/tags/%E5%9B%BE%E8%AE%BA/" style="font-size: 1.18em; color: #999ca1">图论</a></div></div><div class="card-widget card-archives">
+    <div class="item-headline">
+      <i class="fas fa-archive"></i>
+      <span>归档</span>
+      
+    </div>
+  
+    <ul class="card-archive-list">
+      
+        <li class="card-archive-list-item">
+          <a class="card-archive-list-link" href="/archives/2026/04/">
+            <span class="card-archive-list-date">
+              四月 2026
+            </span>
+            <span class="card-archive-list-count">2</span>
+          </a>
+        </li>
+      
+        <li class="card-archive-list-item">
+          <a class="card-archive-list-link" href="/archives/2026/03/">
+            <span class="card-archive-list-date">
+              三月 2026
+            </span>
+            <span class="card-archive-list-count">1</span>
+          </a>
+        </li>
+      
+        <li class="card-archive-list-item">
+          <a class="card-archive-list-link" href="/archives/2026/02/">
+            <span class="card-archive-list-date">
+              二月 2026
+            </span>
+            <span class="card-archive-list-count">4</span>
+          </a>
+        </li>
+      
+        <li class="card-archive-list-item">
+          <a class="card-archive-list-link" href="/archives/2026/01/">
+            <span class="card-archive-list-date">
+              一月 2026
+            </span>
+            <span class="card-archive-list-count">3</span>
+          </a>
+        </li>
+      
+        <li class="card-archive-list-item">
+          <a class="card-archive-list-link" href="/archives/2025/12/">
+            <span class="card-archive-list-date">
+              十二月 2025
+            </span>
+            <span class="card-archive-list-count">11</span>
+          </a>
+        </li>
+      
+        <li class="card-archive-list-item">
+          <a class="card-archive-list-link" href="/archives/2025/11/">
+            <span class="card-archive-list-date">
+              十一月 2025
+            </span>
+            <span class="card-archive-list-count">8</span>
+          </a>
+        </li>
+      
+    </ul>
+  </div><div class="card-widget card-webinfo"><div class="item-headline"><i class="fas fa-chart-line"></i><span>网站信息</span></div><div class="webinfo"><div class="webinfo-item"><div class="item-name">文章数目 :</div><div class="item-count">29</div></div><div class="webinfo-item"><div class="item-name">本站访客数 :</div><div class="item-count" id="busuanzi_value_site_uv"><i class="fa-solid fa-spinner fa-spin"></i></div></div><div class="webinfo-item"><div class="item-name">本站总浏览量 :</div><div class="item-count" id="busuanzi_value_site_pv"><i class="fa-solid fa-spinner fa-spin"></i></div></div><div class="webinfo-item"><div class="item-name">最后更新时间 :</div><div class="item-count" id="last-push-date" data-lastPushDate="2026-04-18T15:57:31.121Z"><i class="fa-solid fa-spinner fa-spin"></i></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By KeronsHans</span></div><div class="footer_custom_text">I am a little coding cat . PLZ love me</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.5.1"></script><script src="/js/main.js?v=5.5.1"></script><div class="js-pjax"><script>window.typedJSFn = {
+  init: str => {
+    window.typed = new Typed('#subtitle', Object.assign({
+      strings: str,
+      startDelay: 300,
+      typeSpeed: 150,
+      loop: true,
+      backSpeed: 50,
+    }, null))
+  },
+  run: subtitleType => {
+    if (true) {
+      if (typeof Typed === 'function') {
+        subtitleType()
+      } else {
+        btf.getScript('https://cdn.jsdelivr.net/npm/typed.js@2.1.0/dist/typed.umd.min.js').then(subtitleType)
+      }
+    } else {
+      subtitleType()
+    }
+  },
+  processSubtitle: (content, extraContents = []) => {
+    if (true) {
+      const sub = ["a coding cat_with love in its heart","Hamilton musical|Mazda RX7|CSisfate","Welcome to my little bag."].slice()
+
+      if (extraContents.length > 0) {
+        sub.unshift(...extraContents)
+      }
+
+      if (typeof content === 'string') {
+        sub.unshift(content)
+      } else if (Array.isArray(content)) {
+        sub.unshift(...content)
+      }
+
+      sub.length > 0 && typedJSFn.init(sub)
+    } else {
+      document.getElementById('subtitle').textContent = typeof content === 'string' ? content :
+        (Array.isArray(content) && content.length > 0 ? content[0] : '')
+    }
+  }
+}
+btf.addGlobalFn('pjaxSendOnce', () => { typed.destroy() }, 'typedDestroy')
+</script><script>function subtitleType () {
+  typedJSFn.processSubtitle(["a coding cat_with love in its heart","Hamilton musical|Mazda RX7|CSisfate","Welcome to my little bag."])
+}
+typedJSFn.run(subtitleType)</script></div><script src="/js/crash_cheat.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.5.1"></script></div></div></body></html>
