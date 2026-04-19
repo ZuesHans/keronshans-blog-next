@@ -34,14 +34,14 @@ export default async function HomePage() {
         <h1 className="hero-title mb-3">
           Keronshans
         </h1>
-        <p className="text-lg font-light text-owl-textSecondary mb-8 tracking-wide">
-          <span className="text-neon-blue font-medium">技术博客</span>
+        <p className="text-lg font-light mb-8 tracking-wide" style={{ color: "var(--owl-textSecondary)" }}>
+          <span style={{ color: "var(--neon-accent)", fontWeight: 500 }}>技术博客</span>
           {" · "}算法竞赛{" · "}错题整理
         </p>
 
         {/* Stats */}
         <div className="flex flex-wrap gap-3">
-          <div className="stat-card" style={{ "--stat-color": "var(--neon-blue)" } as React.CSSProperties}>
+          <div className="stat-card" style={{ "--stat-color": "var(--neon-accent)" } as React.CSSProperties}>
             <span className="stat-dot" />
             <div>
               <div className="stat-value">{posts.length}</div>
@@ -77,9 +77,9 @@ export default async function HomePage() {
 
         {/* Recent Posts */}
         <section className="lg:col-span-2">
-          <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100 dark:border-owl-border">
-            <h2 className="text-xs font-semibold tracking-widest uppercase text-owl-textMuted">最新文章</h2>
-            <Link href="/posts" className="text-xs text-neon-blue hover:opacity-70 transition-opacity">
+          <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: "1px solid var(--owl-border)" }}>
+            <h2 className="text-xs font-semibold tracking-widest uppercase" style={{ color: "var(--owl-textMuted)" }}>最新文章</h2>
+            <Link href="/posts" style={{ color: "var(--neon-accent)" }} className="text-xs hover:opacity-70 transition-opacity">
               查看全部 →
             </Link>
           </div>
@@ -90,13 +90,13 @@ export default async function HomePage() {
                   <div className="flex-1 min-w-0">
                     <h3 className="post-list-title">{post.title}</h3>
                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                      <span className="text-xs text-owl-textMuted">{post.date}</span>
+                      <span className="text-xs" style={{ color: "var(--owl-textMuted)" }}>{post.date}</span>
                       {post.tags.slice(0, 3).map((tag) => (
                         <span key={tag} className="tag-pill">#{tag}</span>
                       ))}
                     </div>
                   </div>
-                  <span className="post-category-badge text-owl-textMuted">{post.category}</span>
+                  <span className="post-category-badge">{post.category}</span>
                 </article>
               </Link>
             ))}
@@ -108,7 +108,7 @@ export default async function HomePage() {
 
           {/* Quick Links */}
           <div className="cyber-card p-5">
-            <h3 className="text-xs font-semibold tracking-widest uppercase text-owl-textMuted mb-4">快捷入口</h3>
+            <h3 className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: "var(--owl-textMuted)" }}>快捷入口</h3>
             <div className="space-y-1">
               {[
                 { href: "/snippets", label: "代码片段", desc: "ACM算法模板" },
@@ -121,14 +121,17 @@ export default async function HomePage() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="flex items-center gap-3 py-2.5 hover:text-neon-blue transition-colors group"
+                  className="flex items-center gap-3 py-2.5 transition-colors group"
+                  style={{ color: "var(--owl-textSecondary)" }}
                 >
-                  <span className="w-7 h-7 rounded-lg bg-owl-tagBg dark:bg-owl-bgCard flex items-center justify-center text-xs font-medium text-owl-textMuted group-hover:bg-owl-bgCard group-hover:text-neon-blue transition-all border border-transparent group-hover:border-owl-borderHover">
+                  <span className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-medium transition-all border border-transparent"
+                    style={{ background: "var(--owl-tagBg)", color: "var(--owl-textMuted)" }}
+                  >
                     {link.label[0]}
                   </span>
                   <div>
-                    <div className="text-sm text-owl-textSecondary group-hover:text-owl-text transition-colors">{link.label}</div>
-                    <div className="text-xs text-owl-textMuted">{link.desc}</div>
+                    <div className="text-sm transition-colors" style={{ color: "var(--owl-textSecondary)" }}>{link.label}</div>
+                    <div className="text-xs" style={{ color: "var(--owl-textMuted)" }}>{link.desc}</div>
                   </div>
                 </Link>
               ))}
@@ -137,13 +140,14 @@ export default async function HomePage() {
 
           {/* Tags */}
           <div className="cyber-card p-5">
-            <h3 className="text-xs font-semibold tracking-widest uppercase text-owl-textMuted mb-4">标签云</h3>
+            <h3 className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: "var(--owl-textMuted)" }}>标签云</h3>
             <div className="flex flex-wrap gap-1.5">
               {tags.map(({ tag }) => (
                 <Link
                   key={tag}
                   href={`/search?tag=${encodeURIComponent(tag)}`}
-                  className="tag-pill hover:text-neon-blue hover:border-owl-borderHover transition-all"
+                  className="tag-pill hover:text-neon-blue transition-all"
+                  style={{ borderColor: "transparent" }}
                 >
                   #{tag}
                 </Link>
@@ -153,19 +157,22 @@ export default async function HomePage() {
 
           {/* Categories */}
           <div className="cyber-card p-5">
-            <h3 className="text-xs font-semibold tracking-widest uppercase text-owl-textMuted mb-4">分类</h3>
+            <h3 className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: "var(--owl-textMuted)" }}>分类</h3>
             <div className="space-y-1">
               {categories.map((cat) => (
                 <Link
                   key={cat}
                   href={`/posts?category=${cat}`}
-                  className="flex items-center justify-between py-2 hover:text-neon-blue transition-colors group"
+                  className="flex items-center justify-between py-2 transition-colors group"
+                  style={{ color: "var(--owl-textSecondary)" }}
                 >
                   <span className="flex items-center gap-2">
                     <span className="cat-dot" style={{ background: catCssVarMap[cat] }} />
-                    <span className="text-sm text-owl-textSecondary group-hover:text-owl-text transition-colors">{cat}</span>
+                    <span className="text-sm transition-colors">{cat}</span>
                   </span>
-                  <span className="text-xs text-owl-textMuted bg-owl-tagBg dark:bg-owl-bgCard px-2 py-0.5 rounded group-hover:text-neon-blue transition-colors">
+                  <span className="text-xs px-2 py-0.5 rounded transition-colors"
+                    style={{ background: "var(--owl-tagBg)", color: "var(--owl-textMuted)" }}
+                  >
                     {catCounts[cat]}
                   </span>
                 </Link>

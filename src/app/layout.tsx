@@ -23,7 +23,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="font-body bg-owl-bg dark:bg-cyber-dark text-gray-900 dark:text-owl-text transition-colors duration-300 min-h-screen">
+      <body className="font-body transition-colors duration-300 min-h-screen" style={{ background: "var(--owl-bg)", color: "var(--owl-text)" }}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <PageTitleChanger />
           <Navigation />

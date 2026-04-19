@@ -4,7 +4,7 @@
 
 @layer base {
   * {
-    @apply border-gray-200 dark:border-owl-border;
+    border-color: var(--owl-border);
   }
   body {
     @apply antialiased;
@@ -25,16 +25,44 @@
     --neon-yellow: #FFAD60;
     --neon-pink: #FF5370;
   }
+
+  /* Night Owl dark-mode overrides */
+  .dark {
+    --owl-bg: #011627;
+    --owl-bgSubtle: #021C32;
+    --owl-bgCard: #082438;
+    --owl-text: #D6DEEB;
+    --owl-textSecondary: #9AA5CE;
+    --owl-textMuted: #5C6E8A;
+    --owl-border: #0F2942;
+    --owl-borderHover: #1E3A5A;
+    --owl-tagBg: #082438;
+    --owl-tagText: #9AA5CE;
+  }
+  /* Light mode owl vars */
+  :root {
+    --owl-bg: #FFFEF5;
+    --owl-bgSubtle: #FDF6E3;
+    --owl-bgCard: #FAF3E0;
+    --owl-text: #403F4A;
+    --owl-textSecondary: #6B6B7B;
+    --owl-textMuted: #9B9BA8;
+    --owl-border: #E8E4D6;
+    --owl-borderHover: #C9C4B0;
+    --owl-tagBg: #EDE8D5;
+    --owl-tagText: #7A7568;
+  }
 }
 
 @layer components {
   /* ===== Flat card — new design ===== */
   .cyber-card {
     @apply relative rounded-xl border overflow-hidden transition-all duration-200;
-    @apply bg-white dark:bg-owl-bgCard border-gray-100 dark:border-owl-border;
+    background: var(--owl-bgCard);
+    border-color: var(--owl-border);
   }
   .cyber-card:hover {
-    @apply border-owl-borderHover dark:border-owl-borderHover;
+    border-color: var(--owl-borderHover);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
     transform: translateY(-1px);
   }
@@ -42,13 +70,17 @@
   /* ===== Nav links — flat ===== */
   .nav-link {
     @apply px-3 py-1.5 rounded-lg text-sm transition-all duration-200;
-    @apply text-owl-textSecondary hover:text-owl-text hover:bg-owl-bgSubtle;
+    color: var(--owl-textSecondary);
+  }
+  .nav-link:hover {
+    color: var(--owl-text);
+    background: var(--owl-bgSubtle);
   }
 
   /* ===== Section eyebrow ===== */
   .section-eyebrow {
     @apply inline-flex items-center gap-2 text-xs font-medium tracking-widest uppercase;
-    @apply text-owl-textMuted;
+    color: var(--owl-textMuted);
   }
   .section-eyebrow::before {
     content: '';
@@ -59,46 +91,52 @@
   /* ===== Hero title — serif, weight 600 ===== */
   .hero-title {
     @apply font-display text-4xl sm:text-5xl font-semibold tracking-tight leading-tight;
-    @apply text-gray-900 dark:text-owl-text;
+    color: var(--owl-text);
     letter-spacing: -0.02em;
   }
 
   /* ===== Post list items ===== */
   .post-list-item {
-    @apply flex items-center justify-between gap-4 py-4 border-b border-gray-100 dark:border-owl-border;
-    @apply transition-all duration-200 cursor-pointer;
+    @apply flex items-center justify-between gap-4 py-4 cursor-pointer;
+    border-bottom: 1px solid var(--owl-border);
+    @apply transition-all duration-200;
   }
-  .post-list-item:last-child { @apply border-b-0; }
+  .post-list-item:last-child { border-bottom: none; }
   .post-list-item:hover { @apply pl-2; }
   .post-list-item:hover .post-list-title { color: var(--neon-accent); }
 
   .post-list-title {
-    @apply text-[15px] font-normal text-gray-900 dark:text-owl-text leading-relaxed;
+    @apply text-[15px] font-normal leading-relaxed;
+    color: var(--owl-text);
     @apply transition-colors duration-200;
   }
 
   .post-category-badge {
-    @apply text-xs font-medium text-owl-textMuted whitespace-nowrap;
+    @apply text-xs font-medium whitespace-nowrap;
+    color: var(--owl-textMuted);
   }
   .post-category-badge::after {
     content: '';
-    @apply inline-block w-1 h-1 rounded-full bg-owl-textMuted ml-5 align-middle;
+    @apply inline-block w-1 h-1 rounded-full ml-5 align-middle;
+    background: var(--owl-textMuted);
   }
 
   /* ===== Tag pill ===== */
   .tag-pill {
     @apply text-[11px] px-2 py-0.5 rounded;
-    @apply bg-owl-tagBg text-owl-tagText;
+    background: var(--owl-tagBg);
+    color: var(--owl-tagText);
     @apply border border-transparent transition-colors duration-200;
   }
   .post-list-item:hover .tag-pill {
-    @apply border-owl-borderHover;
+    border-color: var(--owl-borderHover);
   }
 
   /* ===== Stat card ===== */
   .stat-card {
     @apply relative flex items-center gap-3 p-4 rounded-xl border cursor-pointer overflow-hidden;
-    @apply bg-white dark:bg-owl-bgCard border-gray-100 dark:border-owl-border;
+    background: var(--owl-bgCard);
+    border-color: var(--owl-border);
     @apply transition-all duration-200;
   }
   .stat-card::after {
@@ -110,7 +148,7 @@
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .stat-card:hover {
-    @apply border-owl-borderHover;
+    border-color: var(--owl-borderHover);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
     transform: translateY(-2px);
   }
@@ -123,18 +161,20 @@
 
   .stat-value {
     @apply text-xl font-semibold tracking-tight leading-tight;
-    @apply text-gray-900 dark:text-owl-text;
+    color: var(--owl-text);
     font-feature-settings: "tnum";
   }
 
   .stat-label {
-    @apply text-xs text-owl-textMuted;
+    @apply text-xs;
+    color: var(--owl-textMuted);
   }
 
   /* ===== Category card ===== */
   .cat-card {
     @apply relative p-5 rounded-xl border cursor-pointer;
-    @apply bg-white dark:bg-owl-bgCard border-gray-100 dark:border-owl-border;
+    background: var(--owl-bgCard);
+    border-color: var(--owl-border);
     @apply transition-all duration-200;
   }
   .cat-card:hover {
@@ -143,9 +183,10 @@
     transform: translateY(-2px);
   }
   .cat-name {
-    @apply text-sm font-medium text-gray-900 dark:text-owl-text mb-1 flex items-center gap-1.5;
+    @apply text-sm font-medium mb-1 flex items-center gap-1.5;
+    color: var(--owl-text);
   }
-  .cat-count { @apply text-xs text-owl-textMuted; }
+  .cat-count { @apply text-xs; color: var(--owl-textMuted); }
   .cat-dot {
     @apply w-1.5 h-1.5 rounded-full flex-shrink-0;
     background: var(--cat-color, var(--neon-accent));
@@ -154,46 +195,51 @@
   /* ===== Flat button ===== */
   .cyber-btn {
     @apply relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200;
-    @apply text-gray-700 dark:text-owl-textSecondary;
-    @apply bg-owl-bgSubtle dark:bg-owl-bgCard;
-    @apply border border-gray-200 dark:border-owl-border;
+    color: var(--owl-textSecondary);
+    background: var(--owl-bgSubtle);
+    border: 1px solid var(--owl-border);
   }
   .cyber-btn:hover {
-    @apply bg-owl-border border-owl-borderHover text-owl-text;
+    background: var(--owl-border);
+    border-color: var(--owl-borderHover);
+    color: var(--owl-text);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   }
   .cyber-btn-blue {
     @apply relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200;
     color: var(--neon-accent);
-    @apply border border-owl-border bg-owl-bgCard;
+    background: var(--owl-bgCard);
+    border: 1px solid var(--owl-border);
   }
   .cyber-btn-blue:hover {
     border-color: var(--neon-accent);
-    background: rgba(130, 170, 255, 0.08);
+    background: rgba(130, 170, 255, 0.12);
   }
   .cyber-btn-green {
     @apply relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200;
     color: var(--neon-green);
-    @apply border border-owl-border bg-owl-bgCard;
+    background: var(--owl-bgCard);
+    border: 1px solid var(--owl-border);
   }
   .cyber-btn-green:hover {
     border-color: var(--neon-green);
-    background: rgba(195, 232, 141, 0.08);
+    background: rgba(195, 232, 141, 0.12);
   }
 
   /* ===== Input ===== */
   .cyber-input {
     @apply w-full px-4 py-2 rounded-lg text-sm transition-all duration-200;
-    @apply bg-owl-bgCard dark:bg-owl-bgCard;
-    @apply border border-gray-200 dark:border-owl-border;
-    @apply text-gray-900 dark:text-owl-text;
+    background: var(--owl-bgCard);
+    border: 1px solid var(--owl-border);
+    color: var(--owl-text);
   }
   .cyber-input:focus {
-    @apply outline-none border-owl-borderHover;
-    box-shadow: 0 0 0 3px rgba(130, 170, 255, 0.1);
+    outline: none;
+    border-color: var(--owl-borderHover);
+    box-shadow: 0 0 0 3px rgba(130, 170, 255, 0.15);
   }
   .cyber-input::placeholder {
-    @apply text-owl-textMuted;
+    color: var(--owl-textMuted);
   }
 
   /* ===== Neumorphic text (flat) ===== */
@@ -225,28 +271,37 @@
 
 /* ===== Markdown content ===== */
 .markdown-body {
-  @apply text-gray-800 dark:text-owl-text leading-relaxed;
+  color: var(--owl-text);
+  @apply leading-relaxed;
 }
 .markdown-body h1 {
-  @apply text-3xl font-display font-semibold mt-8 mb-4 text-gray-900 dark:text-owl-text;
+  @apply text-3xl font-display font-semibold mt-8 mb-4;
+  color: var(--owl-text);
   letter-spacing: -0.02em;
 }
 .markdown-body h2 {
-  @apply text-2xl font-display font-semibold mt-6 mb-3 text-gray-900 dark:text-owl-text;
-  @apply border-b border-gray-100 dark:border-owl-border pb-2;
+  @apply text-2xl font-display font-semibold mt-6 mb-3;
+  color: var(--owl-text);
+  border-bottom: 1px solid var(--owl-border);
+  @apply pb-2;
   letter-spacing: -0.01em;
 }
 .markdown-body h3 {
-  @apply text-xl font-semibold mt-5 mb-2 text-gray-800 dark:text-owl-textSecondary;
+  @apply text-xl font-semibold mt-5 mb-2;
+  color: var(--owl-textSecondary);
 }
 .markdown-body h4 {
-  @apply text-lg font-semibold mt-4 mb-2 text-gray-700 dark:text-owl-textSecondary;
+  @apply text-lg font-semibold mt-4 mb-2;
+  color: var(--owl-textSecondary);
 }
 .markdown-body p {
   @apply my-4;
 }
 .markdown-body a {
-  @apply text-neon-blue hover:underline;
+  color: var(--neon-accent);
+}
+.markdown-body a:hover {
+  @apply underline;
 }
 .markdown-body ul, .markdown-body ol {
   @apply my-3 pl-6 space-y-1;
@@ -258,56 +313,52 @@
   @apply list-decimal;
 }
 .markdown-body li {
-  @apply text-gray-700 dark:text-owl-textSecondary;
+  color: var(--owl-textSecondary);
 }
 .markdown-body blockquote {
-  @apply border-l-4 border-owl-border pl-4 py-2 my-4 bg-owl-bgSubtle rounded-r text-gray-600 dark:text-owl-textMuted italic;
+  @apply border-l-4 pl-4 py-2 my-4 rounded-r italic;
+  border-color: var(--owl-border);
+  background: var(--owl-bgSubtle);
+  color: var(--owl-textMuted);
 }
 .markdown-body code {
   @apply px-1.5 py-0.5 rounded text-[13px] font-mono;
-  @apply bg-owl-bgSubtle dark:bg-owl-bgCard text-neon-pink;
+  background: var(--owl-bgSubtle);
+  color: var(--neon-pink);
 }
 .markdown-body pre {
-  @apply my-4 rounded-xl overflow-x-auto border;
-  @apply border-gray-100 dark:border-owl-border;
+  @apply my-4 rounded-xl overflow-x-auto;
+  border: 1px solid var(--owl-border);
 }
 .markdown-body pre code {
   @apply block p-4 text-sm leading-relaxed;
-  @apply bg-owl-bgCard dark:bg-owl-bgCard text-owl-text;
+  background: var(--owl-bgCard);
+  color: var(--owl-text);
 }
 .markdown-body table {
   @apply w-full my-4 border-collapse;
 }
 .markdown-body th {
   @apply px-4 py-2 text-left font-semibold text-sm;
-  @apply bg-owl-bgSubtle dark:bg-owl-bgCard;
-  @apply border border-gray-100 dark:border-owl-border;
-  @apply text-gray-700 dark:text-owl-text;
+  background: var(--owl-bgSubtle);
+  border: 1px solid var(--owl-border);
+  color: var(--owl-text);
 }
 .markdown-body td {
-  @apply px-4 py-2 border border-gray-100 dark:border-owl-border;
-  @apply text-gray-600 dark:text-owl-textSecondary;
+  @apply px-4 py-2;
+  border: 1px solid var(--owl-border);
+  color: var(--owl-textSecondary);
 }
 .markdown-body hr {
-  @apply my-8 border-gray-100 dark:border-owl-border;
+  @apply my-8;
+  border-color: var(--owl-border);
 }
 .markdown-body img {
   @apply max-w-full rounded-xl my-4;
 }
 .markdown-body strong {
-  @apply text-neon-pink font-semibold;
-}
-
-/* ===== Light mode backgrounds ===== */
-@layer base {
-  :root {
-    background-color: #FFFEF5;
-    color-scheme: light;
-  }
-  .dark {
-    background-color: #011627;
-    color-scheme: dark;
-  }
+  color: var(--neon-pink);
+  @apply font-semibold;
 }
 
 /* ===== Scrollbar ===== */
