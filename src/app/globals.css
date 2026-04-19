@@ -16,31 +16,7 @@
     --neon-purple: #C792EA;
     --neon-yellow: #FFAD60;
     --neon-pink: #FF5370;
-  }
-  .dark {
-    --neon-primary: #D6DEEB;
-    --neon-accent: #82AAFF;
-    --neon-green: #C3E88D;
-    --neon-purple: #C792EA;
-    --neon-yellow: #FFAD60;
-    --neon-pink: #FF5370;
-  }
-
-  /* Night Owl dark-mode overrides */
-  .dark {
-    --owl-bg: #011627;
-    --owl-bgSubtle: #021C32;
-    --owl-bgCard: #082438;
-    --owl-text: #D6DEEB;
-    --owl-textSecondary: #9AA5CE;
-    --owl-textMuted: #5C6E8A;
-    --owl-border: #0F2942;
-    --owl-borderHover: #1E3A5A;
-    --owl-tagBg: #082438;
-    --owl-tagText: #9AA5CE;
-  }
-  /* Light mode owl vars */
-  :root {
+    /* Light mode owl vars */
     --owl-bg: #FFFEF5;
     --owl-bgSubtle: #FDF6E3;
     --owl-bgCard: #FAF3E0;
@@ -51,6 +27,20 @@
     --owl-borderHover: #C9C4B0;
     --owl-tagBg: #EDE8D5;
     --owl-tagText: #7A7568;
+  }
+  html.dark {
+    --neon-primary: #D6DEEB;
+    /* Night Owl dark-mode overrides - use html.dark for higher specificity */
+    --owl-bg: #011627;
+    --owl-bgSubtle: #021C32;
+    --owl-bgCard: #082438;
+    --owl-text: #D6DEEB;
+    --owl-textSecondary: #9AA5CE;
+    --owl-textMuted: #5C6E8A;
+    --owl-border: #0F2942;
+    --owl-borderHover: #1E3A5A;
+    --owl-tagBg: #082438;
+    --owl-tagText: #9AA5CE;
   }
 }
 
