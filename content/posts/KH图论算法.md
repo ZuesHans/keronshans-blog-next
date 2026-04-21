@@ -11,6 +11,81 @@ tags:
 cover: /img/cover/picg_5.png
 
 ---
+
+## 拓扑排序
+
+### Kahn bfs求拓排
+
+```cpp
+
+ int n, m;
+    cin >> n >> m;
+    vector<vi> mp(n + 1);
+    vi idg2(n + 1);
+    for (int i = 0; i < m; i++)
+    {
+        int u, v;
+        cin >> u >> v;
+        mp[u].push_back(v);
+        idg2[v]++;
+    }
+    queue<int> q;
+    for (int i = 1; i <= n; i++)
+        if (idg2[i] == 0) q.push(i);
+    while (!q.empty())
+    {
+        if (q.size() > 1)
+        {
+            wuhuan = 0;
+            //这里判环
+        }
+        auto it = q.front();
+        q.pop();
+        ans.push_back(it);//这里输出拓扑序
+        for (auto v : mp[it])
+        {
+            idg[v]--;
+            if (!idg[v])
+            {
+                q.emplace(v);
+            }
+        }
+    }
+        
+```
+
+### dfs求拓排
+
+- 染色法找返祖边（环）
+- 拓排是反的，从任何一个点出发都能找完dag
+
+```cpp
+ vi clor(n + 1);
+    vi ans;
+    auto dfs = [&](int now, auto self) -> bool
+    {
+        clor[now] = 1;
+        for (auto it : mp[now])
+        {
+            if (clor[it] == 1)
+            {
+                return 0;
+            }
+            else if (clor[it] == 0)
+            {
+                if (!self(it, self))
+                    return 0;
+            }
+        }
+        clor[now] = 2;
+        ans.push_back(now);
+        return 1;
+    };
+for (int i = 1; i <= n; i++) {
+    if (clor[i] == 0) dfs(i);
+}
+```
+
 ## Dijkstra最短路算法
 
 ### Dijkstra模板
@@ -90,7 +165,23 @@ void solve()
 - 我们在根节点上面对他所领导的强连通分量做统计
 - $\text{dfn}$ 值是用来衡量 连通性 的标准。
 
-- **tarjan模板**
+## tarjan性质
+
+- 关于 low 数组的性质：能回到的“最古老/最早”的时间戳
+- Tarjan 算法求出的强连通分量（SCC）的编号，天然就是一个严格的“逆拓扑排序”！
+也就是说，编号越小，离图的“终点（出口）”越近；编号越大，离图的“起点”越近。->因为 SCC 编号已经是“逆拓扑序”了。你只要把循环倒过来，从编号最大的 SCC 开始，一直遍历到编号为 1 的 SCC，这本身就是一个完美的**拓扑序递推**！
+- **几种中档题常见做法**
+
+  - 图里肯定没环，或者只问你先后顺序：
+    - 标准拓扑排序（入度表 + BFS 队列）。如果有字典序要求，就上优先队列。简单、清晰、不易错。
+
+  - 图里可能有环，且只问你谁和谁是一伙的：
+    - 只跑 Tarjan。找出来完事。
+
+  - 图里有环，且要把环缩点后，求整张图的最优解/最大值/路径数：
+    - Tarjan 缩点 + scc_cnt 倒着循环跑 DP。这就是前面说的“图论三剑客”终极偷懒版，一套连招带走！
+
+- **tarjan模板（详细解释）**
 
 ```cpp
 
@@ -126,7 +217,7 @@ int scc_count = 0;
 int scc_id[MAXN];
 
 // =======================
-// Tarjan 算法主体
+// Tarjan 算法主体：纯纯的板子不需要改动
 // =======================
 
 /**
@@ -161,6 +252,8 @@ void Tarjan(int u) {
 
     // 4. 判断是否找到 SCC 根
     // 如果 dfn[u] == low[u]，则 u 是一个 SCC 的根
+
+    //这一段要写对于每一个scc需要维护的东西（根据题意改变）
     if (dfn[u] == low[u]) {
         scc_count++;
         // 5. 出栈：将 SCC 中的所有节点弹出
@@ -253,7 +346,7 @@ void Tarjan(int u,  const vector<vi> &mp)
         dp[scc] = mxscc;
     }
 }
-
+// 拓排dp
 int dfs(int a, const vector<vi> &newmp)
 {
     if (dp[a] != nwempmx[a])
@@ -270,3 +363,142 @@ int dfs(int a, const vector<vi> &newmp)
 }
 
 ```
+
+#### [M. My University Is Better Than Yours](https://codeforces.com/group/A5KcfGn880/contest/687149/problem/M)
+
+- **核心模型**:
+- **思维误区 (Bug)**:
+- **修正逻辑 (Patch)**:
+- **关键代码**:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+using vi = vector<int>;
+
+const int MAXN = 5e5 + 50;
+vi dfn(MAXN);
+vi low(MAXN);
+
+stack<int> stk;
+
+vector<bool> in_stk(MAXN, 0);
+int scc = 0;
+int scc_id[MAXN];
+
+int timer = 0;
+
+void Tarjan(int u, const vector<vi> &mp)
+{
+    dfn[u] = low[u] = ++timer;
+    stk.emplace(u);
+    in_stk[u] = 1;
+
+    for (auto it : mp[u])
+    {
+        if (!dfn[it])
+        {
+            Tarjan(it, mp);
+            low[u] = min(low[u], low[it]);
+        }
+        else if (in_stk[it])
+        {
+            low[u] = min(low[u], dfn[it]);
+        }
+    }
+
+    if (dfn[u] == low[u])
+    {
+        scc++;
+        while (1)
+        {
+            int now = stk.top();
+            stk.pop();
+
+            in_stk[now] = 0;
+            scc_id[now] = scc;
+            if (now == u)
+            {
+                break;
+            }
+        }
+    }
+}
+
+void solve()
+{
+
+    int n, m;
+    cin >> n >> m;
+    vector<vi> mp(n + 1);
+    vi line(n);
+    for (int i = 0; i < m; i++)
+    {
+        int lst = 0, d;
+        for (int j = 0; j < n; j++)
+        {
+            cin >> d;
+            if (lst)
+            {
+                mp[lst].push_back((d));
+            }
+            if (!i)
+            {
+                line[j] = d;
+            }
+            lst = d;
+        }
+    }
+
+    for (int i = 1; i <= n; i++)
+    {
+        if (!dfn[i])
+        {
+            Tarjan(i, mp);
+        }
+    }
+
+    vector<vi> dag(n + 1);
+    for (int i = 1; i <= n; i++)
+    {
+        for (auto v : mp[i])
+        {
+            if (scc_id[i] != scc_id[v])
+            {
+                dag[scc_id[i]].push_back(scc_id[v]);
+            }
+        }
+    }
+    vi xiao_scc(n + 1, n + 1);
+    for (int i = 0; i < n; i++)
+    {
+        xiao_scc[scc_id[line[i]]] = min(i, xiao_scc[scc_id[line[i]]]);
+        // cerr<<xiao[scc_id[line[i]]]<<' '<<i<<' '<<line[i]<<'\n';
+    }
+    for (int i = 1; i <= scc; i++)
+    {
+        for (auto it : dag[i])
+        {
+            // xiao[i] = min(xiao[i], xiao[it]);
+            xiao_scc[i] = min(xiao_scc[i], xiao_scc[it]);
+        }
+    }
+
+    vi ans(n + 1);
+    for (int i = 0; i < n; i++)
+    {
+        // ans[line[i]] = n - xiao[scc_id[line[i]]]-1;
+        ans[line[i]] = n - xiao_scc[scc_id[line[i]]] - 1;
+    }
+    for (int i = 1; i <= n; i++)
+    {
+        cout << ans[i] << ' ';
+    }
+    cout << '\n';
+}
+
+
+```
+
+---
