@@ -19,12 +19,12 @@ export default function RootLayout({
     <html lang="zh-CN" suppressHydrationWarning>
       <head>
         <link
-          href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;600&family=Noto+Sans+SC:wght@300;400;500&display=swap"
+          href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap"
           rel="stylesheet"
         />
       </head>
       <body className="font-body transition-colors duration-300 min-h-screen" style={{ background: "var(--owl-bg)", color: "var(--owl-text)" }}>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <PageTitleChanger />
           <Navigation />
           <main className="pt-16">{children}</main>

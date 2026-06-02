@@ -8,5 +8,6 @@ out/
 next-env.d.ts
 .codebuddy/
 .open-next/
+.wrangler/logs/
 public/img/
 blog-manager/

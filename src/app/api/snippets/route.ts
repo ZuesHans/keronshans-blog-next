@@ -13,9 +13,8 @@ export async function GET() {
     const { env } = await getCloudflareContext({ async: true });
     const { results } = await env.DB.prepare("SELECT * FROM snippets ORDER BY updated_at DESC").all();
     return NextResponse.json(results);
-  } catch (error) {
-    console.error("GET /api/snippets error:", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  } catch {
+    return NextResponse.json([]);
   }
 }
 

@@ -4,11 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare",
+    "build": "node scripts/with-wrangler-env.cjs next build",
+    "preview": "node scripts/with-wrangler-env.cjs opennextjs-cloudflare build && node scripts/with-wrangler-env.cjs opennextjs-cloudflare",
     "start": "next start",
     "lint": "next lint",
-    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
+    "deploy": "node scripts/with-wrangler-env.cjs opennextjs-cloudflare build && node scripts/with-wrangler-env.cjs opennextjs-cloudflare deploy"
   },
   "dependencies": {
     "fuse.js": "^7.0.0",

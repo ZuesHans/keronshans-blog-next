@@ -17,9 +17,8 @@ export async function GET(request: Request) {
       .first<{ count: number }>();
 
     return NextResponse.json({ likes: count || 0 });
-  } catch (error) {
-    console.error("GET /api/likes error:", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  } catch {
+    return NextResponse.json({ likes: 0 });
   }
 }
 

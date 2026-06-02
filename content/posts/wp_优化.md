@@ -23,6 +23,50 @@ cover: /img/cover/picg_12.png
 
 ```
 
+#### nlogn找因子
+
+```cpp
+vector<vi> divisors(2e5+2);
+
+void precompute_divisors() {
+    for (int i = 1; i <= 2e5; ++i) { // i 作为约数
+        for (int j = i; j <= 2e5; j += i) { // j 是 i 的倍数
+            divisors[j].push_back(i); 
+        }
+    }
+}
+```
+
+#### 找质因子
+
+```cpp
+std::map<long long, int> getPrimeFactors(long long n) {
+    std::map<long long, int> factors_count;
+
+    // 1. 不断除以 2，提取所有的 2 这个偶数质因子
+    while (n % 2 == 0) {
+        factors_count[2]++;
+        n /= 2;
+    }
+
+    // 2. 处理奇数因子，步长为 2 (3, 5, 7...)，只需遍历到根号 n
+    for (long long i = 3; i * i <= n; i += 2) {
+        while (n % i == 0) {
+            factors_count[i]++;
+            n /= i;
+        }
+    }
+
+    // 3. 如果经过上述除法后，n 仍然大于 2，那么剩下的 n 本身就是一个质数
+    if (n > 2) {
+        factors_count[n]++;
+    }
+
+    return factors_count;
+}
+
+```
+
 #### [Codeforces 1154G - Minimum Possible LCM](https://codeforces.com/contest/1154/problem/G)
 
 - **核心模型**:枚举gcd

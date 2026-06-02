@@ -82,6 +82,67 @@ struct DSU
 
 ---
 
+### 带权并查集
+
+- 维护线段上的相对位置距离
+
+#### [题目名称]()
+
+- **核心模型**:一句话概括题意/数学本质 (如: 中位数贪心 / 差分约束)
+- **思维误区 (Bug)**:记录第一直觉为什么错了 (如: 以为是DP其实是贪心 / 读错题)
+- **修正逻辑 (Patch)**:下次看到什么特征，要修正为正确思路
+- **关键代码**:
+
+```cpp
+struct DSU
+{
+    vector<int> f, siz;
+    vector<long long> d; // d[x] = val(x) - val(root(x))
+    int cnt;
+    DSU(int n) : f(n), siz(n, 1), d(n, 0), cnt(n)
+    {
+        iota(f.begin(), f.end(), 0);
+    }
+    // int find(int x)
+    // {
+    //     if (x == f[x]) return x;
+    //     int root = find(f[x]);
+    //     d[x] += d[f[x]];
+    //     return f[x] = root;
+    // }   
+    int find(int x)
+    {
+        return x == f[x] ? x : (find(f[x]), d[x] += d[f[x]], f[x] = f[f[x]]);
+    }
+    // 合并时附带约束：val(y) - val(x) = w
+    bool merge(int x, int y, long long w)
+    {
+        int rx = find(x), ry = find(y);
+        long long dx = d[x], dy = d[y];
+        if (rx == ry) return false;
+        if (siz[rx] < siz[ry]) swap(rx, ry), swap(dx, dy), w = -w;
+        // 将 ry 挂到 rx 下：d[ry] = val(ry) - val(rx)
+        // val(y)-val(x)=w => val(ry)+dy - (val(rx)+dx) = w => d[ry] = w+dx-dy
+        d[ry] = w + dx - dy;
+        f[ry] = rx;
+        siz[rx] += siz[ry];
+        cnt--;
+        return true;
+    }
+    // 查询 val(x) - val(y)，要求同一连通块
+    long long diff(int x, int y)
+    {
+        find(x); find(y);
+        if (!same(x, y)) return assert(1); // 或 assert，视题意
+        return d[x] - d[y];
+    }
+    bool same(int x, int y) { return find(x) == find(y); }
+    int size(int x) { return siz[find(x)]; }
+};
+```
+
+---
+
 ### 优先队列
 
 #### [P7913 [CSP-S 2021] 廊桥分配]([题目URL](https://www.luogu.com.cn/problem/P7913))
@@ -177,7 +238,7 @@ cout<<ans<<'\n';
 
 ### 单调栈
 
-#### [玉蟾宫](https://www.luogu.com.cn/problem/P4147)
+#### [玉蟾宫（悬线法）](https://www.luogu.com.cn/problem/P4147)
 
 - **核心模型**:单调栈求最大矩形面积，找到以每一行为底的高度（直接累加，线性处理）
 - **思维误区 (Bug)**:单调栈方向反了，以及单调栈里面留下的最后一个元素是最远阻挠元素，我们的通行范围是阻挠元素往里面一点的那一段
@@ -269,7 +330,7 @@ void solve()
 }
 ```
 
-#### [ImbalancedArray](https://codeforces.com/problemset/problem/817/D)
+#### [ImbalancedArray（维护ai是最值的区间）](https://codeforces.com/problemset/problem/817/D)
 
 - **核心模型**:推式子模拟计算
 - **思维误区 (Bug)**:**记得计算贡献的时候，左闭右闭区间看的是点不是长度！所以要+1**.以及你的操作是左维护一个值右边维护一个值，记得有一个区间开一个区间闭！以下提供ac代码的完美的去重逻辑
@@ -454,7 +515,6 @@ void solve()
 #### [F. Rae Taylor and Trees (hard version)](https://codeforces.com/problemset/problem/2171/F)
 
 - **核心模型**:单调栈维护树状连通块，难点在连通块连接
-- **思维误区 (Bug)**:记录第一直觉为什么错了 (如: 以为是DP其实是贪心 / 读错题)
 - **修正逻辑 (Patch)**:
   - 连通块链接处理方法->维护前缀最小值，链接到前缀最小值头上去
   - 错误逻辑二：单调栈写错了
@@ -547,8 +607,6 @@ void solve()
 #### [D. Simons and Beating Peaks](https://codeforces.com/problemset/problem/2205/D)
 
 - **核心模型**:非常常见的拼接型找最大值
-- **思维误区 (Bug)**:
-- **修正逻辑 (Patch)**:
 - **关键代码**:
 
 ```cpp
@@ -965,8 +1023,6 @@ void solve()
 }
 
 ```
-
----
 
 ---
 

@@ -46,23 +46,23 @@ cover: /img/cover/picg_3.png
 
 - **结论集合**
   - 加法分解类
-    `a + b = (a OR b) + (a AND b) （本题用的）`
-    `a XOR b = (a OR b) - (a AND b)`
-    `a + b = (a XOR b) + 2*(a AND b)`：原理解释： $a \oplus b$ 就是不进位加法，而 $a \text{ \& } b$ 找出了所有需要进位的位。把进位的位左移一位（乘以 2）加上不进位的结果，就是真正的和。 实战用途： 题目给你两数的异或和以及和，让你求这两个数。直接通过等式求出 $a \text{ \& } b$，然后问题就变成了已知异或和与与和，按位贪心构造即可。
+    - `a + b = (a OR b) + (a AND b) （本题用的）`
+    - `a XOR b = (a OR b) - (a AND b)`
+    - `a + b = (a XOR b) + 2*(a AND b)`：原理解释： $a \oplus b$ 就是不进位加法，而 $a \text{ \& } b$ 找出了所有需要进位的位。把进位的位左移一位（乘以 2）加上不进位的结果，就是真正的和。 实战用途： 题目给你两数的异或和以及和，让你求这两个数。直接通过等式求出 $a \text{ \& } b$，然后问题就变成了已知异或和与与和，按位贪心构造即可。
   - 子集/超集类
-    `a AND b = a⟺ a 是 b 的子集（每个1-bit都在b中）`
-    `a OR b = b ⟺ 同上`
-    `a AND b = b ⟺ b 是 a 的子集`
+    - `a AND b = a⟺ a 是 b 的子集（每个1-bit都在b中）`
+    - `a OR b = b ⟺ 同上`
+    - `a AND b = b ⟺ b 是 a 的子集`
   - 消去律
-    `a XOR a = 0`
-    `a OR a = a，a AND a = a`
-    `a XOR 0 = a，a AND 0 = 0，a OR 0 = a`
+    - `a XOR a = 0`
+    - `a OR a = a，a AND a = a`
+    - `a XOR 0 = a，a AND 0 = 0，a OR 0 = a`
   - $$a \oplus b \le a + b$$ 实战用途： 当题目出现 $a \oplus b = a + b$ 时，立刻反应过来：这等价于 $a \text{ \& } b = 0$（两数的二进制表示中没有任何一位同为 1）。
   - lowbit（树状数组核心）
-    `lowbit(a) = a & (-a)，取出a 的最低位1`
+    - lowbit(a) = a & (-a)，取出a 的最低位1`
   - 补集
-    `~a AND b = b 中有但 a 中没有的位`
-    `a XOR b = a 和 b 中恰好只有一个有的位`
+    - `~a AND b = b 中有但 a 中没有的位`
+    - `a XOR b = a 和 b 中恰好只有一个有的位`
   - 常用技巧
     判断2的幂：a & (a-1) == 0
     去掉最低位1：a & (a-1)

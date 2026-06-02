@@ -9,6 +9,7 @@ cover: /img/cover/picg_9.png
 math: true
 ---
 
+## 括号序列
 
 ## 通过性质或者数学构造优化
 

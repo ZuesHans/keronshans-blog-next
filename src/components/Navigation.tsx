@@ -6,15 +6,15 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 const NAV_ITEMS = [
-  { id: "home", label: "首页", icon: "🏠️" },
-  { id: "posts", label: "文章", icon: "📖" },
-  { id: "snippets", label: "代码片段", icon: "{}" },
-  { id: "problems", label: "题单", icon: "📋" },
-  { id: "checkin", label: "打卡", icon: "📊" },
-  { id: "talks", label: "说说", icon: "😽" },
-  { id: "tools", label: "工具", icon: "⚡" },
-  { id: "about", label: "关于", icon: "🤔" },
-  { id: "dashboard", label: "管理", icon: "⚙" },
+  { id: "home", label: "首页" },
+  { id: "posts", label: "文章" },
+  { id: "snippets", label: "片段" },
+  { id: "problems", label: "题单" },
+  { id: "checkin", label: "打卡" },
+  { id: "talks", label: "说说" },
+  { id: "tools", label: "工具" },
+  { id: "about", label: "关于" },
+  { id: "dashboard", label: "管理" },
 ];
 
 export default function Navigation() {
@@ -59,7 +59,7 @@ export default function Navigation() {
       <nav
         style={{
           background: scrolled
-            ? "rgba(255,255,255,0.9)"
+            ? "color-mix(in srgb, var(--owl-bgCard) 86%, transparent)"
             : "var(--owl-bg)",
           backdropFilter: scrolled ? "blur(12px)" : undefined,
           borderBottom: scrolled ? "1px solid var(--owl-border)" : "1px solid transparent",
@@ -73,20 +73,20 @@ export default function Navigation() {
               <div
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-display font-semibold transition-colors"
                 style={{
-                  background: "var(--owl-bgCard)",
+                  background: "var(--owl-text)",
                   border: "1px solid var(--owl-border)",
-                  color: "var(--owl-text)",
+                  color: "var(--owl-bgCard)",
                 }}
               >
                 K
               </div>
               <span className="font-display font-semibold text-base hidden sm:block" style={{ color: "var(--owl-text)" }}>
-                keron<span style={{ color: "var(--neon-accent)" }}>shans</span>
+                Keron<span style={{ color: "var(--neon-accent)" }}>shans</span>
               </span>
             </Link>
 
             {/* Desktop Nav */}
-            <div className="hidden md:flex items-center gap-1">
+            <div className="hidden lg:flex items-center gap-1">
               {NAV_ITEMS.map((item) => {
                 const isActive = active === item.id;
                 return (
@@ -94,14 +94,13 @@ export default function Navigation() {
                     key={item.id}
                     href={item.id === "home" ? "/" : `/${item.id}`}
                     onClick={() => handleNav(item.id)}
-                    className="px-3 py-1.5 rounded-lg text-sm transition-all duration-200"
+                    className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
                     style={{
-                      background: isActive ? "var(--owl-bgCard)" : "transparent",
-                      color: isActive ? "var(--neon-accent)" : "var(--owl-textMuted)",
-                      border: isActive ? "1px solid var(--owl-borderHover)" : "1px solid transparent",
+                      background: isActive ? "var(--owl-bgSubtle)" : "transparent",
+                      color: isActive ? "var(--owl-text)" : "var(--owl-textMuted)",
+                      border: isActive ? "1px solid var(--owl-border)" : "1px solid transparent",
                     }}
                   >
-                    <span className="mr-1.5 text-xs">{item.icon}</span>
                     {item.label}
                   </Link>
                 );
@@ -150,9 +149,9 @@ export default function Navigation() {
             </div>
 
             {/* Mobile menu button */}
-            <div className="flex items-center gap-2 md:hidden">
+            <div className="flex items-center gap-2 lg:hidden">
               {mounted && (
-                <button onClick={toggleTheme} className="p-2 rounded-lg" style={{ color: "var(--owl-textMuted)" }}>
+                <button onClick={toggleTheme} className="p-2 rounded-lg" style={{ color: "var(--owl-textMuted)" }} title="切换主题" aria-label="切换主题">
                   {resolvedTheme === "dark" ? (
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
                   ) : (
@@ -164,6 +163,8 @@ export default function Navigation() {
                 onClick={() => setMenuOpen(!menuOpen)}
                 className="p-2 rounded-lg"
                 style={{ color: "var(--owl-textMuted)" }}
+                title="菜单"
+                aria-label="菜单"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   {menuOpen ? (
@@ -181,7 +182,7 @@ export default function Navigation() {
         {searchOpen && (
           <div style={{
             borderTop: "1px solid var(--owl-border)",
-            background: "rgba(255,255,255,0.9)",
+            background: "color-mix(in srgb, var(--owl-bgCard) 90%, transparent)",
             backdropFilter: "blur(12px)",
           }}>
             <div className="max-w-6xl mx-auto px-6 py-3">
@@ -214,7 +215,7 @@ export default function Navigation() {
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <div className="fixed inset-0 z-40 md:hidden">
+        <div className="fixed inset-0 z-40 lg:hidden">
           <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.3)", backdropFilter: "blur(4px)" }} onClick={() => setMenuOpen(false)} />
           <div
             className="absolute top-16 right-0 w-64 shadow-xl"
@@ -235,10 +236,9 @@ export default function Navigation() {
                     className="flex items-center gap-3 px-4 py-3 text-sm transition-all"
                     style={{
                       background: isActive ? "var(--owl-bgCard)" : "transparent",
-                      color: isActive ? "var(--neon-accent)" : "var(--owl-textMuted)",
+                      color: isActive ? "var(--owl-text)" : "var(--owl-textMuted)",
                     }}
                   >
-                    <span className="text-base">{item.icon}</span>
                     {item.label}
                   </Link>
                 );

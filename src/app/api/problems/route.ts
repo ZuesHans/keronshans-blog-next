@@ -13,9 +13,8 @@ export async function GET() {
     const { env } = await getCloudflareContext({ async: true });
     const { results } = await env.DB.prepare("SELECT * FROM problems ORDER BY created_at DESC").all();
     return NextResponse.json(results);
-  } catch (error) {
-    console.error("GET /api/problems error:", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  } catch {
+    return NextResponse.json([]);
   }
 }
 

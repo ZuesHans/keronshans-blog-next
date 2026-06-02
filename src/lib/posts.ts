@@ -71,14 +71,23 @@ function parseCategory(filename: string): string {
   return "其他";
 }
 
+function formatDate(value: unknown): string {
+  if (!value) return "";
+  const date = value instanceof Date ? value : new Date(String(value));
+  if (!Number.isNaN(date.getTime())) {
+    return date.toISOString().slice(0, 10);
+  }
+  return String(value).slice(0, 10);
+}
+
 export function getCategoryColorClass(category: string): string {
   switch (category) {
-    case "笔记": return "bg-neon-pink/10 text-neon-pink border-neon-pink/30";
-    case "模板": return "bg-neon-blue/10 text-neon-blue border-neon-blue/30";
-    case "题解": return "bg-neon-green/10 text-neon-green border-neon-green/30";
-    case "专题": return "bg-neon-purple/10 text-neon-purple border-neon-purple/30";
-    case "日记": return "bg-neon-yellow/10 text-neon-yellow border-neon-yellow/30";
-    default: return "bg-neon-pink/10 text-neon-pink border-neon-pink/30";
+    case "笔记": return "category-note";
+    case "模板": return "category-template";
+    case "题解": return "category-solution";
+    case "专题": return "category-topic";
+    case "日记": return "category-diary";
+    default: return "";
   }
 }
 
@@ -100,7 +109,7 @@ async function getPostsFromD1(): Promise<PostMeta[] | null> {
         id: toUrlSafeId(slug),
         slug,
         title: String(row.title || slug),
-        date: String(row.date || ""),
+        date: formatDate(row.date),
         tags: Array.isArray(tags) ? tags.map(String) : [],
         cover: "",
         excerpt,
@@ -125,7 +134,7 @@ function getPostsFromFiles(): PostMeta[] {
       id: toUrlSafeId(filename),
       slug: filename.replace(/\.md$/, ""),
       title: data.title || filename.replace(/\.md$/, ""),
-      date: data.date ? String(data.date) : "",
+      date: formatDate(data.date),
       tags: Array.isArray(data.tags) ? data.tags.map((t: unknown) => String(t)) : [],
       cover: data.cover || "",
       excerpt,
@@ -162,7 +171,7 @@ export async function getPostById(id: string): Promise<PostData | null> {
           id: post.id,
           slug: String(row.filename || post.slug),
           title: String(row.title || post.title),
-          date: String(row.date || post.date),
+          date: formatDate(row.date || post.date),
           tags: Array.isArray(tags) ? tags.map(String) : [],
           cover: "",
           excerpt: post.excerpt,
@@ -181,7 +190,7 @@ export async function getPostById(id: string): Promise<PostData | null> {
   return {
     ...post,
     title: data.title || post.slug,
-    date: String(data.date || ""),
+    date: formatDate(data.date),
     tags: Array.isArray(data.tags) ? data.tags.map((t: unknown) => String(t)) : [],
     cover: data.cover || "",
     content,

@@ -20,12 +20,12 @@ interface TagInfo {
 const CATEGORIES = ["笔记", "模板", "题解", "专题", "日记", "其他"];
 
 const CAT_COLORS: Record<string, string> = {
-  "笔记": "bg-neon-pink/10 text-neon-pink border-neon-pink/30",
-  "模板": "bg-neon-blue/10 text-neon-blue border-neon-blue/30",
-  "题解": "bg-neon-green/10 text-neon-green border-neon-green/30",
-  "专题": "bg-neon-purple/10 text-neon-purple border-neon-purple/30",
-  "日记": "bg-neon-yellow/10 text-neon-yellow border-neon-yellow/30",
-  "其他": "bg-neon-pink/10 text-neon-pink border-neon-pink/30",
+  "笔记": "category-chip category-note",
+  "模板": "category-chip category-template",
+  "题解": "category-chip category-solution",
+  "专题": "category-chip category-topic",
+  "日记": "category-chip category-diary",
+  "其他": "category-chip",
 };
 
 function getCatColorClass(cat: string): string {
@@ -69,16 +69,17 @@ export default function PostsClient({
   }, [posts]);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-10">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-display font-bold mb-2">
-          <span className="neon-text">◈</span> 文章列表
+        <div className="page-kicker mb-3">Archive</div>
+        <h1 className="page-heading mb-2">
+          文章列表
         </h1>
-        <p className="text-gray-500 dark:text-gray-400 font-mono text-sm">
-          &gt; 共 {posts.length} 篇文章 | LAST UPDATED: {new Date().toISOString().split("T")[0]}
+        <p className="text-sm" style={{ color: "var(--owl-textSecondary)" }}>
+          共 {posts.length} 篇文章，最近整理于 {new Date().toISOString().split("T")[0]}
         </p>
-        <div className="mt-2 h-[1px] bg-gradient-to-r from-neon-pink via-neon-blue to-neon-green opacity-50" />
+        <div className="soft-divider" />
       </div>
 
       {/* Search */}
@@ -101,9 +102,10 @@ export default function PostsClient({
           onClick={() => setActiveCategory("all")}
           className={`px-3 py-1 rounded-full text-xs font-mono border transition-all ${
             activeCategory === "all"
-              ? "border-neon-pink bg-neon-pink/10 text-neon-pink"
-              : "border-transparent bg-gray-100 dark:bg-cyber-surface text-gray-500 hover:border-neon-pink/30"
+              ? "border-transparent text-white"
+              : "border-transparent text-gray-500"
           }`}
+          style={activeCategory === "all" ? { background: "var(--neon-accent)" } : { background: "var(--owl-tagBg)" }}
         >
           全部 ({posts.length})
         </button>
@@ -117,8 +119,9 @@ export default function PostsClient({
               className={`px-3 py-1 rounded-full text-xs font-mono border transition-all ${
                 activeCategory === cat
                   ? getCatColorClass(cat)
-                  : "border-transparent bg-gray-100 dark:bg-cyber-surface text-gray-500 hover:border-gray-300"
+                  : "border-transparent text-gray-500 hover:border-gray-300"
               }`}
+              style={activeCategory === cat ? undefined : { background: "var(--owl-tagBg)" }}
             >
               {cat} ({count})
             </button>
@@ -130,7 +133,7 @@ export default function PostsClient({
       {activeTag && (
         <div className="mb-4 flex items-center gap-2">
           <span className="text-xs font-mono text-gray-400">筛选标签:</span>
-          <span className="px-2 py-0.5 rounded text-xs font-mono bg-neon-blue/10 text-neon-blue border border-neon-blue/30">
+          <span className="tag-pill">
             #{activeTag}
           </span>
           <button
@@ -150,9 +153,10 @@ export default function PostsClient({
             onClick={() => setActiveTag(activeTag === tag ? null : tag)}
             className={`px-2 py-0.5 rounded text-xs font-mono border transition-all ${
               activeTag === tag
-                ? "bg-neon-blue/10 text-neon-blue border-neon-blue/30"
-                : "text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-cyber-surface border-transparent hover:text-neon-pink hover:border-neon-pink/30"
+                ? "text-white border-transparent"
+                : "text-gray-500 dark:text-gray-400 border-transparent"
             }`}
+            style={activeTag === tag ? { background: "var(--neon-accent)" } : { background: "var(--owl-tagBg)" }}
           >
             #{tag} ({count})
           </button>
@@ -172,28 +176,28 @@ export default function PostsClient({
               <article className="cyber-card p-5 group cursor-pointer">
                 <div className="flex flex-col sm:flex-row sm:items-start gap-4">
                   <div className="shrink-0">
-                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-mono border ${getCatColorClass(post.category)}`}>
+                    <span className={getCatColorClass(post.category)}>
                       {post.category}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h2 className="text-lg font-bold group-hover:text-neon-pink transition-colors mb-1 truncate">
+                    <h2 className="text-lg font-semibold transition-colors mb-1 truncate" style={{ color: "var(--owl-text)" }}>
                       {post.title}
                     </h2>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2 line-clamp-2">
+                    <p className="text-sm mb-2 line-clamp-2" style={{ color: "var(--owl-textSecondary)" }}>
                       {post.excerpt}
                     </p>
-                    <div className="flex flex-wrap gap-1.5 items-center text-xs text-gray-400 dark:text-gray-500 font-mono">
+                    <div className="flex flex-wrap gap-1.5 items-center text-xs font-mono" style={{ color: "var(--owl-textMuted)" }}>
                       <span>{post.date}</span>
-                      <span className="text-neon-pink/50">|</span>
+                      <span>|</span>
                       {post.tags.length > 0 ? post.tags.map((tag) => (
-                        <span key={tag} className="hover:text-neon-blue transition-colors">#{tag}</span>
+                        <span key={tag} className="transition-colors">#{tag}</span>
                       )) : (
                         <span className="italic">无标签</span>
                       )}
                     </div>
                   </div>
-                  <div className="shrink-0 self-center text-gray-400 group-hover:text-neon-pink group-hover:translate-x-1 transition-all">
+                  <div className="shrink-0 self-center text-gray-400 group-hover:translate-x-1 transition-all">
                     →
                   </div>
                 </div>

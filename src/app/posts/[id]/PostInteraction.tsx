@@ -29,14 +29,11 @@ export default function PostInteraction({ postId }: { postId: string }) {
     try {
       const res = await fetch(`/api/comments?postId=${postId}`);
       if (!res.ok) {
-        setError("Failed to load comments");
         return;
       }
       const data = await res.json();
       if (Array.isArray(data)) setComments(data);
-    } catch {
-      setError("Network error");
-    }
+    } catch {}
   }, [postId]);
 
   const fetchLikes = useCallback(async () => {
@@ -166,14 +163,23 @@ export default function PostInteraction({ postId }: { postId: string }) {
           disabled={liked}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-sm transition-all border ${
             liked
-              ? "bg-pink-500/10 border-pink-500/30 text-pink-500 cursor-default"
-              : "bg-gray-50 dark:bg-cyber-surface border-gray-200 dark:border-cyber-border hover:border-neon-pink hover:text-neon-pink text-gray-500 cursor-pointer"
+              ? "cursor-default"
+              : "cursor-pointer"
           }`}
+          style={liked ? {
+            background: "color-mix(in srgb, var(--neon-pink) 12%, var(--owl-bgCard))",
+            borderColor: "color-mix(in srgb, var(--neon-pink) 35%, var(--owl-border))",
+            color: "var(--neon-pink)",
+          } : {
+            background: "var(--owl-bgCard)",
+            borderColor: "var(--owl-border)",
+            color: "var(--owl-textMuted)",
+          }}
         >
           {liked ? "\u2665" : "\u2661"} {likes}
         </button>
-        <span className="text-sm font-mono text-gray-400">
-          {comments.length} comments
+        <span className="text-sm font-mono" style={{ color: "var(--owl-textMuted)" }}>
+          {comments.length} 条评论
         </span>
         {likeError && (
           <span className="text-xs font-mono text-red-400">{likeError}</span>
@@ -217,7 +223,7 @@ export default function PostInteraction({ postId }: { postId: string }) {
             disabled={!commentContent.trim() || submitting}
             className="px-4 py-2 rounded-lg font-mono text-sm border border-neon-pink bg-neon-pink/10 text-neon-pink hover:bg-neon-pink/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
           >
-            {submitting ? "..." : "SEND"}
+            {submitting ? "..." : "发送"}
           </button>
         </div>
         {commentContent.length > 400 && (
@@ -234,7 +240,7 @@ export default function PostInteraction({ postId }: { postId: string }) {
             onClick={() => setShowAdminPanel(!showAdminPanel)}
             className="text-xs font-mono text-gray-500 hover:text-neon-pink transition-colors cursor-pointer"
           >
-            {showAdminPanel ? "CANCEL" : "ADMIN"}
+            {showAdminPanel ? "取消" : "管理"}
           </button>
         </div>
       )}
@@ -253,9 +259,9 @@ export default function PostInteraction({ postId }: { postId: string }) {
             />
             <button
               onClick={handleAdminLogin}
-              className="px-3 py-2 rounded-lg font-mono text-xs border border-neon-purple bg-neon-purple/10 text-neon-purple hover:bg-neon-purple/20 transition-all cursor-pointer"
+              className="cyber-btn text-xs px-3 py-2 cursor-pointer"
             >
-              LOGIN
+              登录
             </button>
           </div>
         </div>
@@ -265,7 +271,7 @@ export default function PostInteraction({ postId }: { postId: string }) {
       <div className="space-y-3">
         {comments.length === 0 ? (
           <p className="text-center text-gray-400 font-mono text-sm py-4">
-            No comments yet. Be the first!
+            暂时还没有评论。
           </p>
         ) : (
           comments.map((comment) => (

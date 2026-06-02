@@ -17,38 +17,37 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   if (!post) notFound();
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-10">
       {/* Back button */}
-      <Link href="/posts" className="inline-flex items-center gap-2 text-sm font-mono text-gray-500 dark:text-gray-400 hover:text-neon-pink transition-colors mb-6">
+      <Link href="/posts" className="inline-flex items-center gap-2 text-sm font-mono transition-colors mb-8" style={{ color: "var(--owl-textMuted)" }}>
         <span>←</span> 返回文章列表
       </Link>
 
       {/* Article Header */}
       <header className="mb-8">
         <div className="flex items-center gap-3 mb-3 flex-wrap">
-          <span className={`px-2 py-0.5 rounded text-xs font-mono border ${getCategoryColorClass(post.category)}`}>
+          <span className={`category-chip ${getCategoryColorClass(post.category)}`}>
             {post.category}
           </span>
           {post.tags.map((tag) => (
-            <span key={tag} className="text-xs font-mono text-gray-500 dark:text-gray-400">
+            <span key={tag} className="tag-pill">
               #{tag}
             </span>
           ))}
         </div>
-        <h1 className="text-3xl sm:text-4xl font-display font-bold mb-3 neon-text">
+        <h1 className="page-heading mb-4">
           {post.title}
         </h1>
-        <div className="flex items-center gap-4 text-sm font-mono text-gray-500 dark:text-gray-400">
+        <div className="flex items-center gap-4 text-sm font-mono" style={{ color: "var(--owl-textMuted)" }}>
           <span>{post.date}</span>
-          <span className="w-1 h-1 rounded-full bg-neon-pink" />
+          <span className="w-1 h-1 rounded-full" style={{ background: "var(--owl-textMuted)" }} />
           <span>Keronshans</span>
         </div>
-        <div className="mt-4 h-[1px] bg-gradient-to-r from-neon-pink via-neon-blue to-transparent opacity-40" />
+        <div className="soft-divider" />
       </header>
 
       {/* Article Content */}
       <article className="relative">
-        <div className="scanline-overlay absolute inset-0 rounded-lg z-10 pointer-events-none" />
         <div className="cyber-card p-6 sm:p-8">
           <MarkdownRenderer content={post.content} />
         </div>
@@ -61,7 +60,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
       <PostInteraction postId={id} />
 
       {/* Footer */}
-      <footer className="mt-8 pt-6 border-t border-gray-200 dark:border-cyber-border">
+      <footer className="mt-8 pt-6" style={{ borderTop: "1px solid var(--owl-border)" }}>
         <Link href="/posts" className="cyber-btn inline-block">
           ← 返回列表
         </Link>

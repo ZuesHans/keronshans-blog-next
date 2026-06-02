@@ -6,9 +6,8 @@ export async function GET() {
     const { env } = await getCloudflareContext({ async: true });
     const { results } = await env.DB.prepare("SELECT * FROM checkins ORDER BY created_at DESC").all();
     return NextResponse.json(results);
-  } catch (error) {
-    console.error("GET /api/checkins error:", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  } catch {
+    return NextResponse.json([]);
   }
 }
 

@@ -4,11 +4,11 @@ import { getCategoryColorClass } from "@/lib/posts";
 
 export const dynamic = "force-dynamic";
 
-export default async function SearchPage({ searchParams }: { searchParams: { q?: string; tag?: string } }) {
-  const query = searchParams.q || "";
-  const tag = searchParams.tag || "";
-  const allPosts = getAllPosts();
-  const allTags = getAllTags();
+export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string; tag?: string }> }) {
+  const params = await searchParams;
+  const query = params.q || "";
+  const tag = params.tag || "";
+  const [allPosts, allTags] = await Promise.all([getAllPosts(), getAllTags()]);
 
   let filteredPosts = allPosts;
   if (tag) {
@@ -25,13 +25,15 @@ export default async function SearchPage({ searchParams }: { searchParams: { q?:
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="text-4xl font-display font-bold mb-2">
-        <span className="neon-text-blue">⚡</span> 搜索
-      </h1>
-      <p className="text-gray-500 dark:text-gray-400 font-mono text-sm mb-6">
-        &gt; {tag ? `标签: #${tag}` : query ? `关键词: "${query}"` : "全部文章"} | 找到 {filteredPosts.length} 个结果
+    <div className="max-w-6xl mx-auto px-4 py-10">
+      <div className="mb-8">
+        <div className="page-kicker mb-3">Search</div>
+        <h1 className="page-heading mb-2">搜索</h1>
+        <p className="text-sm" style={{ color: "var(--owl-textSecondary)" }}>
+          {tag ? `标签：#${tag}` : query ? `关键词：“${query}”` : "全部文章"}，找到 {filteredPosts.length} 个结果
       </p>
+        <div className="soft-divider" />
+      </div>
 
       {/* Search Results */}
       <div className="grid gap-4">
@@ -46,19 +48,19 @@ export default async function SearchPage({ searchParams }: { searchParams: { q?:
               <article className="cyber-card p-5 group cursor-pointer">
                 <div className="flex items-start gap-4">
                   <div className="shrink-0">
-                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-mono border ${getCategoryColorClass(post.category)}`}>
+                    <span className={`category-chip ${getCategoryColorClass(post.category)}`}>
                       {post.category}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h2 className="text-lg font-bold group-hover:text-neon-pink transition-colors mb-1">
+                    <h2 className="text-lg font-semibold transition-colors mb-1" style={{ color: "var(--owl-text)" }}>
                       {post.title}
                     </h2>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{post.excerpt}</p>
-                    <div className="flex flex-wrap gap-1.5 mt-2 text-xs text-gray-400 font-mono">
+                    <p className="text-sm line-clamp-2" style={{ color: "var(--owl-textSecondary)" }}>{post.excerpt}</p>
+                    <div className="flex flex-wrap gap-1.5 mt-2 text-xs font-mono" style={{ color: "var(--owl-textMuted)" }}>
                       <span>{post.date}</span>
                       {post.tags.map((t) => (
-                        <span key={t} className="hover:text-neon-blue">#{t}</span>
+                        <span key={t}>#{t}</span>
                       ))}
                     </div>
                   </div>
@@ -71,17 +73,13 @@ export default async function SearchPage({ searchParams }: { searchParams: { q?:
 
       {/* Popular Tags */}
       <div className="mt-8 cyber-card p-6">
-        <h3 className="font-display font-bold mb-3 text-neon-blue">热门标签</h3>
+        <h3 className="font-display font-semibold mb-3">热门标签</h3>
         <div className="flex flex-wrap gap-2">
           {allTags.slice(0, 20).map(({ tag, count }) => (
             <Link
               key={tag}
               href={`/search?tag=${encodeURIComponent(tag)}`}
-              className={`px-3 py-1 rounded-full text-xs font-mono border transition-all ${
-                tag === tag
-                  ? "bg-neon-blue/10 text-neon-blue border-neon-blue/30"
-                  : "bg-gray-100 dark:bg-cyber-surface text-gray-500 dark:text-gray-400 border-transparent hover:border-neon-blue/30 hover:text-neon-blue"
-              }`}
+              className="tag-pill text-sm"
             >
               #{tag} ({count})
             </Link>

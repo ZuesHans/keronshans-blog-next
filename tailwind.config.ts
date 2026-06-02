@@ -40,8 +40,8 @@ const config: Config = {
       },
       fontFamily: {
         mono: ['"JetBrains Mono"', "monospace"],
-        display: ['"Noto Serif SC"', '"Songti SC"', "serif"],
-        body: ['"Noto Sans SC"', '"PingFang SC"', '"Microsoft YaHei"', "sans-serif"],
+        display: ['"Inter"', '"HarmonyOS Sans SC"', '"MiSans"', '"Segoe UI"', '"PingFang SC"', '"Microsoft YaHei UI"', '"Microsoft YaHei"', "sans-serif"],
+        body: ['"Inter"', '"HarmonyOS Sans SC"', '"MiSans"', '"Segoe UI"', '"PingFang SC"', '"Microsoft YaHei UI"', '"Microsoft YaHei"', "sans-serif"],
       },
       animation: {
         "glow-pulse": "glow-pulse 2s ease-in-out infinite alternate",

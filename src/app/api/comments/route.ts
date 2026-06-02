@@ -17,9 +17,8 @@ export async function GET(request: Request) {
       .all();
 
     return NextResponse.json(results || []);
-  } catch (error) {
-    console.error("GET /api/comments error:", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  } catch {
+    return NextResponse.json([]);
   }
 }
 

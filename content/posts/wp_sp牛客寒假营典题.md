@@ -332,8 +332,6 @@ signed main()
 #### [Digital Folding](https://ac.nowcoder.com/acm/contest/120561/G)
 
 - **核心模型**: 数位贪心显然当答案位数越高越好
-- **思维误区 (Bug)**:
-- **修正逻辑 (Patch)**:
 - **关键代码**:
 
 ```cpp

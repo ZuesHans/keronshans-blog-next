@@ -1,42 +1,36 @@
 import Link from "next/link";
-import { getAllPosts, getAllTags, getCategoryColorClass } from "@/lib/posts";
-
-const catColorMap: Record<string, string> = {
-  "笔记": "bg-neon-blue",
-  "模板": "bg-neon-purple",
-  "题解": "bg-neon-green",
-  "专题": "bg-neon-yellow",
-  "日记": "bg-neon-pink",
-};
+import { getAllPosts, getAllTags } from "@/lib/posts";
 
 const catCssVarMap: Record<string, string> = {
-  "笔记": "var(--neon-blue)",
-  "模板": "var(--neon-purple)",
+  "笔记": "var(--neon-pink)",
+  "模板": "var(--neon-accent)",
   "题解": "var(--neon-green)",
-  "专题": "var(--neon-yellow)",
-  "日记": "var(--neon-pink)",
+  "专题": "var(--neon-purple)",
+  "日记": "var(--neon-yellow)",
 };
 
 export default async function HomePage() {
   const [posts, tags] = await Promise.all([getAllPosts(), getAllTags()]);
   const recentPosts = posts.slice(0, 6);
+  const categoryNames = ["笔记", "模板", "题解", "专题", "日记"];
   const catCounts = Object.fromEntries(
-    ["笔记", "模板", "题解", "专题", "日记"].map((cat) => [cat, posts.filter((p) => p.category === cat).length])
+    categoryNames.map((cat) => [cat, posts.filter((p) => p.category === cat).length])
   );
-  const categories = ["笔记", "模板", "题解", "专题", "日记"].filter((cat) => catCounts[cat] > 0);
+  const categories = categoryNames.filter((cat) => catCounts[cat] > 0);
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-12">
+    <div className="max-w-6xl mx-auto px-6 py-14">
 
       {/* ===== Hero ===== */}
-      <section className="mb-16">
-        <div className="section-eyebrow mb-5">算法 · 笔记 · 模板</div>
+      <section className="mb-16 max-w-3xl">
+        <div className="section-eyebrow mb-5">Notebook · CP · Daily</div>
         <h1 className="hero-title mb-3">
           Keronshans
         </h1>
-        <p className="text-lg font-light mb-8 tracking-wide" style={{ color: "var(--owl-textSecondary)" }}>
-          <span style={{ color: "var(--neon-accent)", fontWeight: 500 }}>技术博客</span>
-          {" · "}算法竞赛{" · "}错题整理
+        <p className="text-lg leading-8 mb-8" style={{ color: "var(--owl-textSecondary)" }}>
+          <span style={{ color: "var(--neon-accent)", fontWeight: 600 }}>小猫的窝</span>
+          <span className="mx-2">/</span>
+          算法模板、题解整理、日常碎片和一点正在长出来的工程感。
         </p>
 
         {/* Stats */}
@@ -111,9 +105,9 @@ export default async function HomePage() {
             <h3 className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: "var(--owl-textMuted)" }}>快捷入口</h3>
             <div className="space-y-1">
               {[
-                { href: "/snippets", label: "代码片段", desc: "ACM算法模板" },
+                { href: "/snippets", label: "代码片段", desc: "算法模板" },
                 { href: "/problems", label: "题单", desc: "刷题/补题记录" },
-                { href: "/checkin", label: "打卡", desc: "每日刷题签到" },
+                { href: "/checkin", label: "打卡", desc: "每日签到" },
                 { href: "/tools", label: "工具箱", desc: "进制转换/位运算" },
                 { href: "/talks", label: "说说", desc: "碎碎念" },
                 { href: "/about", label: "关于", desc: "关于我" },
@@ -125,7 +119,7 @@ export default async function HomePage() {
                   style={{ color: "var(--owl-textSecondary)" }}
                 >
                   <span className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-medium transition-all border border-transparent"
-                    style={{ background: "var(--owl-tagBg)", color: "var(--owl-textMuted)" }}
+                    style={{ background: "var(--owl-bgSubtle)", color: "var(--neon-accent)" }}
                   >
                     {link.label[0]}
                   </span>

@@ -451,6 +451,344 @@ void solve()
 ---
 ---
 
+### 树上问题
+
+#### [D2.Tree coloring树上染色](https://codeforces.com/contest/2183/problem/D2)
+
+- **核心模型**:树上染色
+- **做法**:事实上这就是一道大模拟。题目要求不是父子关系（好求），不是同一层。我们就直接把每一次的染色都分层不同的颜色。
+- **错误点**:容易想贪心:我想要在同一层里，每个同学都有自己**“绝对不能碰的禁忌色（亲爹色）”**。
+纯贪心的逻辑是：“轮到我了，桌子上只要有我能用的，我挑个最小的拿走，不管别人死活。”
+这就必然会导致一个惨案：前面的人为了图省事，顺手拿走了一个极其普通的颜色，结果把后面的人逼上了绝路，导致原本够用的蜡笔，硬生生不够用了！
+- **关键代码**:
+
+```cpp
+void solve()
+{
+    int n;
+    cin >> n;
+    vector<vi> mp(n + 1);
+    for (int i = 0; i < n - 1; i++)
+    {
+        int u, v;
+        cin >> u >> v;
+        mp[u].push_back(v);
+        mp[v].push_back(u);
+    }
+
+    vector<vi> ceng(n + 1);
+    vi baba(n + 1);
+    auto dfs = [&](int now, int fa, int step, auto self) -> void
+    {
+        baba[now] = fa;
+        ceng[step].push_back(now);
+        for (auto it : mp[now])
+        {
+            if (it == fa)
+                continue;
+            self(it, now, step + 1, self);
+        }
+    };
+    dfs(1, 0, 0, dfs);
+    vi color(n + 1);
+    color[1] = 1;
+    int sum = 1;
+    for (int i = 0; i <= n; i++)
+    {
+        set<int> now;
+        for (int k = 1; k <= min(sum, (int)ceng[i].size() + 1); k++)
+        {
+            now.emplace(k);
+        }
+        int bt1 = -1, bt2 = -1;
+        for (auto it : ceng[i])
+        {
+            int fac = color[baba[it]];
+            auto tp = now.begin();
+            if (tp != now.end() && *tp == fac)
+            {
+                tp++;
+            }
+            if (tp != now.end())
+            {
+                color[it] = *tp;
+                now.erase(tp);
+            }
+            else
+            {
+                bool add = 0;
+                if (!now.empty())
+                {
+                    if (bt1 != -1 && baba[bt1] != baba[it])
+                    {
+                        add = 1;
+                        color[it] = color[bt1];
+                        color[bt1] = fac;
+                    }
+                    if (bt2 != -1 && baba[bt2] != baba[it] && !add)
+                    {
+                        add = 1;
+                        color[it] = color[bt2];
+                        color[bt2] = fac;
+                    }
+                }
+                if (!add)
+                {
+                    sum++;
+                    color[it] = sum;
+                }
+                else
+                {
+                    now.clear();
+                }
+            }
+            if (bt1 == -1)
+            {
+                bt1 = it;
+            }
+            if (bt2 == -1 && baba[it] != baba[bt1])
+            {
+                bt2 = it;
+            }
+        }
+    }
+    cout << sum << '\n';
+    vector<vi> op(sum + 1);
+    for (int i = 1; i <= n; i++)
+    {
+        op[color[i]].push_back(i);
+    }
+    for (int i = 1; i <= sum; i++)
+    {
+        cout << op[i].size() << ' ';
+        for (auto it : op[i])
+        {
+            cout << it << ' ';
+        }
+        cout << '\n';
+    }
+}
+
+```
+
+#### [流沙树上dp](https://acm.hdu.edu.cn/contest/problem?cid=1197&pid=1007)
+
+- **核心模型**:树上dp（涉及图论概念：子树:包含自己还有自己的所有儿子）。树上贪心 （赛时一发过只是放在这参考一下树上的遍历
+- **关键代码**:
+
+```cpp
+void solve()
+{
+ int n;
+ cin >> n;
+ vi a(n + 1);
+ for (int i = 1; i <= n; i++)
+ {
+  cin >> a[i];
+ }
+ vector<vi> mp(n + 1);
+ for (int i = 0; i < n - 1; i++)
+ {
+  int u, v;
+  cin >> u >> v;
+  mp[u].push_back(v);
+  mp[v].push_back(u);
+ }
+
+ vi ans(n + 1);
+ vi sz(n + 1, -(1e9));
+ auto dfs = [&](int now, int fa, auto self) -> int
+ {
+  bool is_leaf = 1;
+  int sum = a[now];
+  int siz = 1;
+  int pans = (1e18);
+  for (auto it : mp[now])
+  {
+   if (it == fa)
+   {
+    continue;
+   }
+   is_leaf = 0;
+   sum += self(it, now, self);
+   siz += sz[it];
+   pans = min(pans, ans[it]);
+  }
+
+  if (is_leaf)
+  {
+   sz[now] = 1;
+   ans[now] = a[now];
+   return a[now];
+  }
+  else
+  {
+   sz[now] = siz;
+   ans[now] = min(pans, sum / siz);
+   return sum;
+  }
+ };
+ dfs(1, -1, dfs);
+ for (int i = 1; i <= n; i++)
+ {
+  cout << ans[i] << ' ';
+ }
+ cout << '\n';
+}
+```
+
+#### [国士知遇豫让心树上dp](https://www.matiji.net/exam/brushquestion/47/4777/C98C14523F069FECB0DEED64F00CEAB0)
+
+- **核心模型**:给定一棵树，每个节点可以赋予一个（或者）。问你有多少种赋值方案，使得赋值完毕后从根节点到达每一个叶子节点的唯一简单路径所经过的点构成的括号串是一个合法括号串
+- **修正逻辑**: 注意到合法括号串的trick：把左括号变成-1，右括号变成1，最后相加等于0.那么我们定义`dp[i][j]`为在点i的前缀和为j的方案数，考虑转移。**难点：**$$dp[u][j] = \prod_{v \in son(u)} dp[v][j]$$ 用乘法的原因是：你必须同时满足：$v_1$ 子树往下所有的叶子路径必须合法（假设满足状态 $S$ 的有 $X$ 种填法）并且 $v_2$ 子树往下所有的叶子路径必须合法（假设满足状态 $S$ 的有 $Y$ 种填法），
+- 既然这两件事必须同时发生且互不干扰，那么在状态 $S$ 下，$u$ 节点往下生长的总合法方案数自然就是 $X \times Y$。
+- **关键代码**:
+
+```cpp
+
+constexpr int MOD = 998244353;
+void solve()
+{
+    int n;
+    cin >> n;
+    vector<vi> mp(n + 1);
+    for (int i = 0; i < n - 1; i++)
+    {
+        int u, v;
+        cin >> u >> v;
+        mp[u].emplace_back(v);
+        mp[v].emplace_back(u);
+    }
+
+    vector<vi> dp(n + 1, vi(n + 1));
+
+    auto dfs = [&](int fa, int now, auto &&self) -> void
+    {
+        bool is_leave = 1;
+        for (auto v : mp[now])
+        {
+            if (v == fa)
+                continue;
+            is_leave = 0;
+            self(now, v, self);
+        }
+
+        if (is_leave)
+        {
+            dp[now][1] = 1;
+            return;
+        }
+
+        for (int i = 0; i <= n; i++)
+        {
+            int now_add1 = 0;
+            int now_addf1 = 0;
+            if (i)
+            {
+                now_add1 = 1;
+                for (auto v : mp[now])
+                {
+                    if (v == fa)
+                        continue;
+                    now_add1 *= dp[v][i - 1];
+                    now_add1 %= MOD;
+                }
+            }
+            if (i + 1 <= n)
+            {
+                now_addf1 = 1;
+                for (auto v : mp[now])
+                {
+                    if (v == fa)
+                        continue;
+                    now_addf1 *= dp[v][i + 1];
+                    now_addf1 %= MOD;
+                }
+            }
+
+            dp[now][i] = (now_addf1 + now_add1) % MOD;
+        }
+        return;
+    };
+
+    dfs(0, 1, dfs);
+    cout << dp[1][0] << '\n';
+}
+
+```
+
+#### [K. 星云桥 III（图上dfs）](https://hydro.ac/d/XJUCPC/p/5?tid=6a15a69ac1224fa17414cc50)
+
+- **核心模型**:给定一张 n 个点 m 条边的无重边无自环的连通无向图。这张图的所有简单环是否都满足其大小恰好等于5。若这张图没有简单环，也视为满足条件。
+- **解法**:把这题转化成在一颗树上找环，假如环的大小不等于5就错。wtf->树的深度。树上边差分来统计每条树边被“非树边（返祖边）”覆盖的次数。这也是在不写 Tarjan 算法的情况下，离线寻找桥（割边）或判定仙人掌图（Cactus Graph）的经典解法。**一个图跑完树上边差分，发现所有的树边 cnt <= 1（每条边最多被一个非树边覆盖，即最多在一个环里），并且非树边本身也没有重边，那么你就可以在赛场上果断判定：这是一个仙人掌图**。有环套环直接判否就好
+- **关键代码**:
+
+```cpp
+void solve()
+{
+    int n, m;
+    cin >> n >> m;
+
+    vector<vi> mp(n + 1);
+    for (int i = 0; i < m; i++)
+    {
+        int u, v;
+        cin >> u >> v;
+        mp[u].emplace_back(v);
+        mp[v].emplace_back(u);
+    }
+    vi cf(n + 1);
+    vi vis2(n + 1);
+    bool no = 0;
+    vi wtf(n + 1);
+    auto dfs2 = [&](int x, auto &&self, int fa) -> void
+    {
+        vis2[x] = 1;
+        for (auto y : mp[x])
+        {
+            if (y == fa)
+            {
+                continue;
+            }
+            if (vis2[y] == 0)
+            {
+                wtf[y] = wtf[x] + 1;
+                self(y, self, x);
+                // 回溯时累加子树的差分值
+                cf[x] += cf[y];
+            }
+            else if (vis2[y] == 1)
+            {
+                if ((wtf[x] - wtf[y] + 1) != 5)
+                {
+                    no = 1;
+                }
+                cf[x]++;
+                cf[y]--;
+            }
+        }
+        vis2[x] = 2;
+        if (cf[x] > 1)
+        {
+            no = 1;
+        }
+    };
+
+    wtf[1] = 1;
+    dfs2(1, dfs2, 0);
+    if (no)
+        cout << "NO" << '\n';
+    else
+    {
+        cout << "YES" << '\n';
+    }
+}
+```
+
+---
+
+---
+
 ### BFS
 
 #### P1434 [SHOI2002] 滑雪
@@ -990,6 +1328,129 @@ void solve()
   - 检测环路:如果拓扑排序无法将所有节点都加入到最终的序列中（
   - **“顺序”、“依赖”、“先决条件”，或者需要在一个有向图中进行基于依赖的计算（如 DP）时
 
+### 差分约束
+
+#### [倍杀测量者](https://www.luogu.com.cn/problem/P4926)
+
+- **核心模型**:
+- **思维误区 (Bug)**:
+- **修正逻辑 (Patch)**:建立D[0]为基础点，逻辑是当维护| `x[v] == x[u] + w` | `u -> v, w` 和 `v -> u, -w`就这样加进来两条边。超级源点只是保证每个点至少入队一次
+- **关键代码**:
+
+```cpp
+
+struct info
+{
+    int op, a, b, k;
+};
+
+void solve()
+{
+    int n, s, t;
+    cin >> n >> s >> t;
+    vector<info> flags;
+    rep(i, 0, s - 1)
+    {
+        int op, a, b, k;
+        cin >> op >> a >> b >> k;
+        flags.push_back({op, a, b, k});
+    }
+    vector<pii> fen;
+    rep(i, 0, t - 1)
+    {
+        int c, x;
+        cin >> c >> x;
+        fen.emplace_back(c, x);
+    }
+
+    auto check = [&](double x) -> bool
+    {
+        vector<vector<pii>> mp(n + 1);
+        for (auto [c, x] : fen)
+        {
+            mp[0].push_back({c, log(x)});
+            mp[c].push_back({0, -log(x)});
+        }
+        rep(i, 0, s - 1)
+        {
+
+            if (flags[i].op == 1)
+            {
+                if (flags[i].k - x <= 0)
+                    continue;
+                mp[flags[i].b].push_back({flags[i].a, log(flags[i].k - x)});
+            }
+            else
+            {
+
+                mp[flags[i].b].push_back({flags[i].a, -1 * log(flags[i].k + x)});
+            }
+        }
+
+        vector<double> d(n + 1, 0);
+        vi cnt(n + 1, 0);
+        vi inq(n + 1);
+        queue<int> q;
+        rep(i, 0, n)
+        {
+            q.emplace(i);
+            inq[i] = 1;
+        }
+        // d[0] = 0;
+        // q.emplace(0);
+        // inq[0] = 1;
+        while (!q.empty())
+        {
+            int u = q.front();
+            q.pop();
+            inq[u] = 0;
+            for (auto [v, w] : mp[u])
+            {
+                if (d[v] < d[u] + w - EPS)
+                {
+                    d[v] = d[u] + w;
+                    cnt[v]++;
+                    if (cnt[v] >= n)
+                    {
+                        return 0;
+                    }
+                    if (!inq[v])
+                    {
+                        q.emplace(v);
+                        inq[v] = 1;
+                    }
+                }
+            }
+        }
+        return 1;
+    };
+
+    double l = 0, r = 1e9;
+
+    for (int i = 1; i <= 100; i++)
+    {
+        double mid = (l + r) / 2;
+
+        if (check(mid))
+            r = mid;
+        else
+            l = mid;
+    }
+
+    if (!dcmp(l))
+    {
+        cout << -1 << '\n';
+    }
+    else
+    {
+        cout << fixed << setprecision(10) << l << '\n';
+    }
+}
+
+```
+
+---
+
 ### 图论：dijkstra
 
 #### 简单 Dijkstra 模板题
@@ -1409,6 +1870,261 @@ void solve()
 
 ```
 
+### floyd变体
+
+#### [括号路径](https://acm.hdu.edu.cn/contest/problem?cid=1202&pid=1006)
+
+- **核心模型**:看到数据范围和问法想到离线floyd，从floyd的初始化想，我门可以做一个类似区间dp的东西。考虑合法的括号子序列，松弛操作有两种，一种是往两边扩张，一种是和别的合法括号并排。dij是nmlogn的，数据范围支持我们一项一项转移。核心思路类似于floyd的第一维dp变形
+- **关键代码**:
+
+```cpp
+struct kuo
+{
+    int d;
+    int a, b;
+    kuo(int d = 0, int a = 0, int b = 0) : d(d), a(a), b(b) {}
+    bool operator>(const kuo &other) const
+    {
+        return d > other.d;
+    }
+};
+
+void solve()
+{
+    int n, m;
+    cin >> n >> m;
+    vector<vector<pii>> mp(n + 1);
+    vector<vector<pii>> mp2(n + 1);
+    int q;
+    cin >> q;
+    for (int i = 0; i < m; i++)
+    {
+        int u, v;
+        char c;
+        cin >> u >> v >> c;
+        if (c == '(')
+        {
+            mp[u].push_back({v, -1});
+            mp[v].push_back({u, -1});
+        }
+        else
+        {
+            mp2[u].push_back({v, 1});
+            mp2[v].push_back({u, 1});
+        }
+    }
+
+    vector<vi> floyd(n + 1, vi(n + 1, INF));
+    priority_queue<kuo, vector<kuo>, greater<>> pq;
+    for (int i = 1; i <= n; ++i)
+    {
+        floyd[i][i] = 0;
+        pq.push({0, i, i});
+    }
+    while (!pq.empty())
+    {
+        auto it = pq.top();
+        pq.pop();
+        int d = it.d;
+        int a = it.a;
+        int b = it.b;
+        for (auto zuo : mp[a])
+        {
+            for (auto you : mp2[b])
+            {
+                if (floyd[zuo.first][you.first] > d + 2)
+                {
+                    floyd[zuo.first][you.first] = d + 2;
+                    pq.emplace(kuo(d + 2, zuo.first, you.first));
+                }
+            }
+        }
+
+        for (int i = 1; i <= n; i++)
+        {
+            if (floyd[i][a] != INF)
+            {
+                if (floyd[i][b] > floyd[i][a] + d)
+                {
+                    floyd[i][b] = floyd[i][a] + d;
+                    pq.emplace(kuo(floyd[i][b], i, b));
+                }
+            }
+        }
+
+        for (int i = 1; i <= n; i++)
+        {
+            if (floyd[b][i] != INF)
+            {
+                if (floyd[a][i] > floyd[b][i] + d)
+                {
+                    floyd[a][i] = floyd[b][i] + d;
+                    pq.emplace(kuo(floyd[a][i], a, i));
+                }
+            }
+        }
+    }
+
+    while (q--)
+    {
+        int l, r;
+        cin >> l >> r;
+        if (floyd[l][r] != INF)
+        {
+            cout << floyd[l][r] << '\n';
+        }
+        else
+        {
+            cout << -1 << '\n';
+        }
+    }
+}
+
+```
+
+---
+
+### 最小生成树
+
+#### [MC0573潜入相府中](https://www.matiji.net/exam/brushquestion/60/4777/C98C14523F069FECB0DEED64F00CEAB0)
+
+- **核心模型**:三分+kruskal
+- **思维误区 (Bug)**: n,m,L ( 1≤n,m≤10^6  1≤L≤10^9 ) 如果每次都暴力sort跑克鲁斯卡尔，复杂度是 O(调用次数 * m log m)。爆了。我们家一个小小的优化跑三路归并
+- **关键代码**:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+using i64 = long long;
+using i128 = __int128_t;
+
+struct Edge {
+    int u, v;
+    i64 b;
+};
+
+struct DSU {
+    vector<int> fa, sz;
+    int n;
+
+    DSU(int n = 0) { init(n); }
+
+    void init(int n_) {
+        n = n_;
+        fa.resize(n + 1);
+        sz.assign(n + 1, 1);
+        iota(fa.begin(), fa.end(), 0);
+    }
+
+    int find(int x) {
+        while (x != fa[x]) {
+            fa[x] = fa[fa[x]];
+            x = fa[x];
+        }
+        return x;
+    }
+
+    bool unite(int x, int y) {
+        x = find(x);
+        y = find(y);
+        if (x == y) return false;
+        if (sz[x] < sz[y]) swap(x, y);
+        fa[y] = x;
+        sz[x] += sz[y];
+        return true;
+    }
+};
+
+void print_i128(i128 x) {
+    if (x < 0) {
+        cout << '-';
+        x = -x;
+    }
+    if (x >= 10) print_i128(x / 10);
+    cout << char('0' + x % 10);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    i64 L;
+    cin >> n >> m >> L;
+
+    vector<Edge> g[3]; // 0: k=-1, 1: k=0, 2: k=1
+    g[0].reserve(m);
+    g[1].reserve(m);
+    g[2].reserve(m);
+
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        i64 b, k;
+        cin >> u >> v >> b >> k;
+        int id = (k == -1 ? 0 : (k == 0 ? 1 : 2));
+        g[id].push_back({u, v, b});
+    }
+
+    for (int t = 0; t < 3; ++t) {
+        sort(g[t].begin(), g[t].end(), [](const Edge& a, const Edge& b) {
+            if (a.b != b.b) return a.b > b.b;
+            if (a.u != b.u) return a.u < b.u;
+            return a.v < b.v;
+        });
+    }
+
+    DSU dsu(n);
+
+    auto check = [&](i64 x) -> i128 {
+        dsu.init(n);
+        int ptr[3] = {0, 0, 0};
+        i128 ans = 0;
+        int cnt = 0;
+
+        while (cnt < n - 1) {
+            int choose = -1;
+            i128 best = -(i128)4e36;
+
+            for (int t = 0; t < 3; ++t) {
+                if (ptr[t] >= (int)g[t].size()) continue;
+                i64 k = t - 1; // 0->-1, 1->0, 2->1
+                i128 w = (i128)g[t][ptr[t]].b + (i128)k * x;
+                if (choose == -1 || w > best) {
+                    best = w;
+                    choose = t;
+                }
+            }
+
+            const Edge &e = g[choose][ptr[choose]++];
+            if (dsu.unite(e.u, e.v)) {
+                ans += best;
+                ++cnt;
+            }
+        }
+        return ans;
+    };
+
+    // 凸函数在整数区间上的最小值，可以三分
+    i64 lo = 0, hi = L;
+    while (hi - lo > 2) {
+        i64 m1 = lo + (hi - lo) / 3;
+        i64 m2 = hi - (hi - lo) / 3;
+        if (check(m1) < check(m2)) hi = m2;
+        else lo = m1;
+    }
+
+    i64 best_x = lo;
+    for (i64 x = lo + 1; x <= hi; ++x) {
+        if (check(x) < check(best_x)) best_x = x;
+    }
+
+    print_i128(check(best_x));
+    cout << '\n';
+    return 0;
+}
+```
+
 ---
 
 ### 分层图
@@ -1677,7 +2393,154 @@ void solve()
 }
 ```
 
----
+### bitset优化bfs
+
+#### [B.《金牌题》](https://hydro.ac/d/XJUCPC/p/12?tid=6a15a69ac1224fa17414cc50)
+
+- **核心模型**:
+
+>Alice 和 Bob 正在一张有向连通图上探索。两人具有不同的起点。
+>对于两人来说，每秒同时进行以下的操作：
+>如果当前所在的顶点有一条或多条出边，他们会任意地沿着一条出边移动到相邻的顶点；否则，如果他们当前所在的顶点没有出边，他们会停留在该顶点。
+>现在 Wensy 想知道，在某一时刻，他们二人是否有可能相遇呢？
+
+- **思维误区 (Bug)**: 第一直觉想知道：对于每个点每个人可能到得时间，复杂度会爆炸。然后第二想法是对于这一个时间每个人在的点有没有交集。考虑状态空间n^2，只能容忍再多根号n得运算，如果遇到超级稠密图有可能
+- **修正逻辑 (Patch)**:设 $A$ 是 Alice 在第 $t$ 步可能到达的所有顶点的集合。设 $B$ 是 Bob 在第 $t$ 步可能到达的所有顶点的集合。两人在第 $t$ 步能相遇的充分必要条件是：集合 $A$ 和集合 $B$ 有交集。
+- **在时间维度上这道题卡bitset**
+- **卡常教学**：
+  - `A.set(x)`->`A[x]=1`
+  - `if (A.test(i))`->`if (vis[i] == 1)`
+  - `if ((A & B).any())` -> `bool meet = false;for (int i = 1; i <= n; i++) {if (A_vis[i] == 1 && B_vis[i] == 1) {meet = true;break;}}if (meet) ...`
+  - `next_A |= mp[i];`->状态转移：转移到下一个点，意思是A下一步可能会在哪
+- **关键代码**:
+
+```cpp
+
+void solve()
+{
+    int n, m, x, y;
+    cin >> n >> m >> x >> y;
+    vector<bitset<305>> mp(n + 1);
+    vi out_dg(n + 1, 0);
+    for (int i = 0; i < m; i++)
+    {
+        int u, v;
+        cin >> u >> v;
+        mp[u].set(v);
+        out_dg[u]++;
+    }
+
+    for (int i = 1; i <= n; i++)
+    {
+        if (out_dg[i]==0)
+            mp[i].set(i);
+    }
+
+    bitset<305> A, B;
+    A.set(x);
+    B.set(y);
+
+    for (int step = 0; step <= n * n; step++)
+    {
+
+        if ((A & B).any())
+        {
+            cout << "Yes" << '\n';
+            return;
+        }
+
+        bitset<305> next_A, next_B;
+
+        for (int i = 1; i <= n; i++)
+        {
+            if (A.test(i))
+                next_A |= mp[i];
+            if (B.test(i))
+                next_B |= mp[i];
+        }
+
+        A = next_A;
+        B = next_B;
+    }
+
+    cout << "No" << '\n';
+
+}
+
+```
+
+- **均摊下的可过做法（不需要优化卡常）**
+
+```cpp
+
+void solve()
+{
+    int n;
+    cin >> n;
+    int m;
+    cin >> m;
+    int x, y;
+    cin >> x >> y;
+    vector<vector<int>> mp(n + 1);
+    for (int i = 0; i < m; i++)
+    {
+        int u, v;
+        cin >> u >> v;
+        mp[u].push_back(v);
+    }
+
+    vector<vi> vis(n + 1, vi(n + 1, 0));
+    queue<pii> q;
+    vis[x][y] = 1;
+    q.emplace(x, y);
+    while (!q.empty())
+    {
+        auto [u, v] = q.front();
+        q.pop();
+
+        if (u == v)
+        {
+            cout << "Yes\n";
+            return;
+        }
+
+        vi next_alice;
+        vi next_bob;
+        if (mp[u].empty())
+        {
+             next_alice = {u};
+        }
+        else
+        {
+            next_alice = mp[u];
+        }
+        if (mp[v].empty())
+        {
+             next_bob = {v};
+        }
+        else
+        {
+            next_bob= mp[v];
+        }
+
+        for (int it1 : next_alice)
+        {
+            for (int it2 : next_bob)
+            {
+                if (!vis[it1][it2])
+                {
+                    vis[it1][it2] = 1;
+                    q.push({it1, it2});
+                }
+            }
+        }
+    }
+    cout << "No\n";
+    return;
+}
+
+```
+
 ---
 
 ### tarjan
