@@ -1,14 +1,13 @@
 ---
-title: wp_基础算法与杂
-date: 2025-12-05 16:50:10
+title: wp_基础算法与实现
+date: ''
 tags:
   - 算法
   - C++
-  - Problems
   - STL
-  - tricks
-
+  - Tricks
 math: true
+category: 题解复盘
 ---
 ## 基础算法
 

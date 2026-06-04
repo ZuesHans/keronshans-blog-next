@@ -1,3 +1,10 @@
+---
+title: HDU_赛马数学证明
+category: 题解复盘
+date: '2026-06-04'
+tags:
+  - 数学
+---
 A174605 数学证明
 1. 序列定义
 由 Mathematica 代码可知：

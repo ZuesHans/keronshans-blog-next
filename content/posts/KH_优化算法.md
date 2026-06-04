@@ -1,11 +1,13 @@
 ---
-title: KH优化算法
-date: 2025-11-13
+title: KH_优化算法
+date: ''
 tags:
-    - C++
-    - 算法
-    - Trick
-    - 杂项
+  - C++
+  - 算法
+  - Trick
+  - 杂项
+  - 优化
+category: 学习笔记
 ---
 
 

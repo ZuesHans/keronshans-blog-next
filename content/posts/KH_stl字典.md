@@ -1,12 +1,11 @@
 ---
-title: KH_stl字典
-date: 2025-11-10 00:19:54
+title: KH_C++ STL语法字典
+date: '2026-06-04'
 tags:
-    - C++
-    - 数据结构
-    - 算法
+  - C++
+  - STL
 highlight_shrink: false
-
+category: 学习笔记
 ---
 
 ## bitset

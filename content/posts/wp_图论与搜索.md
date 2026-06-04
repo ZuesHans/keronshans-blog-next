@@ -1,12 +1,12 @@
 ---
 title: wp_图论与搜索
-date: 2025-12-06
+date: ''
 tags:
-    - 杂谈
-    - 算法
-    - Problems
-    - 图论
+  - 算法
+  - 图论
+  - C++
 math: true
+category: 题解复盘
 ---
 
 

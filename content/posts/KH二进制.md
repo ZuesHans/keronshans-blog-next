@@ -1,11 +1,12 @@
 ---
-title: KH二进制
-date: 2025-11-13
+title: KH_二进制
+date: '2026-06-04'
 tags:
-    - C++
-    - 算法
-    - Trick
-    - 二进制
+  - C++
+  - 算法
+  - Trick
+  - 二进制
+category: 学习笔记
 ---
 
 ## 二进制常见trick
@@ -70,7 +71,7 @@ tags:
     - 推广到数组：$$\gcd(a_1, a_2, a_3, \dots, a_n) = \gcd(a_1, a_2-a_1, a_3-a_2, \dots, a_n-a_{n-1})$$
     - 实战用途： 题目让你求一个数组在加上某个常数 $x$ 后的全数组 GCD（即求 $\gcd(a_1+x, a_2+x, \dots)$）。直接转化！差分数组是不变的，所以等于 $\gcd(a_1+x, \gcd(a_2-a_1, a_3-a_2, \dots))$。你只需要预处理原数组的差分 GCD，每次询问 $O(1)$ 解决。
 
-## 教学局
+## 教学
 
 ### &
 
@@ -172,12 +173,6 @@ void solve()
   - 这里涉及到一点数学上的小处理:如果那个位置上的01串里面有1就有2^(k-1)个组合方式。
 - **题目**
   - 给出一个数列若干个区间lr的区间异或和，求这个数列的非空子集的异或和
->
->Once Divan analyzed a sequence $a_1, a_2, \ldots, a_n$ consisting of $n$ non-negative integers as follows. He considered each non-empty subsequence of the sequence $a$, computed the [bitwise XOR](https://en.wikipedia.org/wiki/Bitwise_operation#XOR) of its elements and added up all the XORs, obtaining the coziness of the sequence $a$.
-A sequence $c$ is a subsequence of a sequence $d$ if $c$ can be obtained from $d$ by deletion of several (possibly, zero or all) elements. For example, $[1, \, 2, \, 3, \, 4]$, $[2, \, 4]$, and $[2]$ are subsequences of $[1, \, 2, \, 3, \, 4]$, but $[4, \, 3]$ and $[0]$ are not.
-Divan was very proud of his analysis, but now he lost the sequence $a$, and also the coziness value! However, Divan remembers the value of [bitwise OR](https://en.wikipedia.org/wiki/Bitwise_operation#OR) on $m$ contiguous subsegments of the sequence $a$. It turns out that each element of the original sequence is contained in **at least one** of these $m$ segments.
-Divan asks you to help find the coziness of the sequence $a$ using the information he remembers. If several coziness values are possible, print any.
-As the result can be very large, print the value modulo $10^9 + 7$.
 >
 >有一次，Divan分析了一个由 $$$n$$$ 个非负整数组成的序列 $$$a &#95; 1, a &#95; 2, \ldots, a &#95; n$$$ ，如下所示。他考虑序列 $$$a$$$ 的每个非空子序列，计算其元素的[位异或](https://en.wikipedia.org/wiki/Bitwise_operation#XOR)并将所有异或相加，得到序列 $$$a$$$ 的舒适度。
 序列 $$$c$$$ 是序列 $$$d$$$ 的子序列，如果 $$$c$$$ 可以通过删除 $$$d$$$ 中的几个（可能为零或全部）元素来获得。例如， $$$[1, \\, 2, \\, 3, \\, 4]$$$ ， $$$[2, \\, 4]$$$ 和 $$$[2]$$$ 是 $$$[1, \\, 2, \\, 3, \\, 4]$$$ 的子序列，但 $$$[4, \\, 3]$$$ 和 $$$[0]$$$ 不是。

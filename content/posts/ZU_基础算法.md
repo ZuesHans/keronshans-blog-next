@@ -1,12 +1,12 @@
 ---
-title: ZU_基础算法
-date: 2025年11月22日
+title: ZU_基础算法模板
+date: '2026-06-04'
 tags:
-    - 算法
-    - C++
-    - 模板
+  - 算法
+  - C++
+  - 模板
 highlight_shrink: false
-
+category: 算法板子
 ---
 
 
@@ -2165,7 +2165,7 @@ int LIS_nlogn(vector<int>& a) {
 
 - **注意**：求下降序列需要`auto it= upper_bound(all(hei),hsh,greater<int>());`。普通的公式只能算：**排列好后的不下降数列**
 
-## 杂
+## 字符串算法
 
 ### 字符串哈希
 
@@ -2236,5 +2236,34 @@ int main() {
     }
     
     return 0;
+}
+```
+
+## 杂
+
+### 二进制枚举
+
+- 用代码表达就是从高位到低位扫描：
+
+```cpp
+ll R = 0;
+for(int d = 29; d >= 0; d--){
+    if(n & (1ll << d)){  // 如果第d位是1
+        R = R * ten[d] + rli[d];
+    }
+}
+```
+
+### 调和级数优化找因子复杂度
+
+```cpp
+vector<vi> divisors(2e5+2);
+
+void precompute_divisors() {
+    for (int i = 1; i <= 2e5; ++i) { // i 作为约数
+        for (int j = i; j <= 2e5; j += i) { // j 是 i 的倍数
+            divisors[j].push_back(i); 
+        }
+    }
 }
 ```

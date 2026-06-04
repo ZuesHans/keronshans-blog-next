@@ -1,12 +1,13 @@
 ---
-title: wp_̰贪心
-date: 2025-12-06
+title: wp_贪心
+date: ''
 tags:
-    - 贪心算法
-    - 算法
-    - Problems
-    - 贪心
+  - 贪心算法
+  - 算法
+  - 贪心
+  - C++
 math: true
+category: 题解复盘
 ---
 
 

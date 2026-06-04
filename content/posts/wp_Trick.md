@@ -1,11 +1,13 @@
 ---
 title: wp_Trick
-date: 2025-12-06
+date: ''
 tags:
-    - Trick
-    - 算法
-    - Problems
+  - Trick
+  - 算法
+  - C++
+  - codeforces
 math: true
+category: 题解复盘
 ---
 
 ## 括号序列

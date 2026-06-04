@@ -1,9 +1,11 @@
 ---
 title: KH_对拍写法
-date: 2026-02-11
+date: ''
 tags:
-    - 杂谈
-    - 算法
+  - 杂谈
+  - python
+  - C++
+category: 算法板子
 ---
 
 ## python 的随机数生成器写法

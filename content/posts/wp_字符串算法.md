@@ -1,8 +1,11 @@
 ---
-title: wo_字符串算法
-date: 2026-01-12
+title: wp_字符串算法
+date: ''
 tags:
-    - 算法
+  - 算法
+  - C++
+  - 字符串
+category: 题解复盘
 ---
 ## 字符串
 

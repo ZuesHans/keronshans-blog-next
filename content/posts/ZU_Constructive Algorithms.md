@@ -1,10 +1,12 @@
 ---
 title: ZU_Constructive Algorithms
-date: 2025-12-30
+date: ''
 tags:
-    - C++
-    - 算法
-    - 总结
+  - C++
+  - 算法
+  - 总结
+  - codeforces
+category: 碎碎念
 ---
 ## 构造算法
 

@@ -1,13 +1,13 @@
 ---
 title: wp_动态规划
-date: 2025-12-06
+date: ''
 tags:
-    - 算法
-    - DP
-    - Problems
-
-
+  - 算法
+  - DP
+  - 动态规划
+  - C++
 math: true
+category: 题解复盘
 ---
 
 ## 动态规划入门

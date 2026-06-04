@@ -1,12 +1,13 @@
 ---
 title: wp_数学
-date: 2025-12-06
+date: '2026-06-04'
 tags:
-    - 数学
-    - 算法
-    - Problems
-
+  - 数学
+  - 算法
+  - Trick
+  - C++
 math: true
+category: 题解复盘
 ---
 
 ## 数学
