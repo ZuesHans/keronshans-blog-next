@@ -4,7 +4,6 @@ date: 2026-02-11
 tags:
     - 杂谈
     - 算法
-cover: /img/cover/picg_17.png
 ---
 
 ## python 的随机数生成器写法

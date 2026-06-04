@@ -2,7 +2,6 @@
 title: KH_博弈论
 tags:
     - 算法
-cover: /img/cover/picg_11.png
 ---
 
 ## 博弈操作

@@ -5,7 +5,6 @@ tags:
     - C++
     - 算法
     - 总结
-cover: /img/cover/picg_16.png
 ---
 ## 构造算法
 

@@ -39,9 +39,9 @@ const config: Config = {
         },
       },
       fontFamily: {
-        mono: ['"JetBrains Mono"', "monospace"],
-        display: ['"Inter"', '"HarmonyOS Sans SC"', '"MiSans"', '"Segoe UI"', '"PingFang SC"', '"Microsoft YaHei UI"', '"Microsoft YaHei"', "sans-serif"],
-        body: ['"Inter"', '"HarmonyOS Sans SC"', '"MiSans"', '"Segoe UI"', '"PingFang SC"', '"Microsoft YaHei UI"', '"Microsoft YaHei"', "sans-serif"],
+        mono: ["var(--font-mono)"],
+        display: ["var(--font-display)"],
+        body: ["var(--font-body)"],
       },
       animation: {
         "glow-pulse": "glow-pulse 2s ease-in-out infinite alternate",

@@ -6,7 +6,6 @@ tags:
     - C++
     - 模板
 highlight_shrink: false
-cover: /img/cover/picg_19.png
 
 ---
 

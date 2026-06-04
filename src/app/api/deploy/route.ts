@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
-
-const ADMIN_PASSWORD = "zues1";
+import { authenticateAdmin } from "@/lib/adminPassword";
 
 export async function POST(request: Request) {
-  const password = request.headers.get("x-admin-password");
-  if (password !== ADMIN_PASSWORD) {
+  if (!authenticateAdmin(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

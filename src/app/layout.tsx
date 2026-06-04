@@ -6,8 +6,8 @@ import { PageTitleChanger } from "@/components/PageTitleChanger";
 import Navigation from "@/components/Navigation";
 
 export const metadata: Metadata = {
-  title: "Keronshans | 技术博客",
-  description: "ACM竞争编程博客 - 算法、模板、错题本",
+  title: "Keronshans",
+  description: "小猫的小窝：算法竞赛、CS 学习与日常整理。",
 };
 
 export default function RootLayout({
@@ -17,12 +17,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
-      <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap"
-          rel="stylesheet"
-        />
-      </head>
       <body className="font-body transition-colors duration-300 min-h-screen" style={{ background: "var(--owl-bg)", color: "var(--owl-text)" }}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <PageTitleChanger />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { getAdminPassword, setAdminPassword } from "@/lib/auth";
 
 interface CheckinRecord {
   id: number;
@@ -26,6 +27,7 @@ export default function CheckinPage() {
   const [todayNote, setTodayNote] = useState("");
   const [isAuth, setIsAuth] = useState(false);
   const [password, setPassword] = useState("");
+  const [adminPassword, setAdminPasswordState] = useState("");
   const [error, setError] = useState("");
   const [hoveredCell, setHoveredCell] = useState<string | null>(null);
   const [viewYear, setViewYear] = useState(new Date().getFullYear());
@@ -40,13 +42,18 @@ export default function CheckinPage() {
 
   useEffect(() => {
     fetchRecords();
-    if (sessionStorage.getItem("keronshans_auth") === "true") setIsAuth(true);
+    if (sessionStorage.getItem("keronshans_auth") === "true") {
+      setIsAuth(true);
+      setAdminPasswordState(getAdminPassword());
+    }
   }, [fetchRecords]);
 
   const handleLogin = () => {
-    if (password === "zues1") {
+    if (password.trim()) {
       setIsAuth(true);
       sessionStorage.setItem("keronshans_auth", "true");
+      setAdminPassword(password);
+      setAdminPasswordState(password);
       setError("");
     } else {
       setError("密码错误");
@@ -63,7 +70,7 @@ export default function CheckinPage() {
     try {
       const res = await fetch("/api/checkins", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-admin-password": "zues1" },
+        headers: { "Content-Type": "application/json", "x-admin-password": adminPassword },
         body: JSON.stringify({ date: today, type: todayType, count: todayCount, note: todayNote }),
       });
       if (res.ok) {
@@ -78,7 +85,7 @@ export default function CheckinPage() {
     try {
       const res = await fetch(`/api/checkins?id=${id}`, {
         method: "DELETE",
-        headers: { "x-admin-password": "zues1" },
+        headers: { "x-admin-password": adminPassword },
       });
       if (res.ok) setRecords(records.filter((r) => r.id !== id));
     } catch {}

@@ -5,7 +5,6 @@ tags:
     - Trick
     - 算法
     - Problems
-cover: /img/cover/picg_9.png
 math: true
 ---
 

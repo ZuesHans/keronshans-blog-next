@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Keronshans Blog Manager</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="logo">K</div>
+          <div>
+            <h1>Blog Manager</h1>
+            <p>本地内容工作台</p>
+          </div>
+        </div>
+        <nav class="nav">
+          <button class="nav-item active" data-view="posts">文章</button>
+          <button class="nav-item" data-view="snippets">模板片段</button>
+          <button class="nav-item" data-view="problems">题目</button>
+          <button class="nav-item" data-view="tags">标签</button>
+        </nav>
+        <div class="root-path" id="rootPath"></div>
+      </aside>
+
+      <main class="workspace">
+        <header class="toolbar">
+          <div class="search-wrap">
+            <input id="searchInput" type="search" placeholder="搜索标题、标签、说明..." />
+          </div>
+          <div class="toolbar-actions">
+            <button id="openProjectBtn">打开项目 VS Code</button>
+            <button id="openItemBtn">打开当前文件</button>
+            <button id="previewBtn">预览</button>
+            <button id="buildBtn">构建检查</button>
+            <button id="gitBtn">GitHub 备份</button>
+            <button id="deployBtn">发布 CF</button>
+          </div>
+        </header>
+
+        <section class="content">
+          <section class="list-panel">
+            <div class="list-head">
+              <div>
+                <h2 id="viewTitle">文章</h2>
+                <p id="viewHint">管理 content/posts/*.md</p>
+              </div>
+              <button id="newBtn" class="primary">新建</button>
+            </div>
+            <div class="filters" id="filters"></div>
+            <div class="items" id="items"></div>
+          </section>
+
+          <section class="detail-panel">
+            <div class="empty" id="emptyState">
+              <h3>选择一项开始管理</h3>
+              <p>正文仍然交给 VS Code，这里负责元数据、标签和发布流程。</p>
+            </div>
+
+            <form id="detailForm" class="detail hidden">
+              <div class="detail-title-row">
+                <h2 id="detailHeading">元数据</h2>
+                <button type="button" id="showInFolderBtn">所在文件夹</button>
+              </div>
+
+              <label>
+                标题
+                <input name="title" id="fieldTitle" />
+              </label>
+
+              <label class="post-only">
+                分类
+                <select name="category" id="fieldCategory"></select>
+              </label>
+
+              <div class="grid2">
+                <label>
+                  日期
+                  <input name="date" id="fieldDate" type="date" />
+                </label>
+                <label class="snippet-only">
+                  语言
+                  <input name="language" id="fieldLanguage" placeholder="C++" />
+                </label>
+                <label class="problem-only">
+                  平台
+                  <select name="platform" id="fieldPlatform">
+                    <option value="cf">Codeforces</option>
+                    <option value="atcoder">AtCoder</option>
+                    <option value="lg">洛谷</option>
+                    <option value="nc">牛客</option>
+                    <option value="hdu">HDU</option>
+                    <option value="other">其他</option>
+                  </select>
+                </label>
+                <label class="problem-only">
+                  状态
+                  <select name="status" id="fieldStatus">
+                    <option value="AC">AC</option>
+                    <option value="WA">WA</option>
+                    <option value="TLE">TLE</option>
+                    <option value="RE">RE</option>
+                    <option value="REVIEW">待复习</option>
+                    <option value="TODO">待做</option>
+                  </select>
+                </label>
+              </div>
+
+              <label class="problem-only">
+                题目链接
+                <input name="url" id="fieldUrl" />
+              </label>
+
+              <label>
+                标签，逗号分隔
+                <input name="tags" id="fieldTags" placeholder="DP, 图论, 模板" />
+              </label>
+
+              <label class="snippet-only">
+                描述
+                <textarea name="description" id="fieldDescription" rows="3"></textarea>
+              </label>
+
+              <label class="problem-only">
+                备注
+                <textarea name="note" id="fieldNote" rows="3"></textarea>
+              </label>
+
+              <label class="problem-only">
+                复盘
+                <textarea name="analysis" id="fieldAnalysis" rows="6"></textarea>
+              </label>
+
+              <div class="meta-line" id="metaLine"></div>
+              <div class="detail-actions">
+                <button type="button" id="saveMetaBtn" class="primary">保存元数据</button>
+                <button type="button" id="editBodyBtn">用 VS Code 编辑正文</button>
+              </div>
+            </form>
+
+            <section id="tagPanel" class="detail hidden">
+              <h2>标签管理</h2>
+              <p>批量重命名会同时修改文章、模板片段和题目。</p>
+              <div class="tag-cloud" id="tagCloud"></div>
+              <div class="rename-box">
+                <input id="oldTagInput" placeholder="原标签" />
+                <input id="newTagInput" placeholder="新标签" />
+                <button id="renameTagBtn" class="primary">批量重命名</button>
+              </div>
+            </section>
+          </section>
+        </section>
+
+        <section class="log-panel">
+          <div class="log-head">
+            <strong>运行日志</strong>
+            <div>
+              <button id="cleanupBtn">修复 .open-next EPERM</button>
+              <button id="clearLogBtn">清空</button>
+            </div>
+          </div>
+          <pre id="logOutput"></pre>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="newDialog">
+      <form method="dialog" id="newForm">
+        <h2 id="newDialogTitle">新建</h2>
+        <label>
+          标题
+          <input id="newTitle" required />
+        </label>
+        <label class="new-post-only">
+          分类
+          <select id="newCategory"></select>
+        </label>
+        <label class="new-snippet-only">
+          语言
+          <input id="newLanguage" value="C++" />
+        </label>
+        <label class="new-problem-only">
+          题目链接
+          <input id="newUrl" />
+        </label>
+        <label>
+          标签
+          <input id="newTags" placeholder="逗号分隔" />
+        </label>
+        <menu>
+          <button value="cancel">取消</button>
+          <button id="confirmNewBtn" value="default" class="primary">创建</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="gitDialog">
+      <form method="dialog">
+        <h2>GitHub 备份</h2>
+        <label>
+          Commit message
+          <input id="commitMessage" value="chore: update blog content" />
+        </label>
+        <p>会执行 git status、git add -A、git commit、git push origin main。</p>
+        <menu>
+          <button value="cancel">取消</button>
+          <button id="confirmGitBtn" value="default" class="primary">开始备份</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <script src="./renderer.js"></script>
+  </body>
+</html>

@@ -3,7 +3,6 @@ title: wo_字符串算法
 date: 2026-01-12
 tags:
     - 算法
-cover: /img/cover/picg_12.png
 ---
 ## 字符串
 

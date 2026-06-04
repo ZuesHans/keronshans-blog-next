@@ -125,11 +125,11 @@ export default function PostInteraction({ postId }: { postId: string }) {
   };
 
   const handleAdminLogin = () => {
-    if (adminPassword === "zues1") {
+    if (adminPassword.trim()) {
       setIsAdmin(true);
       setShowAdminPanel(false);
     } else {
-      setError("Wrong password");
+      setError("请输入管理员密码");
     }
   };
 

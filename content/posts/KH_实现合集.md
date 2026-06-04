@@ -4,7 +4,6 @@ date: 2026-03-07
 tags:
 
     - 算法
-cover: /img/cover/picg_5.png
 ---
 
 ## 实现二进制拼凑某个数字

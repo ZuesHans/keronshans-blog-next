@@ -5,7 +5,6 @@ tags:
     - 算法
     - Problems
 
-cover: /img/cover/picg_16.png
 ---
 
 

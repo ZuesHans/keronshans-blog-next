@@ -6,7 +6,6 @@ tags:
     - 算法
     - Trick
     - 杂项
-cover: /img/cover/picg_3.png
 ---
 
 

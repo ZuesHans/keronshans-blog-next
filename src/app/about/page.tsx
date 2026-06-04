@@ -4,13 +4,10 @@ const interests = [
   "C++",
   "Python",
   "ACM / XCPC",
-  "图论",
-  "动态规划",
   "精神分析",
-  "音乐剧",
+  "音乐剧爱好者",
   "Hamilton",
   "药理学",
-  "三国杀",
   "中二 / pjsk 入门",
 ];
 
@@ -90,6 +87,19 @@ export default function AboutPage() {
           <div className="space-y-3 text-sm font-mono" style={{ color: "var(--owl-textSecondary)" }}>
             <p>文章内容来源于学习笔记和解题记录。</p>
             <p>以后会慢慢把模板、错题、思路和碎碎念整理得更顺手。</p>
+          </div>
+        </div>
+        {/* cp Info */}
+        <div className="cyber-card p-6">
+          <h3 className="text-lg font-display font-semibold mb-4">
+            关于奖项
+          </h3>
+          <div className="space-y-3 text-sm font-mono" style={{ color: "var(--owl-textSecondary)" }}>
+            <p>（其实只是做个归纳以免忘记了）</p>
+            <p>2026年第二十三届腾讯“codebuddy杯”广东省大学生程序设计竞赛 银奖 </p>
+            <p>2026年河南省大学生程序设计竞赛 银奖（打星） </p>
+            <p>2026年蓝桥杯省赛一等奖 </p>
+            <p>团体程序设计天梯赛 国三 </p>
           </div>
         </div>
 

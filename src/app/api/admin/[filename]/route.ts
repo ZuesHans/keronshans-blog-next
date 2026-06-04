@@ -1,11 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-
-const ADMIN_PASSWORD = "zues1";
-
-function authenticate(request: Request): boolean {
-  return request.headers.get("x-admin-password") === ADMIN_PASSWORD;
-}
+import { authenticateAdmin } from "@/lib/adminPassword";
 
 function inferCategory(filename: string): string {
   if (filename.startsWith("KH_")) return "笔记";
@@ -17,7 +12,7 @@ function inferCategory(filename: string): string {
 
 // GET /api/admin/[filename] - get single post
 export async function GET(request: Request, { params }: { params: Promise<{ filename: string }> }) {
-  if (!authenticate(request)) {
+  if (!authenticateAdmin(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -59,7 +54,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ file
 
 // PUT /api/admin/[filename] - update post
 export async function PUT(request: Request, { params }: { params: Promise<{ filename: string }> }) {
-  if (!authenticate(request)) {
+  if (!authenticateAdmin(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

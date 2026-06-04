@@ -6,7 +6,6 @@ tags:
     - 数据结构
     - 算法
 highlight_shrink: false
-cover: /img/cover/picg_4.png
 
 ---
 

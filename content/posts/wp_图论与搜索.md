@@ -6,7 +6,6 @@ tags:
     - 算法
     - Problems
     - 图论
-cover: /img/cover/picg_11.png
 math: true
 ---
 

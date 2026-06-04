@@ -7,7 +7,6 @@ tags:
     - Problems
 
 
-cover: /img/cover/picg_5.png
 math: true
 ---
 

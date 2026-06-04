@@ -3,7 +3,6 @@ title: Diary日记
 date: 2025-11-05 17:31:22
 tags:
     - 杂谈
-cover: /img/cover/picg_diary.png
 
 ---
 ## 2026年4月1日

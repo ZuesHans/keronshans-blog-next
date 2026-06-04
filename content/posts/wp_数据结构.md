@@ -6,7 +6,6 @@ tags:
     - 数据结构
     - Problems
 
-cover: /img/cover/picg_14.png
 ---
 ## 数据结构
 

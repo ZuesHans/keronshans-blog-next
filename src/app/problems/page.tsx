@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { SITE_PASSWORD, verifyPassword, isAuthenticated, setAuthenticated } from "@/lib/auth";
+import { verifyPassword, isAuthenticated, setAuthenticated, setAdminPassword, getAdminPassword } from "@/lib/auth";
 
 interface ProblemRecord {
   id: string;
@@ -50,6 +50,7 @@ export default function ProblemsPage() {
   const [loaded, setLoaded] = useState(false);
   const [isAuth, setIsAuth] = useState(false);
   const [password, setPassword] = useState("");
+  const [adminPassword, setAdminPasswordState] = useState("");
   const [error, setError] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -80,12 +81,17 @@ export default function ProblemsPage() {
 
   useEffect(() => {
     fetchProblems();
-    if (isAuthenticated()) setIsAuth(true);
+    if (isAuthenticated()) {
+      setIsAuth(true);
+      setAdminPasswordState(getAdminPassword());
+    }
   }, [fetchProblems]);
 
   const handleLogin = () => {
     if (verifyPassword(password)) {
       setAuthenticated();
+      setAdminPassword(password);
+      setAdminPasswordState(password);
       setIsAuth(true);
       setError("");
     } else {
@@ -100,7 +106,7 @@ export default function ProblemsPage() {
     try {
       const res = await fetch("/api/problems", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-admin-password": SITE_PASSWORD },
+        headers: { "Content-Type": "application/json", "x-admin-password": adminPassword },
         body: JSON.stringify({ id, title: formTitle.trim(), url: formUrl.trim(), platform: formPlatform, status: formStatus, tags: formTags, date: new Date().toISOString().split("T")[0], note: formNote.trim(), analysis: formAnalysis.trim() }),
       });
       if (res.ok) {
@@ -116,7 +122,7 @@ export default function ProblemsPage() {
     try {
       const res = await fetch(`/api/problems?id=${id}`, {
         method: "DELETE",
-        headers: { "x-admin-password": SITE_PASSWORD },
+        headers: { "x-admin-password": adminPassword },
       });
       if (res.ok) setProblems(problems.filter((p) => p.id !== id));
     } catch {}
@@ -126,7 +132,7 @@ export default function ProblemsPage() {
     try {
       const res = await fetch("/api/problems", {
         method: "PUT",
-        headers: { "Content-Type": "application/json", "x-admin-password": SITE_PASSWORD },
+        headers: { "Content-Type": "application/json", "x-admin-password": adminPassword },
         body: JSON.stringify({ id, status: newStatus }),
       });
       if (res.ok) setProblems(problems.map((p) => (p.id === id ? { ...p, status: newStatus } : p)));
@@ -137,7 +143,7 @@ export default function ProblemsPage() {
     try {
       const res = await fetch("/api/problems", {
         method: "PUT",
-        headers: { "Content-Type": "application/json", "x-admin-password": SITE_PASSWORD },
+        headers: { "Content-Type": "application/json", "x-admin-password": adminPassword },
         body: JSON.stringify({ id, analysis: editAnalysisText }),
       });
       if (res.ok) {

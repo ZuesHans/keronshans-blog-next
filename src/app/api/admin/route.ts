@@ -1,15 +1,10 @@
 import { NextResponse } from "next/server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-
-const ADMIN_PASSWORD = "zues1";
-
-function authenticate(request: Request): boolean {
-  return request.headers.get("x-admin-password") === ADMIN_PASSWORD;
-}
+import { authenticateAdmin } from "@/lib/adminPassword";
 
 // GET /api/admin - list all posts
 export async function GET(request: Request) {
-  if (!authenticate(request)) {
+  if (!authenticateAdmin(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -34,7 +29,7 @@ export async function GET(request: Request) {
 
 // POST /api/admin - create new post
 export async function POST(request: Request) {
-  if (!authenticate(request)) {
+  if (!authenticateAdmin(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -68,7 +63,7 @@ export async function POST(request: Request) {
 
 // DELETE /api/admin?filename=xxx - delete post
 export async function DELETE(request: Request) {
-  if (!authenticate(request)) {
+  if (!authenticateAdmin(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

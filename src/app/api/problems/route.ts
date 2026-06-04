@@ -1,26 +1,23 @@
 import { NextResponse } from "next/server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-
-const ADMIN_PASSWORD = "zues1";
-
-function authenticate(request: Request): boolean {
-  return request.headers.get("x-admin-password") === ADMIN_PASSWORD;
-}
+import { authenticateAdmin } from "@/lib/adminPassword";
+import { getLocalProblems } from "@/lib/localProblems";
 
 // GET /api/problems - list all problems (public)
 export async function GET() {
   try {
     const { env } = await getCloudflareContext({ async: true });
     const { results } = await env.DB.prepare("SELECT * FROM problems ORDER BY created_at DESC").all();
+    if (!results || results.length === 0) return NextResponse.json(getLocalProblems());
     return NextResponse.json(results);
   } catch {
-    return NextResponse.json([]);
+    return NextResponse.json(getLocalProblems());
   }
 }
 
 // POST /api/problems - create a problem (auth required)
 export async function POST(request: Request) {
-  if (!authenticate(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!authenticateAdmin(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const { env } = await getCloudflareContext({ async: true });
     const { id, title, url, platform, status, tags, date, note, analysis } = await request.json();
@@ -39,7 +36,7 @@ export async function POST(request: Request) {
 
 // PUT /api/problems - update specific fields of a problem (auth required)
 export async function PUT(request: Request) {
-  if (!authenticate(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!authenticateAdmin(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const { env } = await getCloudflareContext({ async: true });
     const { id, title, url, platform, status, tags, date, note, analysis } = await request.json();
@@ -70,7 +67,7 @@ export async function PUT(request: Request) {
 
 // DELETE /api/problems?id=xxx - delete a problem (auth required)
 export async function DELETE(request: Request) {
-  if (!authenticate(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!authenticateAdmin(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const { env } = await getCloudflareContext({ async: true });
     const { searchParams } = new URL(request.url);

@@ -18,7 +18,7 @@ if(git status --porcelain){
 if(-not $SkipBuild){
   Write-Host ""
   Write-Host "[1/6] Building..." -ForegroundColor Yellow
-  npx opennextjs-cloudflare build
+  node scripts/with-wrangler-env.cjs opennextjs-cloudflare build
   if($LASTEXITCODE-ne 0){Write-Host "Build failed!" -ForegroundColor Red;Pop-Location;exit 1}
 }else{
   Write-Host ""
@@ -66,7 +66,7 @@ if($wc -notmatch "PATCH: static asset priority"){
 
 Write-Host ""
 Write-Host "[4/6] Deploy to Cloudflare Workers..." -ForegroundColor Yellow
-npx wrangler deploy
+node scripts/with-wrangler-env.cjs wrangler deploy
 if($LASTEXITCODE-ne 0){Write-Host "Deploy failed!" -ForegroundColor Red;Pop-Location;exit 1}
 Write-Host "  Deployed!" -ForegroundColor Green
 

@@ -3,7 +3,6 @@ title: wp_spţ牛客寒假营典题
 date: 2026-02-11
 tags:
     - 算法
-cover: /img/cover/picg_5.png
 ---
 
 >> 补题所得，按照知识板块分，可能加上其他地方找到的题

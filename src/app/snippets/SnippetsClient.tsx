@@ -41,9 +41,7 @@ export default function SnippetsClient({ snippets, allTags, languages }: Snippet
   const handleCopy = async (snippet: SnippetCard) => {
     // Fetch the full snippet data for code
     try {
-      const res = await fetch(`/api/snippets?filename=${encodeURIComponent(snippet.filename)}`, {
-        headers: { "x-admin-password": "zues1" },
-      });
+      const res = await fetch(`/api/snippets?filename=${encodeURIComponent(snippet.filename)}`);
       if (res.ok) {
         const data = await res.json();
         await navigator.clipboard.writeText(data.code);
@@ -176,9 +174,7 @@ function SnippetPreview({ filename }: { filename: string }) {
     if (code !== null || loading) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/snippets?filename=${encodeURIComponent(filename)}`, {
-        headers: { "x-admin-password": "zues1" },
-      });
+      const res = await fetch(`/api/snippets?filename=${encodeURIComponent(filename)}`);
       if (res.ok) {
         const data = await res.json();
         setCode(data.code || "（空代码）");

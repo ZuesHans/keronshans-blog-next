@@ -7,7 +7,6 @@ tags:
   - Problems
   - STL
   - tricks
-cover: /img/cover/picg_11.png
 
 math: true
 ---

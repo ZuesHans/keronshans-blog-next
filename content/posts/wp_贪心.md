@@ -6,7 +6,6 @@ tags:
     - 算法
     - Problems
     - 贪心
-cover: /img/cover/picg_8.png
 math: true
 ---
 

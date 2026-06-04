@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { getAdminPassword, setAdminPassword } from "@/lib/auth";
 
 interface Talk {
   id: number;
@@ -35,6 +36,7 @@ export default function TalksPage() {
   const [mood, setMood] = useState("😄");
   const [isAuth, setIsAuth] = useState(false);
   const [password, setPassword] = useState("");
+  const [adminPassword, setAdminPasswordState] = useState("");
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
 
@@ -47,13 +49,18 @@ export default function TalksPage() {
       })
       .catch(() => setLoaded(true));
 
-    if (sessionStorage.getItem(AUTH_KEY) === "true") setIsAuth(true);
+    if (sessionStorage.getItem(AUTH_KEY) === "true") {
+      setIsAuth(true);
+      setAdminPasswordState(getAdminPassword());
+    }
   }, []);
 
   const handleLogin = () => {
-    if (password === "zues1") {
+    if (password.trim()) {
       setIsAuth(true);
       sessionStorage.setItem(AUTH_KEY, "true");
+      setAdminPassword(password);
+      setAdminPasswordState(password);
       setError("");
       setPassword("");
     } else {
@@ -66,7 +73,7 @@ export default function TalksPage() {
     try {
       const res = await fetch("/api/talks", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-admin-password": "zues1" },
+        headers: { "Content-Type": "application/json", "x-admin-password": adminPassword },
         body: JSON.stringify({ content: content.trim(), mood }),
       });
       if (res.ok) {
@@ -84,7 +91,7 @@ export default function TalksPage() {
     try {
       const res = await fetch(`/api/talks?id=${id}`, {
         method: "DELETE",
-        headers: { "x-admin-password": "zues1" },
+        headers: { "x-admin-password": adminPassword },
       });
       if (res.ok) {
         setTalks(talks.filter((t) => t.id !== id));

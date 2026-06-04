@@ -3,7 +3,6 @@ title: KH_线性基
 tags:
     - 数学
     - 算法
-cover: /img/cover/picg_4.png
 ---
 ## 线性基
 

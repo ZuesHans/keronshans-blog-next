@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { authenticateAdmin } from "@/lib/adminPassword";
 
 export async function GET() {
   try {
@@ -14,8 +15,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const { env } = await getCloudflareContext({ async: true });
-    const auth = request.headers.get("x-admin-password");
-    if (!auth || auth !== "zues1") {
+    if (!authenticateAdmin(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -39,8 +39,7 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const { env } = await getCloudflareContext({ async: true });
-    const auth = request.headers.get("x-admin-password");
-    if (!auth || auth !== "zues1") {
+    if (!authenticateAdmin(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

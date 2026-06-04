@@ -4,7 +4,6 @@ date: 2026-01-12
 tags:
 
     - 算法
-cover: /img/cover/picg_12.png
 ---
 
 ## 基于数据范围打表预处理
