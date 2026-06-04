@@ -4,6 +4,7 @@ import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
+import rehypeHighlight from "rehype-highlight";
 import rehypeKatex from "rehype-katex";
 import rehypeRaw from "rehype-raw";
 
@@ -11,11 +12,32 @@ interface MarkdownRendererProps {
   content: string;
 }
 
-function CodeBlock({ className, children }: { className?: string; children: React.ReactNode }) {
+type HastNode = {
+  value?: string;
+  children?: HastNode[];
+};
+
+function textFromNode(node?: HastNode): string {
+  if (!node) return "";
+  if (typeof node.value === "string") return node.value;
+  if (Array.isArray(node.children)) return node.children.map(textFromNode).join("");
+  return "";
+}
+
+function CodeBlock({
+  className,
+  language,
+  node,
+  children,
+}: {
+  className?: string;
+  language: string;
+  node?: HastNode;
+  children: React.ReactNode;
+}) {
   const [copied, setCopied] = useState(false);
   const [collapsed, setCollapsed] = useState(true);
-  const codeString = String(children).replace(/\n$/, "");
-  const language = className?.replace("language-", "") || "text";
+  const codeString = (textFromNode(node) || String(children)).replace(/\n$/, "");
   const lines = codeString.split("\n").length;
   const canCollapse = lines > 18;
 
@@ -52,13 +74,21 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
     <div className="markdown-body">
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[rehypeRaw, rehypeKatex]}
+        rehypePlugins={[
+          rehypeRaw,
+          rehypeKatex,
+          [rehypeHighlight, { aliases: { cpp: ["c++", "cc", "cxx", "h", "hpp"] } }],
+        ]}
         components={{
           pre: ({ children }) => <>{children}</>,
-          code: ({ className, children, ...props }) => {
-            const isBlock = className?.startsWith("language-");
-            if (isBlock) {
-              return <CodeBlock className={className}>{children}</CodeBlock>;
+          code: ({ className, children, node, ...props }) => {
+            const languageClass = className?.split(/\s+/).find((name) => name.startsWith("language-"));
+            if (languageClass) {
+              return (
+                <CodeBlock className={className} language={languageClass.replace("language-", "")} node={node as HastNode}>
+                  {children}
+                </CodeBlock>
+              );
             }
             return (
               <code className={className} {...props}>
