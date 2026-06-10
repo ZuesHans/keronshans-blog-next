@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 type Base = 2 | 8 | 10 | 16;
@@ -101,6 +102,21 @@ export default function ToolsPage() {
         </p>
         <div className="mt-2 h-[1px] bg-gradient-to-r from-neon-pink via-neon-yellow to-neon-blue opacity-50" />
       </div>
+
+      <Link href="/blog-search-lab" className="cyber-card mb-6 block p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="page-kicker mb-2">Semantic Search</div>
+            <h2 className="text-xl font-display font-semibold" style={{ color: "var(--owl-text)" }}>
+              语义搜索实验室
+            </h2>
+            <p className="mt-1 text-sm leading-6" style={{ color: "var(--owl-textSecondary)" }}>
+              用自然语言查博客片段，适合找算法板子、错题复盘和学习笔记里的相关内容。
+            </p>
+          </div>
+          <span className="cyber-btn w-fit">打开搜索</span>
+        </div>
+      </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Base Converter */}
