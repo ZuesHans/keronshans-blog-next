@@ -4,7 +4,7 @@ compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
 [vars]
-SEARCH_API_URL = "http://175.178.216.243:8080/search"
+SEARCH_API_URL = "http://origin-search.keronshans.top:8080/search"
 
 [assets]
 directory = ".open-next/assets"
