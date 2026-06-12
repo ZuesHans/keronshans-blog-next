@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+import { toUrlSafeId } from "@/lib/postSlug";
 
 interface BlogSearchResult {
   title?: string;
@@ -27,6 +28,30 @@ function getErrorMessage(data: BlogSearchResponse, fallback: string) {
   if (data.error) return data.error;
   if (typeof data.detail === "string") return data.detail;
   return fallback;
+}
+
+function filenameFromPath(value?: string) {
+  if (!value) return "";
+  return value.split(/[\\/]/).pop() || "";
+}
+
+function normalizeResultHref(result: BlogSearchResult) {
+  const sourceFilename = filenameFromPath(result.source_file);
+  if (sourceFilename.endsWith(".md")) {
+    return `/posts/${toUrlSafeId(sourceFilename)}`;
+  }
+
+  if (result.url) {
+    try {
+      const pathname = result.url.startsWith("http")
+        ? new URL(result.url).pathname
+        : result.url;
+      const rawId = decodeURIComponent(pathname.split("/").filter(Boolean).pop() || "");
+      if (rawId) return `/posts/${toUrlSafeId(`${rawId}.md`)}`;
+    } catch {}
+  }
+
+  return "#";
 }
 
 export default function BlogSearchLabPage() {
@@ -137,7 +162,7 @@ export default function BlogSearchLabPage() {
             “{searchedQuery}” 找到 {results.length} 条结果
           </div>
           {results.map((result, index) => {
-            const href = result.url || "#";
+            const href = normalizeResultHref(result);
             return (
               <Link key={`${result.url || result.title || index}-${index}`} href={href}>
                 <article className="archive-item">

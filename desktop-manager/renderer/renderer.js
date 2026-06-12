@@ -308,6 +308,7 @@ function setupEvents() {
   document.querySelector("#openProjectBtn").addEventListener("click", () => api.openProject());
   document.querySelector("#previewBtn").addEventListener("click", () => api.preview());
   document.querySelector("#buildBtn").addEventListener("click", (event) => runPublish("build", event.currentTarget, "构建检查"));
+  document.querySelector("#syncSearchBtn").addEventListener("click", (event) => runPublish("syncSearchIndex", event.currentTarget, "更新搜索索引"));
   document.querySelector("#deployBtn").addEventListener("click", (event) => runPublish("deploy", event.currentTarget, "发布 Cloudflare"));
   document.querySelector("#cleanupBtn").addEventListener("click", async () => {
     if (await api.cleanupOpenNext()) log("已清理 .open-next。\n");

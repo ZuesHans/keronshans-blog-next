@@ -352,6 +352,9 @@ async function runPublishTask(task, payload, event) {
   if (task === "deploy") {
     return runCommand("deploy", "powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "deploy.ps1", "-SkipGit"], send);
   }
+  if (task === "syncSearchIndex") {
+    return runCommand("sync search index", "powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", path.join("scripts", "sync-search-index.ps1")], send);
+  }
   throw new Error(`Unknown task: ${task}`);
 }
 
