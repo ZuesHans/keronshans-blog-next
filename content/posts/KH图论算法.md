@@ -1,11 +1,12 @@
 ---
 title: KH图论
-date: ''
+date: '2026-06-20'
 tags:
   - 算法
   - C++
   - 图论
-category: 学习笔记
+category: 算法板子
+pinned: false
 ---
 
 ## 拓扑排序

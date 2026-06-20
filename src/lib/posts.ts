@@ -14,6 +14,7 @@ export interface PostMeta {
   cover: string;
   excerpt: string;
   category: string;
+  pinned: boolean;
 }
 
 export interface PostData extends PostMeta {
@@ -21,9 +22,9 @@ export interface PostData extends PostMeta {
 }
 
 function parseCategory(filename: string): string {
-  if (filename.startsWith("KH") || filename.startsWith("ZU_")) return "算法板子";
-  if (filename.startsWith("wp_")) return "题解复盘";
-  if (filename.startsWith("sp_")) return "专题训练";
+  if (filename.startsWith("KH") || filename.startsWith("ZU_")) return "算法学习";
+  if (filename.startsWith("wp_")) return "题目复盘";
+  if (filename.startsWith("sp_")) return "专题集合";
   if (filename.toLowerCase() === "diary.md") return "碎碎念";
   if (filename === "三国杀武将.md") return "碎碎念";
   return "学习笔记";
@@ -31,6 +32,12 @@ function parseCategory(filename: string): string {
 
 function normalizeCategory(value: unknown, filename: string): string {
   const category = String(value || "").trim();
+  const aliases: Record<string, string> = {
+    算法板子: "算法学习",
+    题解复盘: "题目复盘",
+    专题训练: "专题集合",
+  };
+  if (aliases[category]) return aliases[category];
   if (CATEGORY_GROUPS.some((group) => group.name === category)) return category;
   return parseCategory(filename);
 }
@@ -88,6 +95,7 @@ async function getPostsFromD1(): Promise<PostMeta[] | null> {
         cover: "",
         excerpt: makeExcerpt(content),
         category: normalizeCategory(row.category, filename),
+        pinned: false,
       };
     });
   } catch {
@@ -115,6 +123,7 @@ function getPostsFromFiles(): PostMeta[] {
         cover: "",
         excerpt: makeExcerpt(content),
         category: normalizeCategory(data.category, filename),
+        pinned: Boolean(data.pinned),
       };
     });
 }
@@ -122,7 +131,7 @@ function getPostsFromFiles(): PostMeta[] {
 export async function getAllPosts(): Promise<PostMeta[]> {
   const d1Posts = await getPostsFromD1();
   const posts = d1Posts && d1Posts.length > 0 ? d1Posts : getPostsFromFiles();
-  return posts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  return posts.sort((a, b) => Number(b.pinned) - Number(a.pinned) || new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 
 export async function getPostById(id: string): Promise<PostData | null> {
@@ -150,6 +159,7 @@ export async function getPostById(id: string): Promise<PostData | null> {
           cover: "",
           excerpt: post.excerpt,
           category: normalizeCategory(row.category, filename),
+          pinned: false,
           content: String(row.content || ""),
         };
       }
@@ -168,6 +178,7 @@ export async function getPostById(id: string): Promise<PostData | null> {
     tags: parseTags(data.tags),
     cover: "",
     category: normalizeCategory(data.category, `${post.slug}.md`),
+    pinned: Boolean(data.pinned),
     content,
   };
 }

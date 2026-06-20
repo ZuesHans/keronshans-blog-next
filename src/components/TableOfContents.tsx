@@ -21,6 +21,7 @@ export default function TableOfContents() {
   const [activeId, setActiveId] = useState("");
   const [headings, setHeadings] = useState<Heading[]>([]);
   const [progress, setProgress] = useState(0);
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     const article = document.querySelector(".markdown-body");
@@ -92,23 +93,30 @@ export default function TableOfContents() {
   if (headings.length === 0) return null;
 
   return (
-    <div className="toc-panel">
-      <div className="toc-progress" aria-hidden="true">
-        <span style={{ width: `${progress}%` }} />
-      </div>
-      <div className="toc-title">目录</div>
-      <nav className="toc-list" aria-label="文章目录">
-        {headings.map((heading) => (
-          <button
-            type="button"
-            key={heading.id}
-            onClick={() => scrollTo(heading.id)}
-            className={`toc-link ${heading.level === 3 ? "is-sub" : ""} ${activeId === heading.id ? "is-active" : ""}`}
-          >
-            {heading.text}
-          </button>
-        ))}
-      </nav>
+    <div className={`toc-panel ${collapsed ? "is-collapsed" : ""}`}>
+      <button type="button" className="toc-toggle" onClick={() => setCollapsed(!collapsed)}>
+        {collapsed ? "目录" : "收起"}
+      </button>
+      {!collapsed && (
+        <>
+          <div className="toc-progress" aria-hidden="true">
+            <span style={{ width: `${progress}%` }} />
+          </div>
+          <div className="toc-title">目录</div>
+          <nav className="toc-list" aria-label="文章目录">
+            {headings.map((heading) => (
+              <button
+                type="button"
+                key={heading.id}
+                onClick={() => scrollTo(heading.id)}
+                className={`toc-link ${heading.level === 3 ? "is-sub" : ""} ${activeId === heading.id ? "is-active" : ""}`}
+              >
+                {heading.text}
+              </button>
+            ))}
+          </nav>
+        </>
+      )}
     </div>
   );
 }

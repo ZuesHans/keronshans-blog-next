@@ -1,13 +1,14 @@
 ---
 title: KH_优化算法
-date: ''
+date: '2026-06-20'
 tags:
   - C++
   - 算法
   - Trick
   - 杂项
   - 优化
-category: 学习笔记
+category: 算法板子
+pinned: false
 ---
 
 

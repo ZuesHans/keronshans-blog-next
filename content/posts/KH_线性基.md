@@ -4,8 +4,9 @@ tags:
   - 数学
   - 算法
   - C++
-category: 专题训练
+category: 算法板子
 date: '2026-06-04'
+pinned: false
 ---
 ## 线性基
 

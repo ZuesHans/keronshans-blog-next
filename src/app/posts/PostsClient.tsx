@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { CSSProperties } from "react";
 import Link from "next/link";
-import { CATEGORY_GROUPS, getCategoryColorClass } from "@/lib/categories";
+import { CATEGORY_GROUPS } from "@/lib/categories";
 
 const ALL_CATEGORY = "全部";
 
@@ -14,6 +13,7 @@ interface PostMeta {
   tags: string[];
   excerpt: string;
   category: string;
+  pinned: boolean;
 }
 
 interface TagInfo {
@@ -23,7 +23,7 @@ interface TagInfo {
 
 export default function PostsClient({
   initialPosts,
-  initialTags,
+  initialTags: _initialTags,
 }: {
   initialPosts: PostMeta[];
   initialTags: TagInfo[];
@@ -107,35 +107,25 @@ export default function PostsClient({
         <div className="soft-divider" />
       </header>
 
-      <section className="category-shelf" aria-label="文章分类">
+      <section className="posts-category-index" aria-label="文章分类">
         <button
           onClick={() => selectCategory(ALL_CATEGORY)}
-          className={`category-shelf-card ${activeCategory === ALL_CATEGORY ? "is-active" : ""}`}
-          style={{ "--shelf-accent": "var(--owl-text)" } as CSSProperties}
+          className={`posts-category-row ${activeCategory === ALL_CATEGORY ? "is-active" : ""}`}
         >
-          <div className="category-shelf-top">
-            <span className="category-shelf-name">全部文章</span>
-            <strong className="category-shelf-count">{initialPosts.length}</strong>
-          </div>
-          <p className="category-shelf-desc">完整索引，适合直接搜索标题、摘要或标签。</p>
-          <span className="category-shelf-latest">查看所有内容</span>
+          <span>全部文章</span>
+          <small>完整索引</small>
+          <strong>{initialPosts.length}</strong>
         </button>
 
         {categorySummaries.map((group) => (
           <button
             key={group.name}
             onClick={() => selectCategory(group.name)}
-            className={`category-shelf-card ${activeCategory === group.name ? "is-active" : ""}`}
-            style={{ "--shelf-accent": group.accent } as CSSProperties}
+            className={`posts-category-row ${activeCategory === group.name ? "is-active" : ""}`}
           >
-            <div className="category-shelf-top">
-              <span className="category-shelf-name">{group.name}</span>
-              <strong className="category-shelf-count">{group.count}</strong>
-            </div>
-            <p className="category-shelf-desc">{group.description}</p>
-            <span className="category-shelf-latest">
-              最近：{group.latest?.title || "还在整理中"}
-            </span>
+            <span>{group.name}</span>
+            <small>{group.latest?.title || group.description}</small>
+            <strong>{group.count}</strong>
           </button>
         ))}
       </section>
@@ -159,20 +149,6 @@ export default function PostsClient({
         </button>
       </section>
 
-      <section className="tag-cloud" aria-label="标签筛选">
-        <div className="flex flex-wrap gap-2">
-          {initialTags.map(({ tag, count }) => (
-            <button
-              key={tag}
-              onClick={() => selectTag(tag)}
-              className={`tag-filter ${activeTag === tag ? "is-active" : ""}`}
-            >
-              #{tag} {count}
-            </button>
-          ))}
-        </div>
-      </section>
-
       <div className="active-filter-bar">
         <span>
           当前显示 <strong>{filteredPosts.length}</strong> 篇
@@ -181,7 +157,7 @@ export default function PostsClient({
         {activeTag && <span className="tag-pill">#{activeTag}</span>}
       </div>
 
-      <section className="grid gap-4">
+      <section className="posts-directory">
         {filteredPosts.length === 0 ? (
           <div className="cyber-card p-10 text-center" style={{ color: "var(--owl-textSecondary)" }}>
             没有匹配的文章喵🙁，换个分类或关键词试试吧。
@@ -189,23 +165,15 @@ export default function PostsClient({
         ) : (
           filteredPosts.map((post) => (
             <Link key={post.id} href={`/posts/${post.id}`}>
-              <article className="archive-item">
-                <div className="archive-main">
-                  <div className="flex items-center gap-2 flex-wrap mb-2">
-                    <span className={`category-chip ${getCategoryColorClass(post.category)}`}>{post.category}</span>
-                    <span className="text-xs" style={{ color: "var(--owl-textMuted)" }}>{post.date}</span>
-                  </div>
-                  <h2>{post.title}</h2>
-                  <p>{post.excerpt}</p>
-                  <div className="flex flex-wrap gap-1.5 mt-3">
-                    {post.tags.length > 0 ? (
-                      post.tags.map((tag) => <span key={tag} className="tag-pill">#{tag}</span>)
-                    ) : (
-                      <span className="text-xs" style={{ color: "var(--owl-textMuted)" }}>无标签</span>
-                    )}
-                  </div>
+              <article className="posts-directory-item">
+                <div>
+                  <h2>
+                    {post.pinned && <em>置顶</em>}
+                    {post.title}
+                  </h2>
+                  <span>{post.date} · {post.category}</span>
                 </div>
-                <span className="archive-arrow">→</span>
+                <span aria-hidden="true">→</span>
               </article>
             </Link>
           ))

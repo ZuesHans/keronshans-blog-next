@@ -319,6 +319,20 @@ label textarea {
   font-size: 14px;
 }
 
+.checkbox-row {
+  display: inline-flex;
+  grid-template-columns: none;
+  width: fit-content;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.checkbox-row input {
+  width: auto;
+}
+
 .tag-cloud {
   display: flex;
   flex-wrap: wrap;
