@@ -8,8 +8,28 @@
 - 改导航：`src/components/Navigation.tsx`
 - 改全局配色/卡片/字体：`src/app/globals.css`
 - 改关于页：`src/app/about/page.tsx`
-- 写文章：`content/posts/*.md`，也可以用后台 `/dashboard`
+- 写文章：`content/posts/*.md`，也可以用本地桌面管理器或后台 `/dashboard`
 - 改代码片段：`content/snippets/*.md` 或后台
+
+## 内容分类和置顶
+
+文章分类统一使用这五类：
+
+- 算法学习
+- 题目复盘
+- 学习笔记
+- 专题集合
+- 碎碎念
+
+旧文章 frontmatter 里如果还写着 `算法板子`、`题解复盘`、`专题训练`，站点会自动兼容显示成新分类名。
+
+文章支持置顶，在 frontmatter 里写：
+
+```yaml
+pinned: true
+```
+
+置顶文章会排在普通文章前面，首页最近更新和 `/posts` 文章目录都会显示轻量的“置顶”标记。推荐直接用本地桌面管理器里的“置顶文章”勾选项来维护。
 
 ## 本地预览
 
@@ -32,6 +52,14 @@ npm run manager
 - 题目：`content/problems.json`
 
 正文仍然推荐用 VS Code 写。管理器里的“打开当前文件”会直接把对应文件交给 VS Code。
+
+文章元数据可以在管理器里改：
+
+- 标题
+- 分类
+- 日期
+- 标签
+- 置顶文章
 
 ## 发布前检查
 
