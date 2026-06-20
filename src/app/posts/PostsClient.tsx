@@ -53,7 +53,7 @@ export default function PostsClient({
         count: posts.length,
         latest: posts[0],
       };
-    }).filter((group) => group.count > 0);
+    });
   }, [initialPosts]);
 
   const filteredPosts = useMemo(() => {
