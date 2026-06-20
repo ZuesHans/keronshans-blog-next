@@ -352,6 +352,11 @@ async function runPublishTask(task, payload, event) {
     return runCommand("git push", "git", ["push", "origin", "main"], send);
   }
   if (task === "deploy") {
+    if (previewProcess && !previewProcess.killed) {
+      send("Stopping local preview before deploy...\n");
+      previewProcess.kill();
+      previewProcess = null;
+    }
     return runCommand("deploy", "powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "deploy.ps1", "-SkipGit"], send);
   }
   if (task === "syncSearchIndex") {
