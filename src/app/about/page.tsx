@@ -42,26 +42,11 @@ export default function AboutPage() {
               <p className="font-mono text-sm mb-5" style={{ color: "var(--neon-accent)" }}>@Keronshans@gmail.com</p>
               <div className="space-y-2 text-base leading-7" style={{ color: "var(--owl-textSecondary)" }}>
                 <p>大学生 / 中国南方 / ACMer / C++</p>
-                <p>这里放算法模板、题解、碎碎念，以及一些还在成型的自我管理系统。</p>
+                <p>这里放算法题解、碎碎念，以及一些还在成型的自我管理系统。</p>
                 <p>其实是一只会打字的小猫而已。</p>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {[
-            { label: "文章数", value: "27" },
-            { label: "模板数", value: "10+" },
-            { label: "标签数", value: "8+" },
-            { label: "说说数", value: "∞" },
-          ].map((stat) => (
-            <div key={stat.label} className="cyber-card p-4 text-center">
-              <div className="text-2xl font-display font-semibold" style={{ color: "var(--neon-accent)" }}>{stat.value}</div>
-              <div className="text-xs font-mono mt-1" style={{ color: "var(--owl-textMuted)" }}>{stat.label}</div>
-            </div>
-          ))}
         </div>
 
         <div className="cyber-card p-6">
@@ -95,10 +80,11 @@ export default function AboutPage() {
             关于奖项
           </h3>
           <div className="space-y-3 text-sm font-mono" style={{ color: "var(--owl-textSecondary)" }}>
-            <p>（其实只是做个归纳以免忘记了）</p>
+            <p>（只是做个归纳以免忘记了）</p>
             <p>2026年第二十三届腾讯“codebuddy杯”广东省大学生程序设计竞赛 银奖 </p>
             <p>2026年河南省大学生程序设计竞赛 银奖（打星） </p>
             <p>2026年蓝桥杯省赛一等奖 </p>
+            <p>2026年蓝桥杯国赛二等奖 </p>
             <p>团体程序设计天梯赛 国三 </p>
           </div>
         </div>
@@ -106,7 +92,7 @@ export default function AboutPage() {
         {/* Links */}
         <div className="cyber-card p-6">
           <h3 className="text-lg font-display font-semibold mb-4">
-            关于我的链接
+            关于我的页面链接
           </h3>
           <div className="space-y-2">
             <Link
@@ -126,7 +112,7 @@ export default function AboutPage() {
               className="flex items-center gap-3 p-3 rounded-lg transition-all group"
             >
               <div>
-                <div className="font-mono text-sm transition-colors">Codeforces(某小号)</div>
+                <div className="font-mono text-sm transition-colors">Codeforces</div>
                 <div className="text-xs text-gray-400">codeforces.com/profile/zueshans</div>
               </div>
             </Link>

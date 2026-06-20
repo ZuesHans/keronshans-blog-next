@@ -111,7 +111,7 @@ export default function ToolsPage() {
               语义搜索实验室
             </h2>
             <p className="mt-1 text-sm leading-6" style={{ color: "var(--owl-textSecondary)" }}>
-              用自然语言查博客片段，适合找算法板子、错题复盘和学习笔记里的相关内容。
+              用自然语言查博客片段，适合找算法学习、题目复盘和学习笔记里的相关内容。
             </p>
           </div>
           <span className="cyber-btn w-fit">打开搜索</span>

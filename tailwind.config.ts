@@ -11,18 +11,18 @@ const config: Config = {
     extend: {
       colors: {
         neon: {
-          pink: "#FF5370",
-          blue: "#82AAFF",
-          green: "#C3E88D",
-          purple: "#C792EA",
-          yellow: "#FFAD60",
+          pink: "#9A6170",
+          blue: "#477565",
+          green: "#6F8C65",
+          purple: "#756F93",
+          yellow: "#9B7945",
         },
         cyber: {
-          dark: "#011627",
-          darker: "#010D1A",
-          card: "#021C32",
-          border: "#0F2942",
-          surface: "#082438",
+          dark: "#141D1A",
+          darker: "#101714",
+          card: "#202D28",
+          border: "#31423B",
+          surface: "#1B2723",
         },
         // Night Owl Light
         owl: {

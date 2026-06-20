@@ -56,7 +56,6 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
                     <h2 className="text-lg font-semibold transition-colors mb-1" style={{ color: "var(--owl-text)" }}>
                       {post.title}
                     </h2>
-                    <p className="text-sm line-clamp-2" style={{ color: "var(--owl-textSecondary)" }}>{post.excerpt}</p>
                     <div className="flex flex-wrap gap-1.5 mt-2 text-xs font-mono" style={{ color: "var(--owl-textMuted)" }}>
                       <span>{post.date}</span>
                       {post.tags.map((t) => (

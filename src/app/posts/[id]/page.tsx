@@ -24,37 +24,32 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const readingTime = estimateReadingTime(post.content);
 
   return (
-    <div className="max-w-7xl mx-auto px-5 sm:px-6 py-10">
-      <Link href="/posts" className="inline-flex items-center gap-2 text-sm transition-colors mb-8" style={{ color: "var(--owl-textMuted)" }}>
+    <div className="article-shell max-w-6xl mx-auto px-5 sm:px-6 py-10 sm:py-14">
+      <Link href="/posts" className="article-back-link">
         <span aria-hidden="true">←</span>
         返回文章库
       </Link>
 
-      <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_280px] xl:items-start">
-        <main className="min-w-0 max-w-4xl">
-          <header className="mb-8">
-            <div className="flex items-center gap-2 mb-4 flex-wrap">
-              <span className={`category-chip ${getCategoryColorClass(post.category)}`}>{post.category}</span>
-              {post.tags.map((tag) => (
-                <Link key={tag} href={`/search?tag=${encodeURIComponent(tag)}`} className="tag-pill">
-                  #{tag}
-                </Link>
-              ))}
-            </div>
-            <h1 className="page-heading mb-4">{post.title}</h1>
-            <div className="flex items-center gap-3 text-sm flex-wrap" style={{ color: "var(--owl-textMuted)" }}>
+      <div className="article-layout">
+        <main className="min-w-0">
+          <header className="article-header">
+            <h1 className="article-title">{post.title}</h1>
+            <div className="article-meta">
               <span>{post.date || "未标日期"}</span>
               <span className="meta-dot" />
               <span>{readingTime} 分钟阅读</span>
               <span className="meta-dot" />
               <span>Keronshans</span>
             </div>
-            <div className="soft-divider" />
+            <div className="article-taxonomy">
+              <Link href={`/posts?category=${encodeURIComponent(post.category)}`}>{post.category}</Link>
+              {post.tags.map((tag) => (
+                <Link key={tag} href={`/search?tag=${encodeURIComponent(tag)}`}>
+                  #{tag}
+                </Link>
+              ))}
+            </div>
           </header>
-
-          <div className="xl:hidden mb-6">
-            <TableOfContents />
-          </div>
 
           <article className="reader-card">
             <MarkdownRenderer content={post.content} />
@@ -70,16 +65,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
           </footer>
         </main>
 
-        <aside className="hidden xl:block sticky top-24 space-y-4">
-          <div className="article-side-card">
-            <div className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: "var(--owl-textMuted)" }}>
-              当前文章
-            </div>
-            <div className="text-sm font-medium mb-2" style={{ color: "var(--owl-text)" }}>{post.title}</div>
-            <div className="text-xs leading-5" style={{ color: "var(--owl-textMuted)" }}>
-              {post.category} · {readingTime} 分钟
-            </div>
-          </div>
+        <aside className="hidden xl:block sticky top-24">
           <TableOfContents />
         </aside>
       </div>

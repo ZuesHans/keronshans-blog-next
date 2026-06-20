@@ -70,19 +70,20 @@ export default function Navigation() {
   return (
     <>
       <nav
+        className="fixed inset-x-0 top-0 z-50"
         style={{
-          background: scrolled ? "color-mix(in srgb, var(--owl-bgCard) 86%, transparent)" : "var(--owl-bg)",
+          background: scrolled ? "color-mix(in srgb, var(--owl-bg) 90%, transparent)" : "var(--owl-bg)",
           backdropFilter: scrolled ? "blur(12px)" : undefined,
           borderBottom: scrolled ? "1px solid var(--owl-border)" : "1px solid transparent",
-          transition: "all 0.2s ease",
+          transition: "background 0.2s ease, border-color 0.2s ease",
         }}
       >
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2 group" onClick={() => handleNav("home")}>
               <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-display font-semibold transition-colors"
-                style={{ background: "var(--owl-text)", border: "1px solid var(--owl-border)", color: "var(--owl-bgCard)" }}
+                className="w-8 h-8 rounded-md flex items-center justify-center text-sm font-display font-semibold transition-colors"
+                style={{ background: "var(--owl-bgSubtle)", border: "1px solid var(--owl-border)", color: "var(--owl-text)" }}
               >
                 K
               </div>
@@ -91,7 +92,7 @@ export default function Navigation() {
               </span>
             </Link>
 
-            <div className="hidden lg:flex items-center gap-1">
+            <div className="hidden lg:flex items-center gap-4">
               {NAV_ITEMS.map((item) => {
                 const isActive = active === item.id;
                 return (
@@ -99,11 +100,9 @@ export default function Navigation() {
                     key={item.id}
                     href={item.id === "home" ? "/" : `/${item.id}`}
                     onClick={() => handleNav(item.id)}
-                    className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
+                    className="text-sm font-medium transition-colors duration-200"
                     style={{
-                      background: isActive ? "var(--owl-bgSubtle)" : "transparent",
                       color: isActive ? "var(--owl-text)" : "var(--owl-textMuted)",
-                      border: isActive ? "1px solid var(--owl-border)" : "1px solid transparent",
                     }}
                   >
                     {item.label}
@@ -111,7 +110,7 @@ export default function Navigation() {
                 );
               })}
 
-              <button onClick={() => setSearchOpen(!searchOpen)} className="p-2 rounded-lg transition-all" style={{ color: "var(--owl-textMuted)" }} title="搜索" aria-label="搜索">
+              <button onClick={() => setSearchOpen(!searchOpen)} className="p-2 rounded-md transition-colors hover:bg-[var(--owl-bgSubtle)]" style={{ color: "var(--owl-textMuted)" }} title="搜索" aria-label="搜索">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="11" cy="11" r="8" />
                   <path d="m21 21-4.3-4.3" />
@@ -119,7 +118,7 @@ export default function Navigation() {
               </button>
 
               {mounted && (
-                <button onClick={toggleTheme} className="p-2 rounded-lg transition-all" style={{ color: "var(--owl-textMuted)" }} title="切换主题" aria-label="切换主题">
+                <button onClick={toggleTheme} className="p-2 rounded-md transition-colors hover:bg-[var(--owl-bgSubtle)]" style={{ color: "var(--owl-textMuted)" }} title="切换主题" aria-label="切换主题">
                   {themeIcon}
                 </button>
               )}
@@ -127,11 +126,11 @@ export default function Navigation() {
 
             <div className="flex items-center gap-2 lg:hidden">
               {mounted && (
-                <button onClick={toggleTheme} className="p-2 rounded-lg" style={{ color: "var(--owl-textMuted)" }} title="切换主题" aria-label="切换主题">
+                <button onClick={toggleTheme} className="p-2 rounded-md" style={{ color: "var(--owl-textMuted)" }} title="切换主题" aria-label="切换主题">
                   {themeIcon}
                 </button>
               )}
-              <button onClick={() => setMenuOpen(!menuOpen)} className="p-2 rounded-lg" style={{ color: "var(--owl-textMuted)" }} title="菜单" aria-label="菜单">
+              <button onClick={() => setMenuOpen(!menuOpen)} className="p-2 rounded-md" style={{ color: "var(--owl-textMuted)" }} title="菜单" aria-label="菜单">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   {menuOpen ? <path d="M18 6L6 18M6 6l12 12" /> : <path d="M3 12h18M3 6h18M3 18h18" />}
                 </svg>

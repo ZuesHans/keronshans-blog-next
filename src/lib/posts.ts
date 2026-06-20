@@ -21,9 +21,9 @@ export interface PostData extends PostMeta {
 }
 
 function parseCategory(filename: string): string {
-  if (filename.startsWith("KH") || filename.startsWith("ZU_")) return "算法板子";
-  if (filename.startsWith("wp_")) return "题解复盘";
-  if (filename.startsWith("sp_")) return "专题训练";
+  if (filename.startsWith("KH") || filename.startsWith("ZU_")) return "算法学习";
+  if (filename.startsWith("wp_")) return "题目复盘";
+  if (filename.startsWith("sp_")) return "专题集合";
   if (filename.toLowerCase() === "diary.md") return "碎碎念";
   if (filename === "三国杀武将.md") return "碎碎念";
   return "学习笔记";
@@ -31,6 +31,12 @@ function parseCategory(filename: string): string {
 
 function normalizeCategory(value: unknown, filename: string): string {
   const category = String(value || "").trim();
+  const aliases: Record<string, string> = {
+    算法板子: "算法学习",
+    题解复盘: "题目复盘",
+    专题训练: "专题集合",
+  };
+  if (aliases[category]) return aliases[category];
   if (CATEGORY_GROUPS.some((group) => group.name === category)) return category;
   return parseCategory(filename);
 }
