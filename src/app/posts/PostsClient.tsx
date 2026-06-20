@@ -13,6 +13,7 @@ interface PostMeta {
   tags: string[];
   excerpt: string;
   category: string;
+  pinned: boolean;
 }
 
 interface TagInfo {
@@ -166,7 +167,10 @@ export default function PostsClient({
             <Link key={post.id} href={`/posts/${post.id}`}>
               <article className="posts-directory-item">
                 <div>
-                  <h2>{post.title}</h2>
+                  <h2>
+                    {post.pinned && <em>置顶</em>}
+                    {post.title}
+                  </h2>
                   <span>{post.date} · {post.category}</span>
                 </div>
                 <span aria-hidden="true">→</span>

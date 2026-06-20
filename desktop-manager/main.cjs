@@ -113,6 +113,7 @@ function readMarkdownList(dir, kind) {
         path: filePath,
         title: parsed.data.title || filename.replace(/\.md$/, ""),
         category: parseCategory(filename, parsed.data),
+        pinned: Boolean(parsed.data.pinned),
         tags,
         date: String(parsed.data.date || "").slice(0, 10) || todayText(),
         mtime: stat.mtimeMs,
@@ -203,6 +204,7 @@ function createPost(payload) {
     title,
     date: payload.date || todayText(),
     category,
+    pinned: Boolean(payload.pinned),
     tags: parseTags(payload.tags),
   };
   writeMarkdown(path.join(POSTS_DIR, filename), data, "\n");

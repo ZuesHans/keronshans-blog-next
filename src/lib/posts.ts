@@ -14,6 +14,7 @@ export interface PostMeta {
   cover: string;
   excerpt: string;
   category: string;
+  pinned: boolean;
 }
 
 export interface PostData extends PostMeta {
@@ -94,6 +95,7 @@ async function getPostsFromD1(): Promise<PostMeta[] | null> {
         cover: "",
         excerpt: makeExcerpt(content),
         category: normalizeCategory(row.category, filename),
+        pinned: false,
       };
     });
   } catch {
@@ -121,6 +123,7 @@ function getPostsFromFiles(): PostMeta[] {
         cover: "",
         excerpt: makeExcerpt(content),
         category: normalizeCategory(data.category, filename),
+        pinned: Boolean(data.pinned),
       };
     });
 }
@@ -128,7 +131,7 @@ function getPostsFromFiles(): PostMeta[] {
 export async function getAllPosts(): Promise<PostMeta[]> {
   const d1Posts = await getPostsFromD1();
   const posts = d1Posts && d1Posts.length > 0 ? d1Posts : getPostsFromFiles();
-  return posts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  return posts.sort((a, b) => Number(b.pinned) - Number(a.pinned) || new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 
 export async function getPostById(id: string): Promise<PostData | null> {
@@ -156,6 +159,7 @@ export async function getPostById(id: string): Promise<PostData | null> {
           cover: "",
           excerpt: post.excerpt,
           category: normalizeCategory(row.category, filename),
+          pinned: false,
           content: String(row.content || ""),
         };
       }
@@ -174,6 +178,7 @@ export async function getPostById(id: string): Promise<PostData | null> {
     tags: parseTags(data.tags),
     cover: "",
     category: normalizeCategory(data.category, `${post.slug}.md`),
+    pinned: Boolean(data.pinned),
     content,
   };
 }

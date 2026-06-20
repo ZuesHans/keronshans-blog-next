@@ -140,6 +140,11 @@
     color: var(--owl-text);
   }
 
+  .pinned-label {
+    @apply text-xs font-medium;
+    color: var(--neon-accent);
+  }
+
   .post-category-badge {
     @apply text-xs font-medium whitespace-nowrap rounded px-2 py-1;
     color: var(--owl-textMuted);
@@ -601,8 +606,13 @@
   }
 
   .posts-directory-item h2 {
-    @apply text-base font-medium leading-7 transition-colors;
+    @apply flex flex-wrap items-center gap-2 text-base font-medium leading-7 transition-colors;
     color: var(--owl-text);
+  }
+
+  .posts-directory-item h2 em {
+    @apply not-italic text-xs font-medium;
+    color: var(--neon-accent);
   }
 
   .posts-directory-item:hover h2 {

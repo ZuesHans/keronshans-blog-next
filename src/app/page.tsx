@@ -39,6 +39,7 @@ export default async function HomePage() {
                 <article className="post-list-item group">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                      {post.pinned && <span className="pinned-label">置顶</span>}
                       <span className={`category-chip ${getCategoryColorClass(post.category)}`}>{post.category}</span>
                       <span className="text-xs" style={{ color: "var(--owl-textMuted)" }}>{post.date}</span>
                     </div>

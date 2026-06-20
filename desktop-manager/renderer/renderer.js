@@ -23,6 +23,7 @@ const el = {
   detailHeading: document.querySelector("#detailHeading"),
   fieldTitle: document.querySelector("#fieldTitle"),
   fieldCategory: document.querySelector("#fieldCategory"),
+  fieldPinned: document.querySelector("#fieldPinned"),
   fieldDate: document.querySelector("#fieldDate"),
   fieldLanguage: document.querySelector("#fieldLanguage"),
   fieldPlatform: document.querySelector("#fieldPlatform"),
@@ -143,7 +144,7 @@ function renderItems() {
     btn.className = `item ${state.selected && itemKey(state.selected) === itemKey(item) && state.selected.kind === item.kind ? "active" : ""}`;
     const tags = (item.tags || []).slice(0, 4).map((tag) => `<span class="badge">#${tag}</span>`).join("");
     const meta = item.kind === "post"
-      ? `${item.category} · ${item.date} · ${item.filename}`
+      ? `${item.pinned ? "置顶 · " : ""}${item.category} · ${item.date} · ${item.filename}`
       : item.kind === "snippet"
         ? `${item.language} · ${item.date || "未标日期"} · ${item.filename}`
         : `${item.platform} · ${item.status} · ${item.date || "未标日期"}`;
@@ -190,6 +191,7 @@ function renderDetail() {
   el.detailHeading.textContent = item.kind === "post" ? "文章元数据" : item.kind === "snippet" ? "模板元数据" : "题目元数据";
   el.fieldTitle.value = item.title || "";
   el.fieldCategory.value = item.category || "学习笔记";
+  el.fieldPinned.checked = Boolean(item.pinned);
   el.fieldDate.value = item.date || "";
   el.fieldLanguage.value = item.language || "C++";
   el.fieldPlatform.value = item.platform || "cf";
@@ -254,6 +256,7 @@ async function saveMeta() {
       patch: {
         title: el.fieldTitle.value.trim(),
         category: el.fieldCategory.value,
+        pinned: el.fieldPinned.checked,
         date: el.fieldDate.value,
         tags: tagsFromText(el.fieldTags.value),
       },
