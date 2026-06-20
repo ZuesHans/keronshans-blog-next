@@ -6,6 +6,31 @@ $ErrorActionPreference="Stop"
 $BlogRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 Push-Location $BlogRoot
 
+function Clear-OpenNextOutput {
+  param([string]$Path)
+  if(-not (Test-Path -LiteralPath $Path)){ return }
+
+  Write-Host "  Cleaning .open-next output..." -ForegroundColor Gray
+  try {
+    Get-ChildItem -LiteralPath $Path -Force -Recurse -ErrorAction SilentlyContinue |
+      ForEach-Object { $_.Attributes = $_.Attributes -band (-bnot [System.IO.FileAttributes]::ReadOnly) }
+    (Get-Item -LiteralPath $Path -Force).Attributes = (Get-Item -LiteralPath $Path -Force).Attributes -band (-bnot [System.IO.FileAttributes]::ReadOnly)
+  } catch {}
+
+  for($i=1;$i -le 6;$i++){
+    try {
+      Remove-Item -LiteralPath $Path -Recurse -Force -ErrorAction Stop
+      Write-Host "  .open-next cleaned" -ForegroundColor Gray
+      return
+    } catch {
+      if($i -eq 6){
+        throw "Cannot remove .open-next. Close local preview/dev server, VS Code file handles, or Explorer windows inside .open-next, then rerun deploy. Last error: $($_.Exception.Message)"
+      }
+      Start-Sleep -Milliseconds (350 * $i)
+    }
+  }
+}
+
 Write-Host "===== Keronshans Blog Deploy =====" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "[0/6] Git status..." -ForegroundColor Yellow
@@ -18,6 +43,7 @@ if(git status --porcelain){
 if(-not $SkipBuild){
   Write-Host ""
   Write-Host "[1/6] Building..." -ForegroundColor Yellow
+  Clear-OpenNextOutput (Join-Path $BlogRoot ".open-next")
   node scripts/with-wrangler-env.cjs opennextjs-cloudflare build
   if($LASTEXITCODE-ne 0){Write-Host "Build failed!" -ForegroundColor Red;Pop-Location;exit 1}
 }else{
