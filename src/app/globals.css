@@ -9,25 +9,25 @@
 
   :root {
     --font-body: "LXGW WenKai Screen", "HarmonyOS Sans SC", "MiSans", "Source Han Sans SC", "Noto Sans CJK SC", "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", "Segoe UI", sans-serif;
-    --font-display: "LXGW WenKai Screen", "HarmonyOS Sans SC", "MiSans", "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+    --font-display: Georgia, "Times New Roman", "LXGW WenKai Screen", "Songti SC", "STSong", "Noto Serif CJK SC", serif;
     --font-mono: "Maple Mono NF CN", "JetBrains Mono", "Cascadia Code", "Consolas", "SFMono-Regular", monospace;
-    --neon-primary: #27312e;
-    --neon-accent: #477565;
-    --neon-green: #6f8c65;
-    --neon-purple: #756f93;
-    --neon-yellow: #9b7945;
-    --neon-pink: #9a6170;
+    --neon-primary: #1f1e1b;
+    --neon-accent: #c86443;
+    --neon-green: #5f7d68;
+    --neon-purple: #756f8e;
+    --neon-yellow: #9b6b33;
+    --neon-pink: #ad626b;
     --owl-bg: #fbfaf7;
-    --owl-bgSubtle: #f3f2ed;
-    --owl-bgCard: #fffefb;
-    --owl-text: #202724;
-    --owl-textSecondary: #626d67;
-    --owl-textMuted: #8d9690;
-    --owl-border: #e5e2d8;
-    --owl-borderHover: #c9cfc4;
-    --owl-tagBg: #f0f1ec;
-    --owl-tagText: #59665f;
-    --owl-shadow: 0 10px 24px rgba(38, 55, 49, 0.06);
+    --owl-bgSubtle: #f1eee7;
+    --owl-bgCard: #fffefa;
+    --owl-text: #24231f;
+    --owl-textSecondary: #4f4d47;
+    --owl-textMuted: #7b776f;
+    --owl-border: #ded9cf;
+    --owl-borderHover: #c5bdb0;
+    --owl-tagBg: #eeebe3;
+    --owl-tagText: #5d5850;
+    --owl-shadow: 0 18px 42px rgba(39, 34, 27, 0.08);
   }
 
   html.dark {
@@ -58,7 +58,9 @@
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background: var(--owl-bg);
+    background:
+      radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--owl-bgCard) 84%, transparent) 0, transparent 42rem),
+      var(--owl-bg);
   }
 }
 
@@ -67,12 +69,12 @@
     @apply relative rounded-md border overflow-hidden transition-colors duration-200;
     background: var(--owl-bgCard);
     border-color: var(--owl-border);
-    box-shadow: none;
+    box-shadow: 0 1px 0 color-mix(in srgb, var(--owl-border) 60%, transparent);
   }
 
   .cyber-card:hover {
     border-color: var(--owl-borderHover);
-    box-shadow: none;
+    box-shadow: var(--owl-shadow);
   }
 
   .nav-link {
@@ -97,13 +99,13 @@
   }
 
   .hero-title {
-    @apply font-display text-5xl sm:text-6xl font-semibold leading-tight;
+    @apply font-display text-5xl sm:text-6xl font-medium leading-tight;
     color: var(--owl-text);
     letter-spacing: 0;
   }
 
   .page-heading {
-    @apply font-display text-3xl sm:text-4xl font-semibold leading-tight;
+    @apply font-display text-3xl sm:text-4xl font-medium leading-tight;
     color: var(--owl-text);
     letter-spacing: 0;
   }
@@ -136,7 +138,7 @@
   }
 
   .post-list-title {
-    @apply text-[15px] font-medium leading-relaxed transition-colors duration-200;
+    @apply text-[15px] font-semibold leading-relaxed transition-colors duration-200;
     color: var(--owl-text);
   }
 
@@ -166,6 +168,7 @@
     @apply relative flex items-center gap-3 p-4 rounded-md border cursor-pointer overflow-hidden transition-colors duration-200;
     background: var(--owl-bgCard);
     border-color: var(--owl-border);
+    box-shadow: 0 1px 0 color-mix(in srgb, var(--owl-border) 60%, transparent);
   }
 
   .stat-card::after {
@@ -179,7 +182,7 @@
 
   .stat-card:hover {
     border-color: var(--owl-borderHover);
-    box-shadow: none;
+    box-shadow: var(--owl-shadow);
   }
 
   .stat-card:hover::after {
@@ -209,13 +212,14 @@
   .cyber-btn {
     @apply relative px-5 py-2.5 rounded-md text-sm font-medium transition-colors duration-200;
     color: var(--owl-text);
-    background: var(--owl-bgSubtle);
+    background: color-mix(in srgb, var(--owl-bgSubtle) 78%, var(--owl-bgCard));
     border: 1px solid var(--owl-border);
   }
 
   .cyber-btn:hover {
     background: var(--owl-bgCard);
     border-color: var(--owl-borderHover);
+    box-shadow: 0 8px 20px rgba(39, 34, 27, 0.06);
   }
 
   .cyber-btn-blue {
@@ -245,12 +249,13 @@
     background: var(--owl-bgCard);
     border: 1px solid var(--owl-border);
     color: var(--owl-text);
+    box-shadow: 0 1px 0 color-mix(in srgb, var(--owl-border) 58%, transparent);
   }
 
   .cyber-input:focus {
     outline: none;
     border-color: var(--owl-borderHover);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--neon-accent) 18%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--neon-accent) 18%, transparent), 0 10px 24px rgba(39, 34, 27, 0.06);
   }
 
   .cyber-input::placeholder {
@@ -274,7 +279,7 @@
 
   .category-chip {
     @apply inline-block px-2.5 py-1 rounded-md text-xs font-medium border border-transparent;
-    background: var(--owl-tagBg);
+    background: color-mix(in srgb, var(--owl-tagBg) 88%, var(--owl-bgCard));
     color: var(--owl-tagText);
   }
 
@@ -422,6 +427,7 @@
     @apply relative min-h-[180px] rounded-md border p-4 transition-colors duration-200 overflow-hidden;
     background: var(--owl-bgCard);
     border-color: var(--owl-border);
+    box-shadow: 0 1px 0 color-mix(in srgb, var(--owl-border) 60%, transparent);
   }
 
   .dashboard-tile::before {
@@ -432,7 +438,7 @@
 
   .dashboard-tile:hover {
     border-color: var(--owl-borderHover);
-    box-shadow: none;
+    box-shadow: var(--owl-shadow);
   }
 
   .dashboard-count {
@@ -650,12 +656,12 @@
     @apply flex items-center justify-between gap-4 rounded-md border p-5 transition-colors duration-200;
     background: var(--owl-bgCard);
     border-color: var(--owl-border);
-    box-shadow: none;
+    box-shadow: 0 1px 0 color-mix(in srgb, var(--owl-border) 60%, transparent);
   }
 
   .archive-item:hover {
     border-color: var(--owl-borderHover);
-    box-shadow: none;
+    box-shadow: var(--owl-shadow);
   }
 
   .archive-main {
@@ -716,7 +722,7 @@
   }
 
   .article-title {
-    @apply font-display text-3xl font-semibold leading-tight sm:text-4xl;
+    @apply font-display text-3xl font-medium leading-tight sm:text-4xl;
     color: var(--owl-text);
     letter-spacing: 0;
   }
@@ -748,7 +754,7 @@
   .article-side-card,
   .toc-panel {
     @apply rounded-md border p-4;
-    background: transparent;
+    background: color-mix(in srgb, var(--owl-bgCard) 62%, transparent);
     border-color: var(--owl-border);
   }
 
@@ -899,8 +905,8 @@
 
 .markdown-body blockquote {
   @apply border-l-4 pl-4 py-2 my-5 rounded-r-md;
-  border-color: var(--owl-borderHover);
-  background: var(--owl-bgSubtle);
+  border-color: color-mix(in srgb, var(--neon-accent) 56%, var(--owl-border));
+  background: color-mix(in srgb, var(--owl-bgSubtle) 84%, var(--owl-bgCard));
   color: var(--owl-textSecondary);
 }
 
@@ -1023,7 +1029,7 @@
 }
 
 .markdown-body strong {
-  color: var(--neon-pink);
+  color: var(--owl-text);
   @apply font-semibold;
 }
 
