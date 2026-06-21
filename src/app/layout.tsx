@@ -17,7 +17,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
-      <body className="font-body transition-colors duration-300 min-h-screen" style={{ background: "var(--owl-bg)", color: "var(--owl-text)" }}>
+      <body className="font-body transition-colors duration-300 min-h-screen" style={{ color: "var(--owl-text)" }}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <PageTitleChanger />
           <Navigation />

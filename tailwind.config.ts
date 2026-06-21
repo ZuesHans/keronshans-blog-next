@@ -11,11 +11,11 @@ const config: Config = {
     extend: {
       colors: {
         neon: {
-          pink: "#9A6170",
-          blue: "#477565",
-          green: "#6F8C65",
-          purple: "#756F93",
-          yellow: "#9B7945",
+          pink: "#AD626B",
+          blue: "#C86443",
+          green: "#5F7D68",
+          purple: "#756F8E",
+          yellow: "#9B6B33",
         },
         cyber: {
           dark: "#141D1A",
@@ -26,16 +26,16 @@ const config: Config = {
         },
         // Night Owl Light
         owl: {
-          bg: "#FFFEF5",
-          bgSubtle: "#FDF6E3",
-          bgCard: "#FAF3E0",
-          text: "#403F4A",
-          textSecondary: "#6B6B7B",
-          textMuted: "#9B9BA8",
-          border: "#E8E4D6",
-          borderHover: "#C9C4B0",
-          tagBg: "#EDE8D5",
-          tagText: "#7A7568",
+          bg: "#FBFAF7",
+          bgSubtle: "#F1EEE7",
+          bgCard: "#FFFEFA",
+          text: "#24231F",
+          textSecondary: "#4F4D47",
+          textMuted: "#7B776F",
+          border: "#DED9CF",
+          borderHover: "#C5BDB0",
+          tagBg: "#EEEBE3",
+          tagText: "#5D5850",
         },
       },
       fontFamily: {
