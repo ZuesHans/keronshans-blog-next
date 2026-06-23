@@ -72,7 +72,10 @@ function safeTags(value: unknown): string {
 function safeIsoTime(value: unknown, fallback: string): string {
   if (typeof value !== "string") return fallback;
   const time = Date.parse(value);
-  return Number.isFinite(time) ? new Date(time).toISOString() : fallback;
+  const fallbackTime = Date.parse(fallback);
+  if (!Number.isFinite(time)) return fallback;
+  if (Number.isFinite(fallbackTime) && time > fallbackTime) return fallback;
+  return new Date(time).toISOString();
 }
 
 function parseDailyStats(value: unknown): ValidDailyStat[] {

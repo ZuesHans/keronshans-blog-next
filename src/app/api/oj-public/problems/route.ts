@@ -9,7 +9,7 @@ export async function GET() {
               synced_at AS created_at, updated_at, synced_at,
               'oj_float' AS source
          FROM oj_synced_problems
-        ORDER BY updated_at DESC`
+        ORDER BY synced_at DESC, updated_at DESC`
     ).all();
     return NextResponse.json(results || []);
   } catch {
