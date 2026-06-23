@@ -11,6 +11,12 @@ interface CheckinRecord {
   count: number;
   note: string;
   created_at: string;
+  source?: string;
+}
+
+interface OjDailyStat {
+  date: string;
+  totalDelta: number;
 }
 
 const TYPES = {
@@ -34,9 +40,32 @@ export default function CheckinPage() {
 
   const fetchRecords = useCallback(async () => {
     try {
-      const res = await fetch("/api/checkins");
-      const data = await res.json();
-      if (Array.isArray(data)) setRecords(data);
+      const [checkinsRes, ojStatsRes] = await Promise.all([
+        fetch("/api/checkins"),
+        fetch("/api/oj-public/daily-stats"),
+      ]);
+      const checkinsData = await checkinsRes.json();
+      const ojStatsData = await ojStatsRes.json();
+      const checkins = Array.isArray(checkinsData) ? checkinsData : [];
+      const ojRecords = Array.isArray(ojStatsData)
+        ? ojStatsData
+            .filter((item: OjDailyStat) => item.totalDelta > 0)
+            .map((item: OjDailyStat) => ({
+              id: -Number(item.date.replaceAll("-", "")),
+              nickname: "OJ Float",
+              content: "",
+              type: "practice",
+              count: item.totalDelta,
+              note: "OJ Float sync",
+              created_at: `${item.date} 12:00:00`,
+              source: "oj_float",
+            }))
+        : [];
+      setRecords(
+        [...checkins, ...ojRecords].sort((a, b) =>
+          String(b.created_at).localeCompare(String(a.created_at)),
+        ),
+      );
     } catch {}
   }, []);
 
@@ -420,7 +449,7 @@ export default function CheckinPage() {
                   </div>
                   {record.note && <p className="text-xs font-mono text-gray-400 mt-0.5 truncate">{record.note}</p>}
                 </div>
-                {isAuth && (
+                {isAuth && record.source !== "oj_float" && (
                   <button onClick={() => handleDelete(record.id)} className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 text-sm p-1 transition-all">✕</button>
                 )}
               </div>

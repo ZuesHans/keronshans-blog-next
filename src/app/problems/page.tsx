@@ -15,6 +15,7 @@ interface ProblemRecord {
   analysis: string;
   created_at: string;
   updated_at: string;
+  source?: string;
 }
 
 const PLATFORMS: Record<string, { label: string; icon: string; base: string }> = {
@@ -73,8 +74,15 @@ export default function ProblemsPage() {
 
   const fetchProblems = useCallback(async () => {
     try {
-      const res = await fetch("/api/problems");
-      if (res.ok) setProblems(await res.json());
+      const [localRes, syncedRes] = await Promise.all([
+        fetch("/api/problems"),
+        fetch("/api/oj-public/problems"),
+      ]);
+      const localData = localRes.ok ? await localRes.json() : [];
+      const syncedData = syncedRes.ok ? await syncedRes.json() : [];
+      const localProblems = Array.isArray(localData) ? localData : [];
+      const syncedProblems = Array.isArray(syncedData) ? syncedData : [];
+      setProblems([...localProblems, ...syncedProblems]);
     } catch {}
     setLoaded(true);
   }, []);
@@ -366,9 +374,12 @@ export default function ProblemsPage() {
                             {problem.analysis && (
                               <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-neon-purple/20 text-neon-purple border border-neon-purple/30">有笔记</span>
                             )}
+                            {problem.source === "oj_float" && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-neon-blue/10 text-neon-blue border border-neon-blue/20">OJ Float</span>
+                            )}
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
-                            {isAuth && (
+                            {isAuth && problem.source !== "oj_float" && (
                               <>
                                 <button onClick={(e) => { e.stopPropagation(); setEditingAnalysisId(editingAnalysisId === problem.id ? null : problem.id); setEditAnalysisText(problem.analysis || ""); }} className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-neon-purple text-sm p-0.5 transition-all" title="编辑笔记">✎</button>
                                 <select value={problem.status} onChange={(e) => handleStatusChange(problem.id, e.target.value)} className="text-[10px] bg-transparent border border-transparent focus:border-neon-blue/30 rounded px-1 py-0.5 font-mono text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
@@ -376,7 +387,9 @@ export default function ProblemsPage() {
                                 </select>
                               </>
                             )}
-                            <button onClick={(e) => { e.stopPropagation(); handleDelete(problem.id); }} className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 text-sm p-0.5 transition-all">✕</button>
+                            {isAuth && problem.source !== "oj_float" && (
+                              <button onClick={(e) => { e.stopPropagation(); handleDelete(problem.id); }} className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 text-sm p-0.5 transition-all">✕</button>
+                            )}
                           </div>
                         </div>
                         <a href={problem.url} target="_blank" rel="noopener noreferrer" className="block">

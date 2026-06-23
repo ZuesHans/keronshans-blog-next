@@ -72,3 +72,26 @@ CREATE TABLE IF NOT EXISTS problems (
   created_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours'))
 );
+
+-- OJ Float webhook public projection: daily solved totals only.
+CREATE TABLE IF NOT EXISTS oj_daily_stats (
+  date TEXT PRIMARY KEY,
+  total_delta INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours'))
+);
+
+-- OJ Float webhook public projection: synced problem book rows.
+-- note and analysis are optional and only present if the desktop user opts in.
+CREATE TABLE IF NOT EXISTS oj_synced_problems (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  url TEXT NOT NULL DEFAULT '',
+  platform TEXT NOT NULL DEFAULT 'other',
+  status TEXT NOT NULL DEFAULT 'TODO',
+  tags TEXT NOT NULL DEFAULT '[]',
+  date TEXT NOT NULL DEFAULT '',
+  note TEXT NOT NULL DEFAULT '',
+  analysis TEXT NOT NULL DEFAULT '',
+  updated_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours')),
+  synced_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours'))
+);
