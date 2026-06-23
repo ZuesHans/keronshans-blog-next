@@ -22,9 +22,26 @@ interface SyncProblem {
 interface SyncPayload {
   schemaVersion?: unknown;
   app?: unknown;
-  syncedAt?: unknown;
   dailyStats?: unknown;
   problems?: unknown;
+}
+
+interface ValidDailyStat {
+  date: string;
+  totalDelta: number;
+}
+
+interface ValidProblem {
+  id: string;
+  title: string;
+  url: string;
+  platform: string;
+  status: string;
+  tags: string;
+  date: string;
+  note: string;
+  analysis: string;
+  updatedAt: string;
 }
 
 function getBearerToken(request: Request): string {
@@ -52,6 +69,46 @@ function safeTags(value: unknown): string {
   return JSON.stringify(value.filter((item) => typeof item === "string").map((item) => item.trim()).filter(Boolean));
 }
 
+function safeIsoTime(value: unknown, fallback: string): string {
+  if (typeof value !== "string") return fallback;
+  const time = Date.parse(value);
+  return Number.isFinite(time) ? new Date(time).toISOString() : fallback;
+}
+
+function parseDailyStats(value: unknown): ValidDailyStat[] {
+  if (!Array.isArray(value)) return [];
+  const rows: ValidDailyStat[] = [];
+  for (const item of value as SyncDailyStat[]) {
+    if (!isDateKey(item.date) || typeof item.totalDelta !== "number" || item.totalDelta < 0) continue;
+    rows.push({ date: item.date, totalDelta: Math.floor(item.totalDelta) });
+  }
+  return rows;
+}
+
+function parseProblems(value: unknown, fallbackTime: string): ValidProblem[] {
+  if (!Array.isArray(value)) return [];
+  const rows: ValidProblem[] = [];
+  for (const item of value as SyncProblem[]) {
+    const id = safeString(item.id);
+    const title = safeString(item.title);
+    const url = safeString(item.url);
+    if (!id || !title || !url) continue;
+    rows.push({
+      id,
+      title,
+      url,
+      platform: safeString(item.platform, "other"),
+      status: safeString(item.status, "TODO"),
+      tags: safeTags(item.tags),
+      date: isDateKey(item.date) ? item.date : "",
+      note: safeString(item.note),
+      analysis: safeString(item.analysis),
+      updatedAt: safeIsoTime(item.updated_at, fallbackTime),
+    });
+  }
+  return rows;
+}
+
 export async function POST(request: Request) {
   if (!isAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -64,42 +121,38 @@ export async function POST(request: Request) {
     }
 
     const { env } = await getCloudflareContext({ async: true });
-    const syncedAt = safeString(payload.syncedAt, new Date().toISOString());
+    const serverSyncedAt = new Date().toISOString();
+    const dailyStats = parseDailyStats(payload.dailyStats);
+    const problems = parseProblems(payload.problems, serverSyncedAt);
 
-    if (Array.isArray(payload.dailyStats)) {
-      for (const item of payload.dailyStats as SyncDailyStat[]) {
-        if (!isDateKey(item.date) || typeof item.totalDelta !== "number" || item.totalDelta < 0) continue;
-        await env.DB.prepare(
-          "INSERT OR REPLACE INTO oj_daily_stats (date, total_delta, updated_at) VALUES (?, ?, ?)"
-        ).bind(item.date, Math.floor(item.totalDelta), syncedAt).run();
-      }
-    }
-
-    if (Array.isArray(payload.problems)) {
-      for (const item of payload.problems as SyncProblem[]) {
-        const id = safeString(item.id);
-        const title = safeString(item.title);
-        const url = safeString(item.url);
-        if (!id || !title || !url) continue;
-        await env.DB.prepare(
+    await env.DB.batch([
+      env.DB.prepare("DELETE FROM oj_daily_stats"),
+      ...dailyStats.map((item) =>
+        env.DB.prepare(
+          "INSERT INTO oj_daily_stats (date, total_delta, updated_at) VALUES (?, ?, ?)"
+        ).bind(item.date, item.totalDelta, serverSyncedAt)
+      ),
+      env.DB.prepare("DELETE FROM oj_synced_problems"),
+      ...problems.map((item) =>
+        env.DB.prepare(
           `INSERT OR REPLACE INTO oj_synced_problems
             (id, title, url, platform, status, tags, date, note, analysis, updated_at, synced_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         ).bind(
-          id,
-          title,
-          url,
-          safeString(item.platform, "other"),
-          safeString(item.status, "TODO"),
-          safeTags(item.tags),
-          isDateKey(item.date) ? item.date : "",
-          safeString(item.note),
-          safeString(item.analysis),
-          safeString(item.updated_at, syncedAt),
-          syncedAt
-        ).run();
-      }
-    }
+          item.id,
+          item.title,
+          item.url,
+          item.platform,
+          item.status,
+          item.tags,
+          item.date,
+          item.note,
+          item.analysis,
+          item.updatedAt,
+          serverSyncedAt
+        )
+      ),
+    ]);
 
     return NextResponse.json({ success: true });
   } catch {
