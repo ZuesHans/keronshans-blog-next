@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { verifyPassword, isAuthenticated, setAuthenticated, setAdminPassword, getAdminPassword } from "@/lib/auth";
+import { restoreAuthenticatedPassword, verifyPassword, setAuthenticated, setAdminPassword } from "@/lib/auth";
 
 // ====== Types ======
 interface PostItem {
@@ -19,6 +19,7 @@ interface PostItem {
 interface SnippetItem {
   id: string;
   title: string;
+  code: string;
   language: string;
   tags: string | string[];
   created_at: string;
@@ -107,7 +108,6 @@ export default function DashboardPage() {
     try {
       const res = await fetch("/api/deploy", {
         method: "POST",
-        headers: { "x-admin-password": adminPassword },
       });
       const data = await res.json();
       if (data.success) {
@@ -129,17 +129,29 @@ export default function DashboardPage() {
 
   // ====== Auth ======
   useEffect(() => {
-    if (isAuthenticated()) {
+    let cancelled = false;
+
+    async function restoreAuth() {
+      const storedPassword = await restoreAuthenticatedPassword();
+      if (cancelled || !storedPassword) return;
+      setAdminPasswordState(storedPassword);
       setAuthed(true);
-      setAdminPasswordState(getAdminPassword());
     }
+
+    restoreAuth();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const handleLogin = () => {
-    if (verifyPassword(pwd)) {
+  const handleLogin = async () => {
+    setMsg("");
+    if (await verifyPassword(pwd)) {
       setAuthenticated();
       setAdminPassword(pwd);
-      setAdminPasswordState(pwd);
+      setAdminPasswordState("session");
+      setPwd("");
       setAuthed(true);
     } else {
       setMsg("密码错误");
@@ -150,7 +162,7 @@ export default function DashboardPage() {
   const fetchPosts = useCallback(async () => {
     setPostsLoading(true);
     try {
-      const res = await fetch("/api/admin", { headers: { "x-admin-password": adminPassword } });
+      const res = await fetch("/api/admin");
       if (res.ok) setPosts(await res.json());
     } catch {}
     setPostsLoading(false);
@@ -165,7 +177,7 @@ export default function DashboardPage() {
   const openPostEditor = async (filename: string) => {
     setMsg("");
     try {
-      const res = await fetch(`/api/admin/${encodeURIComponent(filename)}`, { headers: { "x-admin-password": adminPassword } });
+      const res = await fetch(`/api/admin/${encodeURIComponent(filename)}`);
       if (!res.ok) return;
       const data = await res.json();
       setEditFile(filename);
@@ -198,12 +210,12 @@ export default function DashboardPage() {
       let res: Response;
       if (editFile) {
         res = await fetch(`/api/admin/${encodeURIComponent(editFile)}`, {
-          method: "PUT", headers: { "Content-Type": "application/json", "x-admin-password": adminPassword },
+          method: "PUT", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ frontmatter, content: editContent, newFilename: editFile !== filename ? filename : undefined }),
         });
       } else {
         res = await fetch("/api/admin", {
-          method: "POST", headers: { "Content-Type": "application/json", "x-admin-password": adminPassword },
+          method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ filename, frontmatter, content: editContent }),
         });
       }
@@ -216,7 +228,7 @@ export default function DashboardPage() {
   const deletePost = async (filename: string) => {
     if (!confirm(`确定删除 ${filename}？此操作不可恢复。`)) return;
     try {
-      const res = await fetch(`/api/admin?filename=${encodeURIComponent(filename)}`, { method: "DELETE", headers: { "x-admin-password": adminPassword } });
+      const res = await fetch(`/api/admin?filename=${encodeURIComponent(filename)}`, { method: "DELETE" });
       if (res.ok) { setMsg("已删除，正在部署..."); fetchPosts(); triggerDeploy(); }
     } catch {}
   };
@@ -278,13 +290,13 @@ export default function DashboardPage() {
       let res: Response;
       if (snippetEditId) {
         res = await fetch("/api/snippets", {
-          method: "PUT", headers: { "Content-Type": "application/json", "x-admin-password": adminPassword },
+          method: "PUT", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: snippetEditId, title: snippetTitle.trim(), language: snippetLang, code: snippetCode, tags: snippetTags }),
         });
       } else {
         const newId = Date.now().toString(36) + Math.random().toString(36).slice(2);
         res = await fetch("/api/snippets", {
-          method: "POST", headers: { "Content-Type": "application/json", "x-admin-password": adminPassword },
+          method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: newId, title: snippetTitle.trim(), language: snippetLang, code: snippetCode, tags: snippetTags }),
         });
       }
@@ -297,7 +309,7 @@ export default function DashboardPage() {
   const deleteSnippet = async (id: string) => {
     if (!confirm(`确定删除代码片段？此操作不可恢复。`)) return;
     try {
-      const res = await fetch(`/api/snippets?id=${encodeURIComponent(id)}`, { method: "DELETE", headers: { "x-admin-password": adminPassword } });
+      const res = await fetch(`/api/snippets?id=${encodeURIComponent(id)}`, { method: "DELETE" });
       if (res.ok) { setMsg("已删除，正在部署..."); fetchSnippets(); triggerDeploy(); }
     } catch {}
   };

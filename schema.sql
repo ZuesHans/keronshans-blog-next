@@ -39,6 +39,9 @@ CREATE TABLE IF NOT EXISTS comments (
   created_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours'))
 );
 
+CREATE INDEX IF NOT EXISTS idx_comments_post_created_at ON comments(post_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_comments_recent_dedupe ON comments(post_id, content, created_at);
+
 -- 点赞（针对文章）
 CREATE TABLE IF NOT EXISTS likes (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -46,6 +49,9 @@ CREATE TABLE IF NOT EXISTS likes (
   ip TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours'))
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_likes_post_ip_unique ON likes(post_id, ip);
+CREATE INDEX IF NOT EXISTS idx_likes_post_id ON likes(post_id);
 
 -- 代码片段
 CREATE TABLE IF NOT EXISTS snippets (

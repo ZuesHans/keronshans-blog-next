@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 const interests = [
   "C++",
@@ -41,19 +42,24 @@ export default function AboutPage() {
   return (
     <div className="about-page -mt-16">
       <section className="relative min-h-[100svh] overflow-hidden">
-        <img
+        <Image
           src="/about-summer-solstice.png"
           alt="夏至荷塘背景"
-          className="absolute inset-0 h-full w-full object-cover"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
         />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,24,24,0.72),rgba(8,24,24,0.26)_48%,rgba(8,24,24,0.62)),linear-gradient(180deg,rgba(8,24,24,0.18),rgba(8,24,24,0.84))]" />
 
         <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-6xl flex-col justify-end px-5 pb-12 pt-28 sm:px-6 lg:pb-16">
           <div className="max-w-3xl">
             <div className="mb-6 flex items-end gap-5">
-              <img
+              <Image
                 src="/avatar.jpg"
                 alt="Keronshans avatar"
+                width={128}
+                height={128}
                 className="h-24 w-24 rounded-md border object-cover shadow-2xl sm:h-32 sm:w-32"
                 style={{ borderColor: "rgba(255,255,255,0.62)" }}
               />

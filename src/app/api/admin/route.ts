@@ -4,7 +4,7 @@ import { authenticateAdmin } from "@/lib/adminPassword";
 
 // GET /api/admin - list all posts
 export async function GET(request: Request) {
-  if (!authenticateAdmin(request)) {
+  if (!(await authenticateAdmin(request))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -29,7 +29,7 @@ export async function GET(request: Request) {
 
 // POST /api/admin - create new post
 export async function POST(request: Request) {
-  if (!authenticateAdmin(request)) {
+  if (!(await authenticateAdmin(request))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
 
 // DELETE /api/admin?filename=xxx - delete post
 export async function DELETE(request: Request) {
-  if (!authenticateAdmin(request)) {
+  if (!(await authenticateAdmin(request))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

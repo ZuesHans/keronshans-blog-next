@@ -15,7 +15,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const { env } = await getCloudflareContext({ async: true });
-    if (!authenticateAdmin(request)) {
+    if (!(await authenticateAdmin(request))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const { env } = await getCloudflareContext({ async: true });
-    if (!authenticateAdmin(request)) {
+    if (!(await authenticateAdmin(request))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

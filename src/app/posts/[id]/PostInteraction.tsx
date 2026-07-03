@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { verifyPassword } from "@/lib/auth";
 
 interface Comment {
   id: number;
@@ -110,7 +111,6 @@ export default function PostInteraction({ postId }: { postId: string }) {
     try {
       const res = await fetch(`/api/comments?id=${commentId}`, {
         method: "DELETE",
-        headers: { "x-admin-password": adminPassword },
       });
       if (res.ok) {
         setComments((prev) => prev.filter((c) => c.id !== commentId));
@@ -124,9 +124,10 @@ export default function PostInteraction({ postId }: { postId: string }) {
     }
   };
 
-  const handleAdminLogin = () => {
-    if (adminPassword.trim()) {
+  const handleAdminLogin = async () => {
+    if (await verifyPassword(adminPassword)) {
       setIsAdmin(true);
+      setAdminPassword("");
       setShowAdminPanel(false);
     } else {
       setError("请输入管理员密码");

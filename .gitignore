@@ -10,5 +10,6 @@ next-env.d.ts
 .codebuddy/
 .open-next/
 .wrangler/logs/
+.wrangler-config/
 public/img/
 blog-manager/

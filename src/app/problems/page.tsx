@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { verifyPassword, isAuthenticated, setAuthenticated, setAdminPassword, getAdminPassword } from "@/lib/auth";
+import { restoreAuthenticatedPassword, verifyPassword, setAuthenticated, setAdminPassword } from "@/lib/auth";
 
 interface ProblemRecord {
   id: string;
@@ -46,6 +46,27 @@ function parseTags(tagsStr: string): string[] {
   try { return JSON.parse(tagsStr); } catch { return []; }
 }
 
+function problemKeys(problem: ProblemRecord): string[] {
+  const keys = [problem.id.trim()];
+  const url = problem.url.trim().toLowerCase();
+  if (url) keys.push(url);
+  return keys.filter(Boolean);
+}
+
+function mergeProblems(localProblems: ProblemRecord[], syncedProblems: ProblemRecord[]): ProblemRecord[] {
+  const seen = new Set<string>();
+  const merged: ProblemRecord[] = [];
+  const add = (problem: ProblemRecord) => {
+    const keys = problemKeys(problem);
+    if (keys.some((key) => seen.has(key))) return;
+    keys.forEach((key) => seen.add(key));
+    merged.push(problem);
+  };
+  localProblems.forEach(add);
+  syncedProblems.forEach(add);
+  return merged;
+}
+
 export default function ProblemsPage() {
   const [problems, setProblems] = useState<ProblemRecord[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -82,24 +103,36 @@ export default function ProblemsPage() {
       const syncedData = syncedRes.ok ? await syncedRes.json() : [];
       const localProblems = Array.isArray(localData) ? localData : [];
       const syncedProblems = Array.isArray(syncedData) ? syncedData : [];
-      setProblems([...localProblems, ...syncedProblems]);
+      setProblems(mergeProblems(localProblems, syncedProblems));
     } catch {}
     setLoaded(true);
   }, []);
 
   useEffect(() => {
     fetchProblems();
-    if (isAuthenticated()) {
+
+    let cancelled = false;
+
+    async function restoreAuth() {
+      const storedPassword = await restoreAuthenticatedPassword();
+      if (cancelled || !storedPassword) return;
+      setAdminPasswordState(storedPassword);
       setIsAuth(true);
-      setAdminPasswordState(getAdminPassword());
     }
+
+    restoreAuth();
+
+    return () => {
+      cancelled = true;
+    };
   }, [fetchProblems]);
 
-  const handleLogin = () => {
-    if (verifyPassword(password)) {
+  const handleLogin = async () => {
+    if (await verifyPassword(password)) {
       setAuthenticated();
       setAdminPassword(password);
-      setAdminPasswordState(password);
+      setAdminPasswordState("session");
+      setPassword("");
       setIsAuth(true);
       setError("");
     } else {
@@ -114,7 +147,7 @@ export default function ProblemsPage() {
     try {
       const res = await fetch("/api/problems", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-admin-password": adminPassword },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, title: formTitle.trim(), url: formUrl.trim(), platform: formPlatform, status: formStatus, tags: formTags, date: new Date().toISOString().split("T")[0], note: formNote.trim(), analysis: formAnalysis.trim() }),
       });
       if (res.ok) {
@@ -130,7 +163,6 @@ export default function ProblemsPage() {
     try {
       const res = await fetch(`/api/problems?id=${id}`, {
         method: "DELETE",
-        headers: { "x-admin-password": adminPassword },
       });
       if (res.ok) setProblems(problems.filter((p) => p.id !== id));
     } catch {}
@@ -140,7 +172,7 @@ export default function ProblemsPage() {
     try {
       const res = await fetch("/api/problems", {
         method: "PUT",
-        headers: { "Content-Type": "application/json", "x-admin-password": adminPassword },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status: newStatus }),
       });
       if (res.ok) setProblems(problems.map((p) => (p.id === id ? { ...p, status: newStatus } : p)));
@@ -151,7 +183,7 @@ export default function ProblemsPage() {
     try {
       const res = await fetch("/api/problems", {
         method: "PUT",
-        headers: { "Content-Type": "application/json", "x-admin-password": adminPassword },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, analysis: editAnalysisText }),
       });
       if (res.ok) {

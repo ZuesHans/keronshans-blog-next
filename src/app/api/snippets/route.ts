@@ -37,7 +37,7 @@ export async function GET(request: Request) {
 
 // POST /api/snippets - create a snippet (auth required)
 export async function POST(request: Request) {
-  if (!authenticateAdmin(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await authenticateAdmin(request))) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const { env } = await getCloudflareContext({ async: true });
     const { id, title, code, language, tags } = await request.json();
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
 
 // PUT /api/snippets - update a snippet (auth required)
 export async function PUT(request: Request) {
-  if (!authenticateAdmin(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await authenticateAdmin(request))) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const { env } = await getCloudflareContext({ async: true });
     const { id, title, code, language, tags } = await request.json();
@@ -73,7 +73,7 @@ export async function PUT(request: Request) {
 
 // DELETE /api/snippets?id=xxx - delete a snippet (auth required)
 export async function DELETE(request: Request) {
-  if (!authenticateAdmin(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await authenticateAdmin(request))) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const { env } = await getCloudflareContext({ async: true });
     const { searchParams } = new URL(request.url);

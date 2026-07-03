@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { verifyPassword, isAuthenticated, setAuthenticated, setAdminPassword, getAdminPassword } from "@/lib/auth";
+import { restoreAuthenticatedPassword, verifyPassword, setAuthenticated, setAdminPassword } from "@/lib/auth";
 
 interface Snippet {
   id: string;
@@ -66,17 +66,29 @@ export default function SnippetsPage() {
 
   useEffect(() => {
     fetchSnippets();
-    if (isAuthenticated()) {
+
+    let cancelled = false;
+
+    async function restoreAuth() {
+      const storedPassword = await restoreAuthenticatedPassword();
+      if (cancelled || !storedPassword) return;
+      setAdminPasswordState(storedPassword);
       setIsAuth(true);
-      setAdminPasswordState(getAdminPassword());
     }
+
+    restoreAuth();
+
+    return () => {
+      cancelled = true;
+    };
   }, [fetchSnippets]);
 
-  const handleLogin = () => {
-    if (verifyPassword(password)) {
+  const handleLogin = async () => {
+    if (await verifyPassword(password)) {
       setAuthenticated();
       setAdminPassword(password);
-      setAdminPasswordState(password);
+      setAdminPasswordState("session");
+      setPassword("");
       setIsAuth(true);
       setError("");
     } else {
@@ -114,13 +126,13 @@ export default function SnippetsPage() {
       if (editingId) {
         res = await fetch("/api/snippets", {
           method: "PUT",
-          headers: { "Content-Type": "application/json", "x-admin-password": adminPassword },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: editingId, title: formTitle.trim(), code: formCode, language: formLang, tags }),
         });
       } else {
         res = await fetch("/api/snippets", {
           method: "POST",
-          headers: { "Content-Type": "application/json", "x-admin-password": adminPassword },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: genId(), title: formTitle.trim(), code: formCode, language: formLang, tags }),
         });
       }
@@ -139,7 +151,6 @@ export default function SnippetsPage() {
     try {
       const res = await fetch(`/api/snippets?id=${id}`, {
         method: "DELETE",
-        headers: { "x-admin-password": adminPassword },
       });
       if (res.ok) setSnippets(snippets.filter(s => s.id !== id));
     } catch {}

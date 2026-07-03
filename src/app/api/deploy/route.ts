@@ -1,9 +1,25 @@
 import { NextResponse } from "next/server";
 import { authenticateAdmin } from "@/lib/adminPassword";
+import { checkRateLimit } from "@/lib/rateLimit";
+
+function rateLimited(retryAfter: number) {
+  return NextResponse.json(
+    { error: "Too many deploy attempts" },
+    { status: 429, headers: { "Retry-After": String(retryAfter) } },
+  );
+}
 
 export async function POST(request: Request) {
-  if (!authenticateAdmin(request)) {
+  if (!(await authenticateAdmin(request))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const limit = checkRateLimit(request, "deploy", 3, 10 * 60 * 1000);
+  if (!limit.allowed) return rateLimited(limit.retryAfter);
+
+  const deployConfirmToken = process.env.DEPLOY_CONFIRM_TOKEN || "";
+  if (deployConfirmToken && request.headers.get("x-deploy-token") !== deployConfirmToken) {
+    return NextResponse.json({ error: "Deploy confirmation token required" }, { status: 403 });
   }
 
   // Try to trigger GitHub Actions workflow if GITHUB_TOKEN is available as env var

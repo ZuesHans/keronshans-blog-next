@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { getAdminPassword, setAdminPassword } from "@/lib/auth";
+import { restoreAuthenticatedPassword, verifyPassword, setAuthenticated, setAdminPassword } from "@/lib/auth";
 
 interface CheckinRecord {
   id: number;
@@ -25,6 +25,9 @@ const TYPES = {
   vp: { label: "VP", emoji: "🏆", color: "#f59e0b" },
   study: { label: "学习", emoji: "📖", color: "#10b981" },
 } as const;
+
+const MONTH_LABELS = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
+const DAY_LABELS = ["一", "", "三", "", "五", "", "日"];
 
 export default function CheckinPage() {
   const [records, setRecords] = useState<CheckinRecord[]>([]);
@@ -71,18 +74,30 @@ export default function CheckinPage() {
 
   useEffect(() => {
     fetchRecords();
-    if (sessionStorage.getItem("keronshans_auth") === "true") {
+
+    let cancelled = false;
+
+    async function restoreAuth() {
+      const storedPassword = await restoreAuthenticatedPassword();
+      if (cancelled || !storedPassword) return;
+      setAdminPasswordState(storedPassword);
       setIsAuth(true);
-      setAdminPasswordState(getAdminPassword());
     }
+
+    restoreAuth();
+
+    return () => {
+      cancelled = true;
+    };
   }, [fetchRecords]);
 
-  const handleLogin = () => {
-    if (password.trim()) {
+  const handleLogin = async () => {
+    if (await verifyPassword(password)) {
       setIsAuth(true);
-      sessionStorage.setItem("keronshans_auth", "true");
+      setAuthenticated();
       setAdminPassword(password);
-      setAdminPasswordState(password);
+      setAdminPasswordState("session");
+      setPassword("");
       setError("");
     } else {
       setError("密码错误");
@@ -99,7 +114,7 @@ export default function CheckinPage() {
     try {
       const res = await fetch("/api/checkins", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-admin-password": adminPassword },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ date: today, type: todayType, count: todayCount, note: todayNote }),
       });
       if (res.ok) {
@@ -114,7 +129,6 @@ export default function CheckinPage() {
     try {
       const res = await fetch(`/api/checkins?id=${id}`, {
         method: "DELETE",
-        headers: { "x-admin-password": adminPassword },
       });
       if (res.ok) setRecords(records.filter((r) => r.id !== id));
     } catch {}
@@ -207,9 +221,6 @@ export default function CheckinPage() {
     return "bg-blue-300 dark:bg-blue-400/60";
   };
 
-  const monthLabels = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
-  const dayLabels = ["一", "", "三", "", "五", "", "日"];
-
   // Compute month label positions based on actual week column indices
   const monthPositions = useMemo(() => {
     const positions: { label: string; col: number }[] = [];
@@ -220,7 +231,7 @@ export default function CheckinPage() {
       const jan1Offset = (jan1.getDay() + 6) % 7;
       const dayIndex = Math.round((monthStart.getTime() - jan1.getTime()) / (1000 * 60 * 60 * 24));
       const col = Math.floor((dayIndex + jan1Offset) / 7);
-      positions.push({ label: monthLabels[m], col });
+      positions.push({ label: MONTH_LABELS[m], col });
     }
     return positions;
   }, [viewYear]);
@@ -370,7 +381,7 @@ export default function CheckinPage() {
 
         <div className="flex gap-0">
           <div className="flex flex-col gap-0 mr-1">
-            {dayLabels.map((label, i) => (
+            {DAY_LABELS.map((label, i) => (
               <div key={i} className="h-[13px] leading-[13px] text-[10px] font-mono text-gray-400 w-4 text-right pr-1">
                 {label}
               </div>

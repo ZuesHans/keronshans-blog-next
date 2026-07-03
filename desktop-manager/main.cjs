@@ -186,8 +186,17 @@ function writeMarkdown(filePath, data, content) {
   fs.writeFileSync(filePath, next, "utf-8");
 }
 
+function resolveInside(root, target) {
+  const rootPath = path.resolve(root);
+  const resolved = path.resolve(rootPath, String(target || ""));
+  if (resolved !== rootPath && !resolved.startsWith(`${rootPath}${path.sep}`)) {
+    throw new Error("Path is outside the managed workspace");
+  }
+  return resolved;
+}
+
 function updateMarkdownMeta(dir, filename, patch) {
-  const filePath = path.join(dir, filename);
+  const filePath = resolveInside(dir, filename);
   if (!fs.existsSync(filePath)) throw new Error(`File not found: ${filename}`);
   const parsed = matter(fs.readFileSync(filePath, "utf-8"));
   const data = { ...parsed.data, ...patch };
@@ -289,20 +298,20 @@ function renameTag({ from, to }) {
 
 function resolveItemPath(item) {
   if (!item) return APP_ROOT;
-  if (item.kind === "post") return path.join(POSTS_DIR, item.filename);
-  if (item.kind === "snippet") return path.join(SNIPPETS_DIR, item.filename);
+  if (item.kind === "post") return resolveInside(POSTS_DIR, item.filename);
+  if (item.kind === "snippet") return resolveInside(SNIPPETS_DIR, item.filename);
   if (item.kind === "problem") return PROBLEMS_FILE;
   return APP_ROOT;
 }
 
 function openVSCode(targetPath) {
-  const candidates = [
-    "code",
-    path.join(process.env.LOCALAPPDATA || "", "Programs", "Microsoft VS Code", "bin", "code.cmd"),
-  ];
+  const localCode = path.join(process.env.LOCALAPPDATA || "", "Programs", "Microsoft VS Code", "bin", "code.cmd");
+  const candidates = process.platform === "win32"
+    ? [localCode].filter((candidate) => fs.existsSync(candidate))
+    : ["code"];
   for (const candidate of candidates) {
     try {
-      const child = spawn(candidate, [targetPath], { cwd: APP_ROOT, detached: true, stdio: "ignore", shell: candidate === "code" });
+      const child = spawn(candidate, [targetPath], { cwd: APP_ROOT, detached: true, stdio: "ignore", shell: false });
       child.unref();
       return true;
     } catch {}
@@ -335,7 +344,7 @@ async function runPublishTask(task, payload, event) {
   }
   if (task === "git") {
     const status = await new Promise((resolve) => {
-      const child = spawn("git", ["status", "--short"], { cwd: APP_ROOT, shell: true });
+      const child = spawn("git", ["status", "--short"], { cwd: APP_ROOT, shell: false });
       let output = "";
       child.stdout.on("data", (chunk) => (output += chunk.toString()));
       child.on("close", () => resolve(output.trim()));
@@ -377,6 +386,7 @@ function createWindow() {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
       nodeIntegration: false,
+      sandbox: true,
     },
   });
   mainWindow.loadFile(path.join(__dirname, "renderer", "index.html"));
@@ -403,7 +413,7 @@ ipcMain.handle("manager:renameTag", (_event, payload) => renameTag(payload));
 ipcMain.handle("manager:openProject", () => openVSCode(APP_ROOT));
 ipcMain.handle("manager:openItem", (_event, item) => openVSCode(resolveItemPath(item)));
 ipcMain.handle("manager:showInFolder", (_event, item) => shell.showItemInFolder(resolveItemPath(item)));
-ipcMain.handle("manager:publish", (event, payload) => runPublishTask(payload.task, payload, event));
+ipcMain.handle("manager:publish", (event, payload) => runPublishTask(String(payload?.task || ""), payload, event));
 ipcMain.handle("manager:cleanupOpenNext", async () => {
   const result = await dialog.showMessageBox(mainWindow, {
     type: "warning",
@@ -422,7 +432,8 @@ ipcMain.handle("manager:preview", () => {
     shell.openExternal("http://localhost:3000");
     return true;
   }
-  previewProcess = spawn("npm", ["run", "dev"], { cwd: APP_ROOT, shell: true });
+  const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
+  previewProcess = spawn(npmCommand, ["run", "dev"], { cwd: APP_ROOT, shell: false });
   previewProcess.stdout.on("data", (chunk) => mainWindow?.webContents.send("manager:log", chunk.toString()));
   previewProcess.stderr.on("data", (chunk) => mainWindow?.webContents.send("manager:log", chunk.toString()));
   setTimeout(() => shell.openExternal("http://localhost:3000"), 3500);

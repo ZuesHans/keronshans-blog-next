@@ -1,11 +1,16 @@
+import { getCloudflareContext } from "@opennextjs/cloudflare";
+
 /**
- * Cloudflare Workers KV storage for blog posts.
- * All post data is stored as JSON in Workers KV.
- * Local content/posts/ files are the source of truth for static generation.
- * Run deploy.ps1 locally to sync KV changes back to local files and redeploy.
+ * Optional Cloudflare Workers KV storage for blog posts.
+ * Local content/posts/ files are still the source of truth for static generation.
  */
 
 const KV_POSTS = "posts"; // JSON array of all posts
+
+interface PostsKVBinding {
+  get(key: string): Promise<string | null>;
+  put(key: string, value: string): Promise<void>;
+}
 
 export interface KvPost {
   filename: string;
@@ -19,9 +24,15 @@ export interface KvPost {
   updatedAt: string;
 }
 
+async function getPostsKV(): Promise<PostsKVBinding | null> {
+  const { env } = await getCloudflareContext({ async: true });
+  return env.POSTS_KV ?? env.KV ?? null;
+}
+
 export async function getAllPostsFromKV(): Promise<KvPost[]> {
-  const { KV } = await import("@opennextjs/cloudflare");
-  const value = await KV.get(KV_POSTS);
+  const kv = await getPostsKV();
+  if (!kv) return [];
+  const value = await kv.get(KV_POSTS);
   if (!value) return [];
   try {
     return JSON.parse(value) as KvPost[];
@@ -31,6 +42,9 @@ export async function getAllPostsFromKV(): Promise<KvPost[]> {
 }
 
 export async function saveAllPostsToKV(posts: KvPost[]): Promise<void> {
-  const { KV } = await import("@opennextjs/cloudflare");
-  await KV.put(KV_POSTS, JSON.stringify(posts));
+  const kv = await getPostsKV();
+  if (!kv) {
+    throw new Error("Cloudflare KV binding POSTS_KV or KV is not configured.");
+  }
+  await kv.put(KV_POSTS, JSON.stringify(posts));
 }

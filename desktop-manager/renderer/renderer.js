@@ -114,7 +114,7 @@ function itemMatches(item) {
 }
 
 function renderFilters() {
-  el.filters.innerHTML = "";
+  el.filters.replaceChildren();
   if (state.view === "tags") return;
   const options = [{ id: "all", label: "全部" }];
   if (state.view === "posts") {
@@ -137,23 +137,26 @@ function renderFilters() {
 }
 
 function renderItems() {
-  el.items.innerHTML = "";
+  el.items.replaceChildren();
   const items = currentCollection().filter(itemMatches);
   items.forEach((item) => {
     const btn = document.createElement("button");
     btn.className = `item ${state.selected && itemKey(state.selected) === itemKey(item) && state.selected.kind === item.kind ? "active" : ""}`;
-    const tags = (item.tags || []).slice(0, 4).map((tag) => `<span class="badge">#${tag}</span>`).join("");
     const meta = item.kind === "post"
       ? `${item.pinned ? "置顶 · " : ""}${item.category} · ${item.date} · ${item.filename}`
       : item.kind === "snippet"
         ? `${item.language} · ${item.date || "未标日期"} · ${item.filename}`
         : `${item.platform} · ${item.status} · ${item.date || "未标日期"}`;
-    btn.innerHTML = `
-      <div class="item-title">${escapeHtml(item.title || "(未命名)")}</div>
-      <div class="item-meta">${escapeHtml(meta)}</div>
-      <div class="item-summary">${escapeHtml(item.summary || item.note || item.url || "")}</div>
-      <div>${tags}</div>
-    `;
+    btn.appendChild(textNode("div", "item-title", item.title || "(未命名)"));
+    btn.appendChild(textNode("div", "item-meta", meta));
+    btn.appendChild(textNode("div", "item-summary", item.summary || item.note || item.url || ""));
+
+    const tags = document.createElement("div");
+    (item.tags || []).slice(0, 4).forEach((tag) => {
+      tags.appendChild(textNode("span", "badge", `#${tag}`));
+    });
+    btn.appendChild(tags);
+
     btn.addEventListener("click", () => {
       state.selected = item;
       renderDetail();
@@ -161,6 +164,13 @@ function renderItems() {
     });
     el.items.appendChild(btn);
   });
+}
+
+function textNode(tagName, className, text) {
+  const node = document.createElement(tagName);
+  node.className = className;
+  node.textContent = String(text || "");
+  return node;
 }
 
 function escapeHtml(text) {
@@ -208,8 +218,8 @@ function renderTags() {
   el.empty.classList.add("hidden");
   el.detailForm.classList.add("hidden");
   el.tagPanel.classList.remove("hidden");
-  el.items.innerHTML = "";
-  el.tagCloud.innerHTML = "";
+  el.items.replaceChildren();
+  el.tagCloud.replaceChildren();
   state.snapshot.tags.forEach(({ tag, count }) => {
     const chip = document.createElement("button");
     chip.className = "tag-chip";
@@ -238,13 +248,23 @@ function render() {
 async function refresh() {
   state.snapshot = await api.snapshot();
   el.rootPath.textContent = state.snapshot.root;
-  el.fieldCategory.innerHTML = state.snapshot.categories.map((category) => `<option value="${category}">${category}</option>`).join("");
-  document.querySelector("#newCategory").innerHTML = state.snapshot.categories.map((category) => `<option value="${category}">${category}</option>`).join("");
+  replaceOptions(el.fieldCategory, state.snapshot.categories);
+  replaceOptions(document.querySelector("#newCategory"), state.snapshot.categories);
   if (state.selected) {
     const next = currentCollection().find((item) => itemKey(item) === itemKey(state.selected) && item.kind === state.selected.kind);
     state.selected = next || null;
   }
   render();
+}
+
+function replaceOptions(select, values) {
+  select.replaceChildren();
+  values.forEach((value) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = value;
+    select.appendChild(option);
+  });
 }
 
 async function saveMeta() {

@@ -12,7 +12,7 @@ function inferCategory(filename: string): string {
 
 // GET /api/admin/[filename] - get single post
 export async function GET(request: Request, { params }: { params: Promise<{ filename: string }> }) {
-  if (!authenticateAdmin(request)) {
+  if (!(await authenticateAdmin(request))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -54,7 +54,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ file
 
 // PUT /api/admin/[filename] - update post
 export async function PUT(request: Request, { params }: { params: Promise<{ filename: string }> }) {
-  if (!authenticateAdmin(request)) {
+  if (!(await authenticateAdmin(request))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

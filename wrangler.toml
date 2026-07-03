@@ -2,6 +2,9 @@ name = "keronshans-blog"
 main = ".open-next/worker.js"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
+routes = [
+  { pattern = "talks.keronshans.top", custom_domain = true }
+]
 
 [vars]
 SEARCH_API_URL = "https://api.keronshans.top/search"
