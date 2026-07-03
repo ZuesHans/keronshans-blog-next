@@ -3,7 +3,7 @@ main = ".open-next/worker.js"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 routes = [
-  { pattern = "talks.keronshans.top", custom_domain = true }
+  { pattern = "talks.keronshans.top/*", zone_name = "keronshans.top" }
 ]
 
 [vars]
