@@ -1371,6 +1371,92 @@ void solve() {
     }
 ```
 
+### 树上dp
+
+#### [Fabulous Tress](https://ac.nowcoder.com/acm/contest/133877/F)
+
+- **题目大意**:给定一棵大小为n的树及所有边的边权，考虑其每棵子树，对子树中的点赋点权，使得u,v之间的边权等于点权差的绝对值。对每棵子树，求子树内点权极差的最小值。
+- **数据范围**:n1e5 w（边权大小）5000
+- **修正逻辑 (Patch)**:因为需要求出1到n每一个的最小值，可以知道肯定用一个整体的算法然后整体输出。对于两个2相邻的节点赋值，发现当他成为链状的时候可以尝试dp推到，所以整道题可以做一个自底向上的dp推导。注意到数据范围会发现可以用二维dp，稍微的难点就是如何dp。由于平移本身不影响答案，所以我们强制令 \(a_u=x\)，给整棵 \(u\) 子树赋值后，子树中最大点权的最小值。由于我们把所有点整体平移过，所以最小点权可以看成 \(0\)，最终最大值就是复杂度。
+- **关键代码**:
+
+```cpp
+
+void solve()
+{
+    int n;
+    cin >> n;
+    vector<vector<pii>> mp(n + 1);
+    int mx = 0;
+    for (int i = 0; i < n - 1; i++)
+    {
+        int u, v, w;
+        cin >> u >> v >> w;
+        mp[u].push_back({v, w});
+        mp[v].push_back({u, w});
+        mx = max(mx, w);
+    }
+    vector<vector<pii>> adj(n + 1);
+    auto order = [&](auto &&self, int now, int fa) -> void
+    {
+        for (auto it : mp[now])
+        {
+            if (it.first == fa)
+            {
+                continue;
+            }
+            else
+            {
+                adj[now].push_back(it);
+                self(self, it.first, now);
+            }
+        }
+    };
+    order(order, 1, 0);
+    vector<vi> dp(n + 1, vi(2 * mx + 1));
+    vi ans(n + 1);
+    auto dfs = [&](auto self, int now, int fa) -> void
+    {
+        for (auto [to, w] : adj[now])
+        {
+            if (to != fa)
+            {
+                self(self, to, now);
+            }
+        }
+        for (int i = 0; i < 2 * mx + 1; i++)
+        {
+            dp[now][i] = i;
+            for (auto [to, w] : adj[now])
+            {
+                if (to == fa)
+                {
+                    continue;
+                }
+                int now_best = INF;
+                if (i - w >= 0)
+                {
+                    now_best = min(now_best, dp[to][i - w]);
+                }
+                if (i + w <= 2 * mx)
+                {
+                    now_best = min(now_best, dp[to][i + w]);
+                }
+                dp[now][i] = max(now_best, dp[now][i]);
+            }
+        }
+        ans[now] = *min_element(all(dp[now]));
+    };
+    dfs(dfs, 1, 0);
+    for (int i = 1; i <= n; i++)
+    {
+        cout << ans[i] << ' ';
+    }
+    cout << '\n';
+}
+
+```
+
 ---
 
 ### SOSdp

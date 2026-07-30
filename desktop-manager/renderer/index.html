@@ -22,6 +22,10 @@
           <button class="nav-item" data-view="problems">题目</button>
           <button class="nav-item" data-view="tags">标签</button>
         </nav>
+        <div class="workspace-tools">
+          <button id="selectWorkspaceBtn">切换工作区</button>
+          <button id="resetWorkspaceBtn">回到博客项目</button>
+        </div>
         <div class="root-path" id="rootPath"></div>
       </aside>
 
@@ -31,7 +35,7 @@
             <input id="searchInput" type="search" placeholder="搜索标题、标签、说明..." />
           </div>
           <div class="toolbar-actions">
-            <button id="openProjectBtn">打开项目 VS Code</button>
+            <button id="openProjectBtn">打开工作区 VS Code</button>
             <button id="openItemBtn">打开当前文件</button>
             <button id="previewBtn">预览</button>
             <button id="buildBtn">构建检查</button>

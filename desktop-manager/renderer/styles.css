@@ -118,6 +118,23 @@ textarea {
   gap: 8px;
 }
 
+.workspace-tools {
+  display: grid;
+  gap: 8px;
+}
+
+.workspace-tools button {
+  background: #20302c;
+  border-color: #344741;
+  color: #edf3ef;
+  text-align: left;
+}
+
+.workspace-tools button:hover {
+  background: #2a3d38;
+  color: #ffffff;
+}
+
 .nav-item {
   text-align: left;
   background: transparent;

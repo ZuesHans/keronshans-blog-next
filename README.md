@@ -45,13 +45,26 @@ npm run dev
 npm run manager
 ```
 
-这个命令会打开 Electron 小窗口。第一版用于管理本地文章、代码片段和题目：
+这个命令会打开 Electron 小窗口。默认工作区是当前博客项目，用于管理：
 
 - 文章：`content/posts/*.md`
 - 代码片段：`content/snippets/*.md`
 - 题目：`content/problems.json`
 
 正文仍然推荐用 VS Code 写。管理器里的“打开当前文件”会直接把对应文件交给 VS Code。
+
+管理器左侧有“切换工作区”：
+
+- 选择博客项目根目录时，会解析该目录下的 `content/posts`、`content/snippets` 和 `content/problems.json`
+- 选择 `content` 目录时，会解析这个 `content` 目录本身
+- 选择 `posts` 或 `snippets` 文件夹时，只管理这个文件夹里的 Markdown
+- 选择普通文件夹时，会解析这个文件夹里的 Markdown，并按 frontmatter/目录名推断文章或模板片段
+- 选择单个 `.md`/`.mdx` 文件时，只管理这个文件；保存元数据会写回这个原文件
+- 选择单个 `.json` 文件时，会按题目列表管理；保存会写回这个原 JSON 文件
+
+也就是说，管理器解析出来的东西不会复制到别处：你的文件在哪里，它就从哪里读，修改后也写回哪里。左下角会显示当前正在管理的真实路径；列表标题下面也会显示当前文章/模板/题目实际读取的路径。
+
+注意：网站本地预览和线上发布仍然以当前项目里的 `content/`、后台 API/D1 数据为准。用管理器打开外部文件夹只是本地整理和编辑；如果希望外部文件出现在这个博客站点里，需要把它放回本项目的 `content/posts` 或 `content/snippets`，或者通过后台写入对应数据源。
 
 文章元数据可以在管理器里改：
 

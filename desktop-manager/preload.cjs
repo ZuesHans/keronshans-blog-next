@@ -9,6 +9,8 @@ contextBridge.exposeInMainWorld("managerApi", {
   updateSnippet: (payload) => ipcRenderer.invoke("manager:updateSnippet", payload),
   updateProblem: (payload) => ipcRenderer.invoke("manager:updateProblem", payload),
   renameTag: (payload) => ipcRenderer.invoke("manager:renameTag", payload),
+  selectWorkspace: () => ipcRenderer.invoke("manager:selectWorkspace"),
+  resetWorkspace: () => ipcRenderer.invoke("manager:resetWorkspace"),
   openProject: () => ipcRenderer.invoke("manager:openProject"),
   openItem: (item) => ipcRenderer.invoke("manager:openItem", item),
   showInFolder: (item) => ipcRenderer.invoke("manager:showInFolder", item),

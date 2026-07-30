@@ -45,6 +45,14 @@ const viewMeta = {
   tags: { title: "标签", hint: "聚合文章、模板和题目的标签" },
 };
 
+function canCreateCurrentView() {
+  if (!state.snapshot || state.view === "tags") return false;
+  if (state.view === "posts") return Boolean(state.snapshot.canCreate?.posts);
+  if (state.view === "snippets") return Boolean(state.snapshot.canCreate?.snippets);
+  if (state.view === "problems") return Boolean(state.snapshot.canCreate?.problems);
+  return false;
+}
+
 function tagsFromText(text) {
   return String(text || "")
     .split(/[，,]/)
@@ -234,8 +242,9 @@ function renderTags() {
 function render() {
   const meta = viewMeta[state.view];
   el.viewTitle.textContent = meta.title;
-  el.viewHint.textContent = meta.hint;
+  el.viewHint.textContent = state.snapshot?.pathHints?.[state.view] || meta.hint;
   document.querySelector("#newBtn").classList.toggle("hidden", state.view === "tags");
+  document.querySelector("#newBtn").disabled = !canCreateCurrentView();
   document.querySelectorAll(".nav-item").forEach((node) => node.classList.toggle("active", node.dataset.view === state.view));
   renderFilters();
   if (state.view === "tags") renderTags();
@@ -247,7 +256,7 @@ function render() {
 
 async function refresh() {
   state.snapshot = await api.snapshot();
-  el.rootPath.textContent = state.snapshot.root;
+  el.rootPath.textContent = `${state.snapshot.workspaceLabel}\n${state.snapshot.input}`;
   replaceOptions(el.fieldCategory, state.snapshot.categories);
   replaceOptions(document.querySelector("#newCategory"), state.snapshot.categories);
   if (state.selected) {
@@ -272,6 +281,7 @@ async function saveMeta() {
   if (!item) return;
   if (item.kind === "post") {
     await api.updatePost({
+      item,
       filename: item.filename,
       patch: {
         title: el.fieldTitle.value.trim(),
@@ -283,6 +293,7 @@ async function saveMeta() {
     });
   } else if (item.kind === "snippet") {
     await api.updateSnippet({
+      item,
       filename: item.filename,
       patch: {
         title: el.fieldTitle.value.trim(),
@@ -329,6 +340,22 @@ function setupEvents() {
   document.querySelector("#openItemBtn").addEventListener("click", () => state.selected && api.openItem(state.selected));
   document.querySelector("#showInFolderBtn").addEventListener("click", () => state.selected && api.showInFolder(state.selected));
   document.querySelector("#openProjectBtn").addEventListener("click", () => api.openProject());
+  document.querySelector("#selectWorkspaceBtn").addEventListener("click", async () => {
+    const snapshot = await api.selectWorkspace();
+    if (!snapshot) return;
+    state.snapshot = snapshot;
+    state.selected = null;
+    state.filter = "all";
+    log(`已切换工作区：${snapshot.input}\n`);
+    await refresh();
+  });
+  document.querySelector("#resetWorkspaceBtn").addEventListener("click", async () => {
+    state.snapshot = await api.resetWorkspace();
+    state.selected = null;
+    state.filter = "all";
+    log("已回到博客项目工作区。\n");
+    await refresh();
+  });
   document.querySelector("#previewBtn").addEventListener("click", () => api.preview());
   document.querySelector("#buildBtn").addEventListener("click", (event) => runPublish("build", event.currentTarget, "构建检查"));
   document.querySelector("#syncSearchBtn").addEventListener("click", (event) => runPublish("syncSearchIndex", event.currentTarget, "更新搜索索引"));

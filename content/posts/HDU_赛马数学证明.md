@@ -11,7 +11,7 @@ A174605 数学证明
 
 $$a(n) = \sum_{k=0}^{n} \bigl(k - s_2(k)\bigr)$$
 
-其中 $s_2(k)$ 是 $k$ 的二进制表示中 1 的个数（popcount）。
+其中 $s_2(k)$ 是 $k$ 的二进制表示中 1 的个数（popcount）
 
 2. Legendre 公式：$\nu_2(n!) = n - s_2(n)$
 这是核心引理。
