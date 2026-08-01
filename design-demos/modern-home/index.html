@@ -1,0 +1,1211 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Keronshans - Modern Home Demo</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --canvas: #f7f9f9;
+        --paper: #ffffff;
+        --ink: #122023;
+        --ink-soft: #425257;
+        --muted: #78868a;
+        --line: #dce3e3;
+        --line-strong: #c8d2d2;
+        --mint: #0f9876;
+        --mint-soft: #e6f5f0;
+        --blue: #315fca;
+        --blue-soft: #eaf0ff;
+        --coral: #d95c45;
+        --code: #182426;
+        --code-muted: #9eb0b4;
+        --shadow: 0 20px 55px rgba(31, 51, 55, 0.09);
+        --content: 1080px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        background: var(--canvas);
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: var(--canvas);
+        font-family: Inter, "SF Pro Display", "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+        font-size: 15px;
+        line-height: 1.7;
+        letter-spacing: 0;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+
+      body.dialog-open {
+        overflow: hidden;
+      }
+
+      button,
+      input {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      button,
+      a {
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      button:focus-visible,
+      a:focus-visible,
+      input:focus-visible {
+        outline: 3px solid rgba(49, 95, 202, 0.24);
+        outline-offset: 3px;
+      }
+
+      .shell {
+        width: min(var(--content), calc(100% - 40px));
+        margin: 0 auto;
+      }
+
+      .site-header {
+        position: sticky;
+        z-index: 20;
+        top: 0;
+        border-bottom: 1px solid rgba(220, 227, 227, 0.86);
+        background: rgba(247, 249, 249, 0.94);
+        backdrop-filter: blur(16px);
+      }
+
+      .header-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 68px;
+        gap: 24px;
+      }
+
+      .wordmark {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 16px;
+        font-weight: 750;
+        line-height: 1;
+      }
+
+      .wordmark-mark {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: 31px;
+        height: 31px;
+        color: #ffffff;
+        border-radius: 7px;
+        background: var(--ink);
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .wordmark-mark::after {
+        position: absolute;
+        right: -3px;
+        bottom: -3px;
+        width: 8px;
+        height: 8px;
+        border: 2px solid var(--canvas);
+        border-radius: 50%;
+        background: var(--mint);
+        content: "";
+      }
+
+      .desktop-nav {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        margin-left: auto;
+      }
+
+      .desktop-nav a {
+        padding: 8px 10px;
+        color: var(--ink-soft);
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        transition: color 180ms ease, background 180ms ease;
+      }
+
+      .desktop-nav a:hover,
+      .desktop-nav a[aria-current="page"] {
+        color: var(--ink);
+        background: var(--paper);
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .search-trigger,
+      .menu-trigger {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 36px;
+        border: 1px solid var(--line-strong);
+        border-radius: 7px;
+        background: var(--paper);
+        color: var(--ink-soft);
+        cursor: pointer;
+        transition: border-color 180ms ease, color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+      }
+
+      .search-trigger {
+        gap: 10px;
+        padding: 0 10px;
+        font-size: 12px;
+        font-weight: 650;
+      }
+
+      .search-trigger kbd {
+        padding: 1px 5px;
+        color: var(--muted);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        background: var(--canvas);
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 10px;
+      }
+
+      .search-trigger:hover,
+      .menu-trigger:hover {
+        color: var(--ink);
+        border-color: var(--mint);
+        box-shadow: 0 7px 20px rgba(15, 152, 118, 0.1);
+        transform: translateY(-1px);
+      }
+
+      .menu-trigger {
+        display: none;
+        width: 44px;
+        padding: 0;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .mobile-nav {
+        display: none;
+        padding: 0 0 12px;
+      }
+
+      .mobile-nav.open {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+      }
+
+      .mobile-nav a {
+        padding: 9px;
+        color: var(--ink-soft);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--paper);
+        font-size: 12px;
+        font-weight: 650;
+        text-align: center;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 280px;
+        align-items: center;
+        min-height: 420px;
+        gap: 72px;
+        padding: 62px 0 54px;
+      }
+
+      .hero-copy {
+        min-width: 0;
+        animation: rise-in 520ms ease both;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        margin-bottom: 17px;
+        color: var(--mint);
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .eyebrow::before {
+        width: 26px;
+        height: 2px;
+        background: var(--mint);
+        content: "";
+      }
+
+      .hero h1 {
+        margin: 0;
+        font-size: 78px;
+        line-height: 1.02;
+        font-weight: 780;
+        letter-spacing: 0;
+      }
+
+      .hero-intro {
+        max-width: 640px;
+        margin: 22px 0 0;
+        color: var(--ink-soft);
+        font-size: 18px;
+        line-height: 1.8;
+      }
+
+      .hero-meta {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px 22px;
+        margin-top: 28px;
+        color: var(--muted);
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        font-size: 12px;
+      }
+
+      .hero-meta span {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .hero-meta strong {
+        color: var(--ink);
+        font-size: 15px;
+      }
+
+      .portrait-wrap {
+        position: relative;
+        width: 280px;
+        height: 280px;
+        animation: portrait-in 600ms 80ms ease both;
+      }
+
+      .portrait-wrap::before,
+      .portrait-wrap::after {
+        position: absolute;
+        z-index: 0;
+        content: "";
+      }
+
+      .portrait-wrap::before {
+        inset: 17px -15px -15px 17px;
+        border: 1px solid var(--line-strong);
+        border-radius: 8px;
+      }
+
+      .portrait-wrap::after {
+        right: -18px;
+        bottom: 28px;
+        width: 58px;
+        height: 8px;
+        background: var(--mint);
+      }
+
+      .portrait-wrap img {
+        position: relative;
+        z-index: 1;
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 51% 40%;
+        border: 1px solid var(--line-strong);
+        border-radius: 8px;
+        background: var(--paper);
+        box-shadow: var(--shadow);
+      }
+
+      .portrait-note {
+        position: absolute;
+        z-index: 2;
+        right: 10px;
+        bottom: 10px;
+        padding: 5px 8px;
+        color: #ffffff;
+        border-radius: 4px;
+        background: rgba(18, 32, 35, 0.88);
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 10px;
+      }
+
+      .focus-band {
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+        background: var(--paper);
+      }
+
+      .focus-inner {
+        display: grid;
+        grid-template-columns: 160px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 28px;
+        min-height: 104px;
+        padding: 18px 0;
+      }
+
+      .focus-label {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        color: var(--muted);
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .focus-label::before {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--mint);
+        box-shadow: 0 0 0 5px var(--mint-soft);
+        content: "";
+      }
+
+      .focus-content {
+        min-width: 0;
+      }
+
+      .focus-content a {
+        display: inline-block;
+        max-width: 100%;
+        overflow: hidden;
+        font-size: 17px;
+        font-weight: 730;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        transition: color 180ms ease;
+      }
+
+      .focus-content a:hover {
+        color: var(--mint);
+      }
+
+      .focus-content p {
+        margin: 2px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .text-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--blue);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .text-link::after {
+        content: "\2192";
+        transition: transform 180ms ease;
+      }
+
+      .text-link:hover::after {
+        transform: translateX(4px);
+      }
+
+      .articles-section {
+        padding: 74px 0 76px;
+      }
+
+      .section-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 28px;
+      }
+
+      .section-kicker {
+        margin: 0 0 3px;
+        color: var(--mint);
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .section-head h2 {
+        margin: 0;
+        font-size: 30px;
+        line-height: 1.25;
+        font-weight: 760;
+      }
+
+      .article-list {
+        border-top: 1px solid var(--line-strong);
+      }
+
+      .article-row {
+        position: relative;
+        display: grid;
+        grid-template-columns: 56px minmax(0, 1fr) 132px;
+        align-items: center;
+        min-height: 138px;
+        gap: 26px;
+        padding: 24px 8px 24px 0;
+        border-bottom: 1px solid var(--line);
+        transition: background 190ms ease;
+      }
+
+      .article-row::after {
+        position: absolute;
+        right: 13px;
+        color: var(--mint);
+        font-size: 18px;
+        opacity: 0;
+        transform: translateX(-8px);
+        transition: opacity 190ms ease, transform 190ms ease;
+        content: "\2197";
+      }
+
+      .article-row:hover {
+        background: var(--paper);
+      }
+
+      .article-row:hover::after {
+        opacity: 1;
+        transform: translateX(0);
+      }
+
+      .article-index {
+        color: var(--line-strong);
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 22px;
+        font-weight: 700;
+      }
+
+      .article-main {
+        min-width: 0;
+        transition: transform 190ms ease;
+      }
+
+      .article-row:hover .article-main {
+        transform: translateX(5px);
+      }
+
+      .article-category {
+        display: inline-flex;
+        align-items: center;
+        min-height: 22px;
+        margin-bottom: 7px;
+        padding: 2px 7px;
+        color: var(--mint);
+        border-radius: 4px;
+        background: var(--mint-soft);
+        font-size: 10px;
+        font-weight: 750;
+      }
+
+      .article-category.solution {
+        color: var(--blue);
+        background: var(--blue-soft);
+      }
+
+      .article-category.note {
+        color: var(--coral);
+        background: #fff0ec;
+      }
+
+      .article-title {
+        display: block;
+        margin: 0;
+        overflow-wrap: anywhere;
+        font-size: 20px;
+        line-height: 1.35;
+        font-weight: 735;
+        transition: color 180ms ease;
+      }
+
+      .article-row:hover .article-title {
+        color: var(--mint);
+      }
+
+      .article-excerpt {
+        display: -webkit-box;
+        max-width: 650px;
+        margin: 6px 0 0;
+        overflow: hidden;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.65;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 1;
+      }
+
+      .article-meta {
+        padding-right: 30px;
+        color: var(--muted);
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 11px;
+        text-align: right;
+      }
+
+      .article-meta strong {
+        display: block;
+        margin-bottom: 2px;
+        color: var(--ink-soft);
+        font-size: 12px;
+      }
+
+      .lower-band {
+        border-top: 1px solid var(--line);
+        background: var(--paper);
+      }
+
+      .lower-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+        gap: 72px;
+        padding: 58px 0 62px;
+      }
+
+      .lower-grid h2 {
+        margin: 0 0 11px;
+        font-size: 23px;
+        line-height: 1.35;
+      }
+
+      .lower-grid p {
+        max-width: 580px;
+        margin: 0;
+        color: var(--ink-soft);
+      }
+
+      .category-links {
+        display: grid;
+        gap: 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .category-links a {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 43px;
+        border-bottom: 1px solid var(--line);
+        color: var(--ink-soft);
+        font-size: 13px;
+        transition: color 180ms ease, padding 180ms ease;
+      }
+
+      .category-links a:hover {
+        padding-left: 6px;
+        color: var(--mint);
+      }
+
+      .category-links span {
+        color: var(--muted);
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 11px;
+      }
+
+      .site-footer {
+        border-top: 1px solid var(--line);
+      }
+
+      .footer-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 84px;
+        gap: 24px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .footer-links {
+        display: flex;
+        gap: 16px;
+      }
+
+      .footer-links a:hover {
+        color: var(--mint);
+      }
+
+      .search-dialog {
+        width: min(680px, calc(100% - 28px));
+        max-height: min(680px, calc(100vh - 40px));
+        padding: 0;
+        color: var(--ink);
+        border: 1px solid var(--line-strong);
+        border-radius: 8px;
+        background: var(--paper);
+        box-shadow: 0 30px 100px rgba(12, 30, 34, 0.24);
+        overflow: hidden;
+      }
+
+      .search-dialog::backdrop {
+        background: rgba(18, 32, 35, 0.42);
+        backdrop-filter: blur(5px);
+      }
+
+      .search-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .search-head input {
+        min-width: 0;
+        flex: 1;
+        height: 44px;
+        padding: 0 12px;
+        color: var(--ink);
+        border: 0;
+        background: transparent;
+        outline: 0;
+        font-size: 16px;
+      }
+
+      .close-search {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--canvas);
+        color: var(--ink-soft);
+        cursor: pointer;
+        font-size: 18px;
+      }
+
+      .search-body {
+        max-height: 520px;
+        padding: 8px;
+        overflow-y: auto;
+      }
+
+      .search-result {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 18px;
+        padding: 13px 12px;
+        border-radius: 6px;
+        transition: background 150ms ease;
+      }
+
+      .search-result:hover {
+        background: var(--mint-soft);
+      }
+
+      .search-result strong {
+        display: block;
+        font-size: 14px;
+      }
+
+      .search-result span {
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .search-result time {
+        color: var(--muted);
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 10px;
+      }
+
+      .search-empty {
+        display: none;
+        padding: 38px 18px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .search-empty.visible {
+        display: block;
+      }
+
+      @keyframes rise-in {
+        from {
+          opacity: 0;
+          transform: translateY(16px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes portrait-in {
+        from {
+          opacity: 0;
+          transform: translateY(12px) rotate(1deg);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) rotate(0);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      @media (max-width: 860px) {
+        .desktop-nav {
+          display: none;
+        }
+
+        .menu-trigger {
+          display: inline-flex;
+        }
+
+        .hero {
+          grid-template-columns: minmax(0, 1fr) 220px;
+          min-height: 370px;
+          gap: 38px;
+          padding: 48px 0;
+        }
+
+        .portrait-wrap {
+          width: 220px;
+          height: 220px;
+        }
+
+        .focus-inner {
+          grid-template-columns: 125px minmax(0, 1fr) auto;
+          gap: 18px;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .shell {
+          width: min(100% - 28px, 560px);
+        }
+
+        .header-inner {
+          min-height: 62px;
+        }
+
+        .wordmark-text {
+          display: none;
+        }
+
+        .search-trigger {
+          padding: 0 9px;
+        }
+
+        .search-trigger kbd {
+          display: none;
+        }
+
+        .hero {
+          grid-template-columns: minmax(0, 1fr) 104px;
+          min-height: 326px;
+          gap: 18px;
+          padding: 39px 0 36px;
+        }
+
+        .eyebrow {
+          margin-bottom: 10px;
+          font-size: 10px;
+        }
+
+        .eyebrow::before {
+          width: 18px;
+        }
+
+        .hero h1 {
+          font-size: 40px;
+        }
+
+        .hero-intro {
+          margin-top: 15px;
+          font-size: 14px;
+          line-height: 1.7;
+        }
+
+        .hero-meta {
+          gap: 6px 13px;
+          margin-top: 18px;
+          font-size: 10px;
+        }
+
+        .hero-meta strong {
+          font-size: 12px;
+        }
+
+        .portrait-wrap {
+          width: 104px;
+          height: 132px;
+        }
+
+        .portrait-wrap::before {
+          inset: 8px -7px -7px 8px;
+        }
+
+        .portrait-wrap::after,
+        .portrait-note {
+          display: none;
+        }
+
+        .focus-inner {
+          grid-template-columns: 1fr auto;
+          min-height: 110px;
+          gap: 11px 14px;
+        }
+
+        .focus-label {
+          grid-column: 1 / -1;
+        }
+
+        .focus-content a {
+          font-size: 14px;
+        }
+
+        .focus-content p {
+          display: none;
+        }
+
+        .articles-section {
+          padding: 55px 0 58px;
+        }
+
+        .section-head {
+          align-items: center;
+          margin-bottom: 20px;
+        }
+
+        .section-head h2 {
+          font-size: 25px;
+        }
+
+        .article-row {
+          grid-template-columns: 34px minmax(0, 1fr);
+          min-height: 126px;
+          gap: 12px;
+          padding: 20px 4px 20px 0;
+        }
+
+        .article-row:hover {
+          background: var(--paper);
+        }
+
+        .article-row::after {
+          display: none;
+        }
+
+        .article-index {
+          align-self: start;
+          padding-top: 24px;
+          font-size: 15px;
+        }
+
+        .article-title {
+          font-size: 17px;
+        }
+
+        .article-excerpt {
+          -webkit-line-clamp: 2;
+        }
+
+        .article-meta {
+          grid-column: 2;
+          padding: 0;
+          margin-top: -12px;
+          text-align: left;
+        }
+
+        .article-meta strong {
+          display: inline;
+          margin-right: 8px;
+        }
+
+        .lower-grid {
+          grid-template-columns: 1fr;
+          gap: 40px;
+          padding: 48px 0;
+        }
+
+        .footer-inner {
+          align-items: flex-start;
+          flex-direction: column;
+          justify-content: center;
+          min-height: 110px;
+          gap: 8px;
+        }
+
+        .search-dialog {
+          width: 100%;
+          max-width: none;
+          height: 100%;
+          max-height: none;
+          margin: 0;
+          border: 0;
+          border-radius: 0;
+        }
+
+        .search-body {
+          max-height: calc(100vh - 74px);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="shell header-inner">
+        <a class="wordmark" href="#top" aria-label="Keronshans 首页">
+          <span class="wordmark-mark" aria-hidden="true">K</span>
+          <span class="wordmark-text">Keronshans</span>
+        </a>
+
+        <nav class="desktop-nav" aria-label="主要导航">
+          <a href="#top" aria-current="page">首页</a>
+          <a href="http://127.0.0.1:3000/posts" target="_blank" rel="noreferrer">文章</a>
+          <a href="http://127.0.0.1:3000/problems" target="_blank" rel="noreferrer">题单</a>
+          <a href="http://127.0.0.1:3000/snippets" target="_blank" rel="noreferrer">片段</a>
+          <a href="http://127.0.0.1:3000/talks" target="_blank" rel="noreferrer">说说</a>
+          <a href="http://127.0.0.1:3000/about" target="_blank" rel="noreferrer">关于</a>
+        </nav>
+
+        <div class="header-actions">
+          <button class="search-trigger" id="searchTrigger" type="button" aria-haspopup="dialog">
+            <span>搜索</span><kbd>Ctrl K</kbd>
+          </button>
+          <button class="menu-trigger" id="menuTrigger" type="button" aria-expanded="false" aria-controls="mobileNav">菜单</button>
+        </div>
+      </div>
+      <nav class="shell mobile-nav" id="mobileNav" aria-label="手机导航">
+        <a href="http://127.0.0.1:3000/posts" target="_blank" rel="noreferrer">文章</a>
+        <a href="http://127.0.0.1:3000/problems" target="_blank" rel="noreferrer">题单</a>
+        <a href="http://127.0.0.1:3000/snippets" target="_blank" rel="noreferrer">片段</a>
+        <a href="http://127.0.0.1:3000/checkin" target="_blank" rel="noreferrer">打卡</a>
+        <a href="http://127.0.0.1:3000/talks" target="_blank" rel="noreferrer">说说</a>
+        <a href="http://127.0.0.1:3000/dashboard" target="_blank" rel="noreferrer">工作台</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="shell hero" aria-labelledby="heroTitle">
+        <div class="hero-copy">
+          <div class="eyebrow">CP NOTEBOOK · CS LEARNING</div>
+          <h1 id="heroTitle">Keronshans</h1>
+          <p class="hero-intro">菜菜小猫的窝。记录算法竞赛、CS 学习笔记，以及一些没有必要被分类的碎碎念。</p>
+          <div class="hero-meta" aria-label="网站统计">
+            <span><strong>31</strong> articles</span>
+            <span><strong>14</strong> solutions</span>
+            <span><strong>27</strong> tags</span>
+          </div>
+        </div>
+        <div class="portrait-wrap">
+          <img src="../../public/avatar.jpg" alt="Keronshans 的头像" />
+          <span class="portrait-note">still learning...</span>
+        </div>
+      </section>
+
+      <section class="focus-band" aria-label="当前整理">
+        <div class="shell focus-inner">
+          <div class="focus-label">NOW WRITING</div>
+          <div class="focus-content">
+            <a href="http://127.0.0.1:3000/posts/post-206sza" target="_blank" rel="noreferrer">KH_网络流：残量网络、最小割与 Dinic</a>
+            <p>算法学习 · 最后更新于 2026-07-01</p>
+          </div>
+          <a class="text-link" href="http://127.0.0.1:3000/posts/post-206sza" target="_blank" rel="noreferrer">继续阅读</a>
+        </div>
+      </section>
+
+      <section class="shell articles-section" aria-labelledby="articlesTitle">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">LATEST NOTES</p>
+            <h2 id="articlesTitle">最近在写</h2>
+          </div>
+          <a class="text-link" href="http://127.0.0.1:3000/posts" target="_blank" rel="noreferrer">全部文章</a>
+        </div>
+
+        <div class="article-list">
+          <a class="article-row" href="http://127.0.0.1:3000/posts/post-206sza" target="_blank" rel="noreferrer">
+            <span class="article-index">01</span>
+            <span class="article-main">
+              <span class="article-category">算法学习</span>
+              <span class="article-title">KH_网络流</span>
+              <span class="article-excerpt">整理最大流、最小割、残量网络与 Dinic 的实现细节。</span>
+            </span>
+            <span class="article-meta"><strong>2026.07.01</strong>C++ · 图论</span>
+          </a>
+
+          <a class="article-row" href="http://127.0.0.1:3000/posts/kh-optimize-algo" target="_blank" rel="noreferrer">
+            <span class="article-index">02</span>
+            <span class="article-main">
+              <span class="article-category">算法学习</span>
+              <span class="article-title">KH_优化算法</span>
+              <span class="article-excerpt">三分、随机化、常数优化，以及一些不太好分类的技巧。</span>
+            </span>
+            <span class="article-meta"><strong>2026.06.20</strong>C++ · Trick</span>
+          </a>
+
+          <a class="article-row" href="http://127.0.0.1:3000/posts/kh-graph-algo" target="_blank" rel="noreferrer">
+            <span class="article-index">03</span>
+            <span class="article-main">
+              <span class="article-category">算法学习</span>
+              <span class="article-title">KH图论</span>
+              <span class="article-excerpt">最短路、连通性、树上问题与图论中的常用思考方式。</span>
+            </span>
+            <span class="article-meta"><strong>2026.06.20</strong>C++ · 图论</span>
+          </a>
+
+          <a class="article-row" href="http://127.0.0.1:3000/posts/hdu-math" target="_blank" rel="noreferrer">
+            <span class="article-index">04</span>
+            <span class="article-main">
+              <span class="article-category solution">题目复盘</span>
+              <span class="article-title">HDU_赛马数学证明</span>
+              <span class="article-excerpt">从一道结论题重新梳理证明过程，以及比赛中为什么没有想到。</span>
+            </span>
+            <span class="article-meta"><strong>2026.06.04</strong>数学 · 复盘</span>
+          </a>
+
+          <a class="article-row" href="http://127.0.0.1:3000/posts/kh-binary" target="_blank" rel="noreferrer">
+            <span class="article-index">05</span>
+            <span class="article-main">
+              <span class="article-category note">学习笔记</span>
+              <span class="article-title">KH_二进制</span>
+              <span class="article-excerpt">位运算、状态压缩和那些经常忘记的二进制小技巧。</span>
+            </span>
+            <span class="article-meta"><strong>2026.06.04</strong>C++ · Trick</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="lower-band">
+        <div class="shell lower-grid">
+          <div>
+            <p class="section-kicker">ABOUT THIS PLACE</p>
+            <h2>一块持续生长的个人笔记区。</h2>
+            <p>文章是对外展示的主体，题单、代码片段和打卡仍然存在，但不会在首页抢夺注意力。这里先让读者认识内容，再进入更深的工作区。</p>
+          </div>
+          <div class="category-links" aria-label="文章分类">
+            <a href="http://127.0.0.1:3000/posts?category=%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0" target="_blank" rel="noreferrer">算法学习 <span>11</span></a>
+            <a href="http://127.0.0.1:3000/posts?category=%E9%A2%98%E7%9B%AE%E5%A4%8D%E7%9B%98" target="_blank" rel="noreferrer">题目复盘 <span>14</span></a>
+            <a href="http://127.0.0.1:3000/posts?category=%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0" target="_blank" rel="noreferrer">学习笔记 <span>3</span></a>
+            <a href="http://127.0.0.1:3000/posts?category=%E7%A2%8E%E7%A2%8E%E5%BF%B5" target="_blank" rel="noreferrer">碎碎念 <span>3</span></a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <span>© 2026 Keronshans · Made for notes that need a home.</span>
+        <div class="footer-links">
+          <a href="http://127.0.0.1:3000/about" target="_blank" rel="noreferrer">关于</a>
+          <a href="http://127.0.0.1:3000/dashboard" target="_blank" rel="noreferrer">工作台</a>
+          <a href="#top">回到顶部</a>
+        </div>
+      </div>
+    </footer>
+
+    <dialog class="search-dialog" id="searchDialog" aria-labelledby="searchTitle">
+      <div class="search-head">
+        <input id="searchInput" type="search" placeholder="搜索文章标题或标签..." maxlength="80" autocomplete="off" aria-label="搜索文章" />
+        <button class="close-search" id="closeSearch" type="button" aria-label="关闭搜索">×</button>
+      </div>
+      <div class="search-body" id="searchResults" aria-live="polite">
+        <a class="search-result" data-search="KH 网络流 算法学习 C++ 图论" href="http://127.0.0.1:3000/posts/post-206sza" target="_blank" rel="noreferrer"><span><strong>KH_网络流</strong><span>算法学习 · C++ · 图论</span></span><time>07.01</time></a>
+        <a class="search-result" data-search="KH 优化算法 算法学习 C++ Trick" href="http://127.0.0.1:3000/posts/kh-optimize-algo" target="_blank" rel="noreferrer"><span><strong>KH_优化算法</strong><span>算法学习 · C++ · Trick</span></span><time>06.20</time></a>
+        <a class="search-result" data-search="KH 图论 算法学习 C++" href="http://127.0.0.1:3000/posts/kh-graph-algo" target="_blank" rel="noreferrer"><span><strong>KH图论</strong><span>算法学习 · C++ · 图论</span></span><time>06.20</time></a>
+        <a class="search-result" data-search="HDU 赛马 数学证明 题目复盘 数学" href="http://127.0.0.1:3000/posts/hdu-math" target="_blank" rel="noreferrer"><span><strong>HDU_赛马数学证明</strong><span>题目复盘 · 数学</span></span><time>06.04</time></a>
+        <a class="search-result" data-search="KH 二进制 学习笔记 C++ Trick" href="http://127.0.0.1:3000/posts/kh-binary" target="_blank" rel="noreferrer"><span><strong>KH_二进制</strong><span>学习笔记 · C++ · Trick</span></span><time>06.04</time></a>
+        <a class="search-result" data-search="KH 期望 DP 概率论 数学" href="http://127.0.0.1:3000/posts/kh-expected-dp" target="_blank" rel="noreferrer"><span><strong>KH_期望DP与概率论</strong><span>算法学习 · DP · 数学</span></span><time>06.04</time></a>
+        <div class="search-empty" id="searchEmpty">没有找到匹配的文章。</div>
+      </div>
+    </dialog>
+
+    <script>
+      const menuTrigger = document.getElementById("menuTrigger");
+      const mobileNav = document.getElementById("mobileNav");
+      const searchTrigger = document.getElementById("searchTrigger");
+      const searchDialog = document.getElementById("searchDialog");
+      const closeSearch = document.getElementById("closeSearch");
+      const searchInput = document.getElementById("searchInput");
+      const searchItems = Array.from(document.querySelectorAll(".search-result"));
+      const searchEmpty = document.getElementById("searchEmpty");
+
+      function openSearchDialog() {
+        searchDialog.showModal();
+        document.body.classList.add("dialog-open");
+        requestAnimationFrame(() => searchInput.focus());
+      }
+
+      function closeSearchDialog() {
+        searchDialog.close();
+        document.body.classList.remove("dialog-open");
+        searchInput.value = "";
+        searchItems.forEach((item) => { item.hidden = false; });
+        searchEmpty.classList.remove("visible");
+      }
+
+      function filterSearchResults() {
+        const query = searchInput.value.trim().toLocaleLowerCase();
+        let visible = 0;
+
+        searchItems.forEach((item) => {
+          const matches = !query || item.dataset.search.toLocaleLowerCase().includes(query);
+          item.hidden = !matches;
+          if (matches) visible += 1;
+        });
+
+        searchEmpty.classList.toggle("visible", visible === 0);
+      }
+
+      menuTrigger.addEventListener("click", () => {
+        const open = mobileNav.classList.toggle("open");
+        menuTrigger.setAttribute("aria-expanded", String(open));
+      });
+
+      searchTrigger.addEventListener("click", openSearchDialog);
+      closeSearch.addEventListener("click", closeSearchDialog);
+      searchInput.addEventListener("input", filterSearchResults);
+
+      searchDialog.addEventListener("click", (event) => {
+        if (event.target === searchDialog) closeSearchDialog();
+      });
+
+      searchDialog.addEventListener("close", () => {
+        document.body.classList.remove("dialog-open");
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLocaleLowerCase() === "k") {
+          event.preventDefault();
+          if (!searchDialog.open) openSearchDialog();
+        }
+      });
+    </script>
+  </body>
+</html>

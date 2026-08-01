@@ -247,15 +247,10 @@ export default function CheckinPage() {
   }, [records]);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-display font-bold mb-2">
-          <span className="neon-text-blue">◈</span> 刷题打卡
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400 font-mono text-sm">
-          &gt; CHECK_IN.SYSTEM | 坚持就是胜利
-        </p>
-        <div className="mt-2 h-[1px] bg-gradient-to-r from-neon-blue via-neon-purple to-neon-green opacity-50" />
+    <div className="app-page">
+      <div className="app-page-header">
+        <h1>刷题打卡</h1>
+        <p>坚持就是胜利</p>
       </div>
 
       {/* Stats Overview */}

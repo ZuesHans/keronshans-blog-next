@@ -1,0 +1,970 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Keronshans - Codeforces Style Demo</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --page: #ffffff;
+        --surface: #ffffff;
+        --surface-soft: #f5f7f9;
+        --line: #b9b9b9;
+        --line-soft: #dddddd;
+        --text: #1f2328;
+        --muted: #6a737d;
+        --link: #0b65c2;
+        --link-hover: #e14a2a;
+        --blue: #2f75b5;
+        --blue-dark: #245f98;
+        --red: #d94336;
+        --green: #168c3f;
+        --cyan: #0b8793;
+        --violet: #7d3c98;
+        --orange: #c46b16;
+        --shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        background: var(--page);
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        color: var(--text);
+        background: var(--page);
+        font-family: Arial, "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+        font-size: 13px;
+        line-height: 1.55;
+        letter-spacing: 0;
+      }
+
+      button,
+      input {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      button,
+      a {
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      a {
+        color: var(--link);
+        text-decoration: none;
+      }
+
+      a:hover {
+        color: var(--link-hover);
+        text-decoration: underline;
+      }
+
+      .site-shell {
+        width: min(1100px, calc(100% - 32px));
+        margin: 0 auto;
+      }
+
+      .masthead {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        min-height: 104px;
+        padding: 20px 2px 14px;
+        gap: 24px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: flex-end;
+        gap: 12px;
+        color: var(--text);
+      }
+
+      .brand:hover {
+        color: var(--text);
+        text-decoration: none;
+      }
+
+      .brand-bars {
+        display: flex;
+        align-items: flex-end;
+        gap: 3px;
+        width: 31px;
+        height: 38px;
+        padding-bottom: 3px;
+        border-bottom: 2px solid #3c3c3c;
+      }
+
+      .brand-bars span {
+        display: block;
+        width: 7px;
+      }
+
+      .brand-bars span:nth-child(1) {
+        height: 14px;
+        background: #e0aa18;
+      }
+
+      .brand-bars span:nth-child(2) {
+        height: 28px;
+        background: var(--blue);
+      }
+
+      .brand-bars span:nth-child(3) {
+        height: 21px;
+        background: var(--red);
+      }
+
+      .brand-copy {
+        display: grid;
+        gap: 1px;
+      }
+
+      .brand-name {
+        font-size: 30px;
+        font-weight: 700;
+        line-height: 1;
+        color: #343434;
+      }
+
+      .brand-name em {
+        color: var(--blue);
+        font-style: normal;
+      }
+
+      .brand-tagline {
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .masthead-side {
+        display: grid;
+        justify-items: end;
+        gap: 7px;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      .handle {
+        color: var(--red);
+        font-weight: 700;
+      }
+
+      .main-nav {
+        position: relative;
+        display: flex;
+        align-items: stretch;
+        min-height: 42px;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        box-shadow: var(--shadow);
+        background: var(--surface);
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: stretch;
+        flex: 1;
+        padding-left: 10px;
+      }
+
+      .nav-links a {
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        color: #333333;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        border-bottom: 3px solid transparent;
+      }
+
+      .nav-links a:hover {
+        color: var(--link);
+        text-decoration: none;
+        background: var(--surface-soft);
+      }
+
+      .nav-links a.active {
+        color: var(--link);
+        border-bottom-color: var(--blue);
+      }
+
+      .nav-search {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 7px 6px 10px;
+        border-left: 1px solid var(--line-soft);
+      }
+
+      .nav-search label {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .nav-search input {
+        width: 170px;
+        height: 27px;
+        padding: 3px 7px;
+        color: var(--text);
+        border: 1px solid #a7a7a7;
+        border-radius: 2px;
+        background: #ffffff;
+        outline: none;
+      }
+
+      .nav-search input:focus {
+        border-color: var(--blue);
+        box-shadow: 0 0 0 2px rgba(47, 117, 181, 0.16);
+      }
+
+      .menu-toggle {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        min-width: 64px;
+        border: 0;
+        border-left: 1px solid var(--line-soft);
+        background: #ffffff;
+        color: var(--link);
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .page-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 292px;
+        gap: 18px;
+        padding: 18px 0 42px;
+        align-items: start;
+      }
+
+      .main-column,
+      .sidebar {
+        min-width: 0;
+      }
+
+      .main-column {
+        display: grid;
+        gap: 16px;
+      }
+
+      .sidebar {
+        display: grid;
+        gap: 12px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        background: var(--surface);
+        overflow: hidden;
+      }
+
+      .panel-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 34px;
+        padding: 7px 10px;
+        color: #3f3f3f;
+        background: #eeeeee;
+        border-bottom: 1px solid var(--line);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .panel-title::before {
+        content: "\2192";
+        margin-right: 6px;
+        color: var(--blue);
+        font-weight: 700;
+      }
+
+      .panel-title > span:first-child {
+        flex: 1;
+      }
+
+      .panel-title a {
+        font-weight: 400;
+      }
+
+      .focus-note {
+        padding: 16px 18px 17px;
+      }
+
+      .focus-meta {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-bottom: 8px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .status-badge {
+        padding: 1px 6px;
+        color: #ffffff;
+        background: var(--green);
+        border: 1px solid #0e7431;
+        border-radius: 2px;
+        font-size: 10px;
+        font-weight: 700;
+      }
+
+      .focus-note h1 {
+        margin: 0 0 8px;
+        font-size: 22px;
+        line-height: 1.3;
+        color: #222222;
+      }
+
+      .focus-note p {
+        margin: 0 0 11px;
+        color: #454545;
+        font-size: 14px;
+      }
+
+      .focus-tags,
+      .tag-cloud {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 22px;
+        padding: 2px 7px;
+        color: #3b3b3b;
+        background: #f0f0f0;
+        border: 1px solid #c8c8c8;
+        border-radius: 2px;
+        font-size: 11px;
+      }
+
+      button.tag {
+        cursor: pointer;
+      }
+
+      .tag:hover,
+      .tag.active {
+        color: #ffffff;
+        background: var(--blue);
+        border-color: var(--blue-dark);
+        text-decoration: none;
+      }
+
+      .post-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+      }
+
+      .post-table th,
+      .post-table td {
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--line-soft);
+        text-align: left;
+        vertical-align: middle;
+      }
+
+      .post-table th {
+        color: #555555;
+        background: #f7f7f7;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .post-table tbody tr:hover {
+        background: #f6f9fc;
+      }
+
+      .post-table tbody tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .post-title {
+        display: block;
+        overflow: hidden;
+        font-size: 13px;
+        font-weight: 700;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .post-subline {
+        display: block;
+        margin-top: 2px;
+        overflow: hidden;
+        color: var(--muted);
+        font-size: 10px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .col-category {
+        width: 108px;
+      }
+
+      .col-date {
+        width: 94px;
+      }
+
+      .category {
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .rating-master {
+        color: #d52b1e;
+      }
+
+      .rating-expert {
+        color: #2457c5;
+      }
+
+      .rating-specialist {
+        color: #008a8a;
+      }
+
+      .rating-pupil {
+        color: #168c3f;
+      }
+
+      .rating-newbie {
+        color: #6d6d6d;
+      }
+
+      .table-footer {
+        display: flex;
+        justify-content: flex-end;
+        padding: 8px 10px;
+        background: #fafafa;
+        border-top: 1px solid var(--line-soft);
+      }
+
+      .empty-state {
+        display: none;
+        padding: 28px 16px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .empty-state.visible {
+        display: block;
+      }
+
+      .activity-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .activity-list li {
+        display: grid;
+        grid-template-columns: 76px minmax(0, 1fr);
+        gap: 10px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+
+      .activity-list li:last-child {
+        border-bottom: 0;
+      }
+
+      .activity-date {
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .profile {
+        display: grid;
+        grid-template-columns: 72px minmax(0, 1fr);
+        gap: 12px;
+        padding: 12px;
+      }
+
+      .profile img {
+        display: block;
+        width: 72px;
+        height: 72px;
+        object-fit: cover;
+        border: 1px solid #a9a9a9;
+        border-radius: 2px;
+      }
+
+      .profile-name {
+        margin: 1px 0 2px;
+        color: var(--red);
+        font-size: 16px;
+        font-weight: 700;
+      }
+
+      .profile-copy {
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .profile-online {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 7px;
+        color: var(--green);
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .profile-online::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--green);
+      }
+
+      .stats-table,
+      .category-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .stats-table td,
+      .category-table td {
+        padding: 7px 10px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+
+      .stats-table tr:last-child td,
+      .category-table tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .stats-table td:last-child,
+      .category-table td:last-child {
+        text-align: right;
+        font-weight: 700;
+      }
+
+      .progress-wrap {
+        padding: 11px 10px 12px;
+      }
+
+      .progress-copy {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 6px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .progress-track {
+        height: 8px;
+        border: 1px solid #b4b4b4;
+        background: #eeeeee;
+      }
+
+      .progress-bar {
+        width: 68%;
+        height: 100%;
+        background: var(--blue);
+      }
+
+      .sidebar-copy,
+      .tag-cloud {
+        padding: 10px;
+      }
+
+      .sidebar-copy p {
+        margin: 0 0 7px;
+      }
+
+      .sidebar-copy p:last-child {
+        margin-bottom: 0;
+      }
+
+      .footer {
+        padding: 18px 2px 28px;
+        border-top: 1px solid var(--line-soft);
+        color: var(--muted);
+        font-size: 11px;
+        text-align: center;
+      }
+
+      .demo-note {
+        margin-top: 4px;
+        color: #9a9a9a;
+      }
+
+      @media (max-width: 860px) {
+        .nav-search label {
+          display: none;
+        }
+
+        .nav-search input {
+          width: 132px;
+        }
+
+        .page-grid {
+          grid-template-columns: minmax(0, 1fr) 250px;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .site-shell {
+          width: min(100% - 20px, 660px);
+        }
+
+        .masthead {
+          min-height: 86px;
+          padding-top: 14px;
+        }
+
+        .brand-name {
+          font-size: 25px;
+        }
+
+        .brand-tagline,
+        .masthead-side .meta-line {
+          display: none;
+        }
+
+        .masthead-side {
+          font-size: 11px;
+        }
+
+        .main-nav {
+          flex-wrap: wrap;
+        }
+
+        .menu-toggle {
+          display: flex;
+          order: 1;
+        }
+
+        .nav-search {
+          order: 2;
+          flex: 1;
+          border-left: 0;
+        }
+
+        .nav-search input {
+          width: 100%;
+        }
+
+        .nav-links {
+          display: none;
+          order: 3;
+          flex: 0 0 100%;
+          padding: 4px;
+          border-top: 1px solid var(--line-soft);
+          flex-wrap: wrap;
+        }
+
+        .main-nav.menu-open .nav-links {
+          display: flex;
+        }
+
+        .nav-links a {
+          min-height: 36px;
+          padding: 0 10px;
+          border-bottom-width: 2px;
+        }
+
+        .page-grid {
+          grid-template-columns: 1fr;
+          padding-top: 12px;
+        }
+
+        .sidebar {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 520px) {
+        .brand-bars {
+          width: 27px;
+          height: 34px;
+        }
+
+        .brand-bars span {
+          width: 6px;
+        }
+
+        .brand-name {
+          font-size: 22px;
+        }
+
+        .focus-note {
+          padding: 13px;
+        }
+
+        .focus-note h1 {
+          font-size: 19px;
+        }
+
+        .post-table th,
+        .post-table td {
+          padding: 8px;
+        }
+
+        .col-category {
+          width: 86px;
+        }
+
+        .col-date {
+          display: none;
+        }
+
+        .sidebar {
+          grid-template-columns: 1fr;
+        }
+
+        .activity-list li {
+          grid-template-columns: 64px minmax(0, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-shell">
+      <div class="masthead">
+        <a class="brand" href="#top" aria-label="返回 Demo 顶部">
+          <span class="brand-bars" aria-hidden="true"><span></span><span></span><span></span></span>
+          <span class="brand-copy">
+            <span class="brand-name">Keron<em>shans</em></span>
+            <span class="brand-tagline">competitive programming notes &amp; daily records</span>
+          </span>
+        </a>
+        <div class="masthead-side">
+          <div><span class="handle">Keronshans</span> · personal notebook</div>
+          <div class="meta-line">31 articles&nbsp;&nbsp;|&nbsp;&nbsp;14 solutions&nbsp;&nbsp;|&nbsp;&nbsp;27 tags</div>
+        </div>
+      </div>
+
+      <nav class="main-nav" id="mainNav" aria-label="主要导航">
+        <button class="menu-toggle" id="menuToggle" type="button" aria-expanded="false" aria-controls="navLinks">MENU</button>
+        <div class="nav-links" id="navLinks">
+          <a class="active" href="#top">首页</a>
+          <a href="http://127.0.0.1:3000/posts" target="_blank" rel="noreferrer">文章</a>
+          <a href="http://127.0.0.1:3000/problems" target="_blank" rel="noreferrer">题单</a>
+          <a href="http://127.0.0.1:3000/checkin" target="_blank" rel="noreferrer">打卡</a>
+          <a href="http://127.0.0.1:3000/talks" target="_blank" rel="noreferrer">说说</a>
+          <a href="http://127.0.0.1:3000/about" target="_blank" rel="noreferrer">关于</a>
+          <a href="http://127.0.0.1:3000/dashboard" target="_blank" rel="noreferrer">工作台</a>
+        </div>
+        <div class="nav-search">
+          <label for="articleSearch">Search</label>
+          <input id="articleSearch" type="search" placeholder="搜索文章..." maxlength="80" autocomplete="off" />
+        </div>
+      </nav>
+    </header>
+
+    <main class="site-shell page-grid" id="top">
+      <div class="main-column">
+        <section class="panel" aria-labelledby="focusHeading">
+          <div class="panel-title"><span>Current focus / 当前专题</span><a href="http://127.0.0.1:3000/posts" target="_blank" rel="noreferrer">查看文章 →</a></div>
+          <div class="focus-note">
+            <div class="focus-meta">
+              <span class="status-badge">UPDATING</span>
+              <span>算法学习 · 2026-07-01</span>
+            </div>
+            <h1 id="focusHeading">KH_网络流：从残量网络到 Dinic</h1>
+            <p>整理最大流、最小割与分层图的实现细节。这里更像一张正在维护的竞赛笔记，而不是产品首页上的功能介绍。</p>
+            <div class="focus-tags" aria-label="专题标签">
+              <span class="tag">C++</span>
+              <span class="tag">图论</span>
+              <span class="tag">网络流</span>
+              <span class="tag">模板</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="recentHeading">
+          <div class="panel-title"><span id="recentHeading">Recent notes / 最近更新</span><span id="resultCount">8 entries</span></div>
+          <table class="post-table">
+            <thead>
+              <tr>
+                <th>标题</th>
+                <th class="col-category">分类</th>
+                <th class="col-date">更新</th>
+              </tr>
+            </thead>
+            <tbody id="postRows">
+              <tr data-search="KH 网络流 算法学习 C++ 图论 网络流">
+                <td><a class="post-title" href="http://127.0.0.1:3000/posts/post-206sza" target="_blank" rel="noreferrer">KH_网络流</a><span class="post-subline">最大流、最小割与 Dinic 模板整理</span></td>
+                <td class="col-category"><span class="category rating-master">算法学习</span></td>
+                <td class="col-date">2026-07-01</td>
+              </tr>
+              <tr data-search="KH 优化算法 算法学习 C++ Trick 优化">
+                <td><a class="post-title" href="http://127.0.0.1:3000/posts/kh-optimize-algo" target="_blank" rel="noreferrer">KH_优化算法</a><span class="post-subline">三分、随机化与常见优化策略</span></td>
+                <td class="col-category"><span class="category rating-expert">算法学习</span></td>
+                <td class="col-date">2026-06-20</td>
+              </tr>
+              <tr data-search="KH 图论 算法学习 C++ 图论">
+                <td><a class="post-title" href="http://127.0.0.1:3000/posts/kh-graph-algo" target="_blank" rel="noreferrer">KH图论</a><span class="post-subline">最短路、连通性与图上常用技巧</span></td>
+                <td class="col-category"><span class="category rating-expert">算法学习</span></td>
+                <td class="col-date">2026-06-20</td>
+              </tr>
+              <tr data-search="HDU 赛马 数学证明 题目复盘 数学">
+                <td><a class="post-title" href="http://127.0.0.1:3000/posts/hdu-math" target="_blank" rel="noreferrer">HDU_赛马数学证明</a><span class="post-subline">一道结论题的证明过程与复盘</span></td>
+                <td class="col-category"><span class="category rating-specialist">题目复盘</span></td>
+                <td class="col-date">2026-06-04</td>
+              </tr>
+              <tr data-search="KH 二进制 学习笔记 C++ Trick">
+                <td><a class="post-title" href="http://127.0.0.1:3000/posts/kh-binary" target="_blank" rel="noreferrer">KH_二进制</a><span class="post-subline">位运算、状态压缩与二进制技巧</span></td>
+                <td class="col-category"><span class="category rating-pupil">学习笔记</span></td>
+                <td class="col-date">2026-06-04</td>
+              </tr>
+              <tr data-search="KH 期望 DP 概率论 算法学习 数学">
+                <td><a class="post-title" href="http://127.0.0.1:3000/posts/kh-expected-dp" target="_blank" rel="noreferrer">KH_期望DP与概率论</a><span class="post-subline">概率模型与期望动态规划</span></td>
+                <td class="col-category"><span class="category rating-expert">算法学习</span></td>
+                <td class="col-date">2026-06-04</td>
+              </tr>
+              <tr data-search="KH C++ STL 语法字典 学习笔记">
+                <td><a class="post-title" href="http://127.0.0.1:3000/posts/post-23ptkm" target="_blank" rel="noreferrer">KH_C++ STL语法字典</a><span class="post-subline">容器、算法与常用语法速查</span></td>
+                <td class="col-category"><span class="category rating-pupil">学习笔记</span></td>
+                <td class="col-date">2026-06-04</td>
+              </tr>
+              <tr data-search="线代 复习 学习笔记 数学">
+                <td><a class="post-title" href="http://127.0.0.1:3000/posts/post-gbhr07" target="_blank" rel="noreferrer">线代复习</a><span class="post-subline">线性代数知识点与考试复习记录</span></td>
+                <td class="col-category"><span class="category rating-newbie">学习笔记</span></td>
+                <td class="col-date">持续更新</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="empty-state" id="emptyState" role="status">没有找到匹配的文章。</div>
+          <div class="table-footer"><a href="http://127.0.0.1:3000/posts" target="_blank" rel="noreferrer">浏览全部 31 篇文章 →</a></div>
+        </section>
+
+        <section class="panel" aria-labelledby="activityHeading">
+          <div class="panel-title"><span id="activityHeading">Recent activity / 最近动态</span><a href="http://127.0.0.1:3000/talks" target="_blank" rel="noreferrer">详细 →</a></div>
+          <ul class="activity-list">
+            <li><span class="activity-date">07-31</span><span>整理了文章全文搜索，现在可以直接定位到正文关键词。</span></li>
+            <li><span class="activity-date">07-23</span><span>更新 <a href="#recentHeading">wp_动态规划</a>，补充状态设计与转移顺序。</span></li>
+            <li><span class="activity-date">07-02</span><span>发布 <a href="http://127.0.0.1:3000/posts/post-206sza" target="_blank" rel="noreferrer">KH_网络流</a>。</span></li>
+          </ul>
+        </section>
+      </div>
+
+      <aside class="sidebar" aria-label="侧栏信息">
+        <section class="panel">
+          <div class="panel-title"><span>Profile / 个人</span></div>
+          <div class="profile">
+            <img src="../../public/avatar.jpg" alt="Keronshans 的头像" />
+            <div>
+              <div class="profile-name">Keronshans</div>
+              <div class="profile-copy">ACM / CS learner<br />记录算法、代码和日常。</div>
+              <div class="profile-online">持续学习中</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title"><span>Notebook stats / 统计</span></div>
+          <table class="stats-table">
+            <tr><td>公开文章</td><td class="rating-expert">31</td></tr>
+            <tr><td>题目复盘</td><td class="rating-specialist">14</td></tr>
+            <tr><td>标签</td><td class="rating-pupil">27</td></tr>
+            <tr><td>当前专题</td><td class="rating-master">网络流</td></tr>
+          </table>
+          <div class="progress-wrap">
+            <div class="progress-copy"><span>本月整理进度</span><strong>68%</strong></div>
+            <div class="progress-track" aria-label="本月整理进度 68%"><div class="progress-bar"></div></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title"><span>Categories / 分类</span></div>
+          <table class="category-table">
+            <tr><td><a href="#recentHeading">算法学习</a></td><td class="rating-master">11</td></tr>
+            <tr><td><a href="#recentHeading">题目复盘</a></td><td class="rating-specialist">14</td></tr>
+            <tr><td><a href="#recentHeading">学习笔记</a></td><td class="rating-pupil">3</td></tr>
+            <tr><td><a href="#recentHeading">碎碎念</a></td><td class="rating-newbie">3</td></tr>
+          </table>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title"><span>Popular tags / 热门标签</span></div>
+          <div class="tag-cloud" aria-label="按标签筛选文章">
+            <button class="tag" type="button" data-filter="C++">C++ · 27</button>
+            <button class="tag" type="button" data-filter="算法">算法 · 25</button>
+            <button class="tag" type="button" data-filter="数学">数学 · 5</button>
+            <button class="tag" type="button" data-filter="图论">图论 · 4</button>
+            <button class="tag" type="button" data-filter="DP">DP · 2</button>
+            <button class="tag" type="button" data-filter="Trick">Trick · 4</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title"><span>About this demo</span></div>
+          <div class="sidebar-copy">
+            <p>这是一次性视觉稿，不是现有首页。</p>
+            <p>参考 Codeforces 的密度、边框、列表和色阶，但内容仍然属于 Keronshans。</p>
+          </div>
+        </section>
+      </aside>
+    </main>
+
+    <footer class="site-shell footer">
+      <div>Keronshans · CP Notebook / CS Learning / Daily</div>
+      <div class="demo-note">Visual direction demo 01 · Codeforces-inspired</div>
+    </footer>
+
+    <script>
+      const searchInput = document.getElementById("articleSearch");
+      const rows = Array.from(document.querySelectorAll("#postRows tr"));
+      const countLabel = document.getElementById("resultCount");
+      const emptyState = document.getElementById("emptyState");
+      const filterButtons = Array.from(document.querySelectorAll("[data-filter]"));
+      const mainNav = document.getElementById("mainNav");
+      const menuToggle = document.getElementById("menuToggle");
+
+      function applySearch() {
+        const query = searchInput.value.trim().toLocaleLowerCase();
+        let visible = 0;
+
+        rows.forEach((row) => {
+          const matches = !query || row.dataset.search.toLocaleLowerCase().includes(query);
+          row.hidden = !matches;
+          if (matches) visible += 1;
+        });
+
+        countLabel.textContent = `${visible} ${visible === 1 ? "entry" : "entries"}`;
+        emptyState.classList.toggle("visible", visible === 0);
+
+        filterButtons.forEach((button) => {
+          button.classList.toggle("active", query === button.dataset.filter.toLocaleLowerCase());
+        });
+      }
+
+      searchInput.addEventListener("input", applySearch);
+
+      filterButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          const nextValue = searchInput.value === button.dataset.filter ? "" : button.dataset.filter;
+          searchInput.value = nextValue;
+          applySearch();
+          searchInput.focus();
+        });
+      });
+
+      menuToggle.addEventListener("click", () => {
+        const expanded = mainNav.classList.toggle("menu-open");
+        menuToggle.setAttribute("aria-expanded", String(expanded));
+      });
+    </script>
+  </body>
+</html>

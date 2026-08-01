@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Keronshans 文章正文视觉皮肤 Demo" />
+    <title>KH_网络流 - 正文页皮肤 Demo</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+    <link rel="stylesheet" href="../styles.css" />
+    <link rel="stylesheet" href="./article.css" />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" defer></script>
+    <script src="../script.js" defer></script>
+    <script src="./article.js" defer></script>
+  </head>
+  <body data-page="article">
+    <a class="skip-link" href="#articleBody">跳到正文</a>
+
+    <header class="site-header" data-header>
+      <div class="shell nav-inner">
+        <a class="brand" href="../" aria-label="Keronshans 首页">
+          <span class="brand-mark" aria-hidden="true">K</span>
+          <span>Keronshans</span>
+        </a>
+
+        <nav class="desktop-nav" aria-label="主要导航">
+          <a href="../">首页</a>
+          <a class="active" href="../posts/">文章</a>
+          <a href="http://127.0.0.1:3000/problems" target="_blank" rel="noreferrer">题单</a>
+          <a href="http://127.0.0.1:3000/templates" target="_blank" rel="noreferrer">模板</a>
+          <a href="http://127.0.0.1:3000/checkin" target="_blank" rel="noreferrer">打卡</a>
+        </nav>
+
+        <div class="nav-actions">
+          <a
+            class="icon-button"
+            href="http://127.0.0.1:3000/search"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="打开全局搜索"
+            title="全局搜索"
+          >
+            <i data-lucide="search" aria-hidden="true"></i>
+          </a>
+          <button class="icon-button" type="button" data-theme-toggle aria-label="切换深色模式" title="切换深色模式">
+            <i data-lucide="moon" aria-hidden="true"></i>
+          </button>
+          <button
+            class="icon-button mobile-menu-button"
+            type="button"
+            data-menu-toggle
+            aria-expanded="false"
+            aria-controls="mobileMenu"
+            aria-label="打开导航"
+            title="导航"
+          >
+            <i data-lucide="menu" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+
+      <nav class="mobile-nav" id="mobileMenu" data-mobile-menu aria-label="手机导航">
+        <a href="../">首页</a>
+        <a href="../posts/">文章</a>
+        <a href="http://127.0.0.1:3000/problems" target="_blank" rel="noreferrer">题单</a>
+        <a href="http://127.0.0.1:3000/templates" target="_blank" rel="noreferrer">模板</a>
+        <a href="http://127.0.0.1:3000/checkin" target="_blank" rel="noreferrer">打卡</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="article-cover" aria-labelledby="articleTitle">
+        <div class="hero-shade" aria-hidden="true"></div>
+        <div class="shell article-cover-content">
+          <a class="article-return" href="../posts/">
+            <i data-lucide="arrow-left" aria-hidden="true"></i>
+            返回文章
+          </a>
+          <p>算法学习 · 图论</p>
+          <h1 id="articleTitle">KH_网络流</h1>
+          <div class="article-cover-meta">
+            <time datetime="2026-07-01">2026.07.01</time>
+            <span aria-hidden="true"></span>
+            <span>约 7 分钟阅读</span>
+            <span aria-hidden="true"></span>
+            <span>Keronshans</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="shell article-page-shell">
+        <div class="article-layout-demo">
+          <main class="article-main" id="articleBody">
+            <div class="article-taxonomy-demo" aria-label="文章标签">
+              <a href="../posts/?category=算法学习">算法学习</a>
+              <a href="http://127.0.0.1:3000/search?tag=C%2B%2B">#C++</a>
+              <a href="http://127.0.0.1:3000/search?tag=图论">#图论</a>
+              <a href="http://127.0.0.1:3000/search?tag=网络流">#网络流</a>
+            </div>
+
+            <article class="markdown-body">
+              <p class="article-lead">整理 Dinic、最小割与费用流的模板、思路和容易写错的细节。正文仍然沿用网站现有的 Markdown、KaTeX 与代码高亮能力。</p>
+
+              <h2 id="overview">讲解</h2>
+              <h3 id="max-flow">最大流</h3>
+              <p><strong>Dinic 算法</strong>先通过 BFS 对残量网络分层，再使用 DFS 在层次图中寻找增广路。只允许从低层走到高层，因此每轮都能排除大量无效路径。</p>
+
+              <blockquote>
+                一条路径能够推进的流量，是路径上所有剩余容量的最小值。若路径为 $P$，则本次增广量为
+                $$\Delta f = \min_{e \in P} c_f(e).$$
+              </blockquote>
+
+              <ul>
+                <li>加边时同时添加正向边与反向边。</li>
+                <li>DFS 遇到汇点时返回当前可增广流。</li>
+                <li>每轮 BFS 后重置当前弧数组 <code>cur</code>。</li>
+                <li><strong>INF 应大于所有可能答案的总和</strong>，不要随手使用 <code>1e9</code>。</li>
+              </ul>
+
+              <h2 id="complexity">复杂度与容量</h2>
+              <p>Dinic 在一般图上的理论最坏复杂度为 $O(V^2E)$。在二分图匹配等特殊网络中，实际表现通常更好。</p>
+              <div class="math-display">$$\operatorname{Dinic}(V,E)=O\!\left(V^2E\right)$$</div>
+
+              <h2 id="template">模板实现</h2>
+              <p>下面保留当前网站的深色代码块、语言标识、复制和长代码折叠方式，只调整外层边框与页面配色。</p>
+
+              <div class="code-panel" data-code-panel>
+                <div class="code-toolbar">
+                  <span>cpp</span>
+                  <div>
+                    <button class="code-action" type="button" data-code-toggle>展开 31 行</button>
+                    <button class="code-action" type="button" data-copy-code>复制</button>
+                  </div>
+                </div>
+                <pre class="is-collapsed"><code><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> T&gt;
+<span class="hljs-keyword">struct</span> <span class="hljs-title">Flow</span> {
+    <span class="hljs-keyword">const</span> <span class="hljs-type">int</span> n;
+    <span class="hljs-keyword">const</span> T inf = numeric_limits&lt;T&gt;::max();
+
+    <span class="hljs-keyword">struct</span> <span class="hljs-title">Edge</span> {
+        <span class="hljs-type">int</span> to;
+        T w;
+    };
+
+    vector&lt;Edge&gt; ver;
+    vector&lt;vector&lt;<span class="hljs-type">int</span>&gt;&gt; h;
+    vector&lt;<span class="hljs-type">int</span>&gt; cur, d;
+
+    <span class="hljs-keyword">void</span> <span class="hljs-title">add</span>(<span class="hljs-type">int</span> u, <span class="hljs-type">int</span> v, T c) {
+        h[u].push_back(ver.size());
+        ver.push_back({v, c});
+        h[v].push_back(ver.size());
+        ver.push_back({u, <span class="hljs-number">0</span>});
+    }
+
+    T <span class="hljs-title">dfs</span>(<span class="hljs-type">int</span> u, <span class="hljs-type">int</span> t, T f) {
+        <span class="hljs-keyword">if</span> (u == t) <span class="hljs-keyword">return</span> f;
+        T rest = f;
+        <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> &amp;i = cur[u]; i &lt; h[u].size(); ++i) {
+            <span class="hljs-type">int</span> id = h[u][i];
+            <span class="hljs-keyword">auto</span> &amp;[v, c] = ver[id];
+            <span class="hljs-keyword">if</span> (c &amp;&amp; d[v] == d[u] + <span class="hljs-number">1</span>) {
+                T pushed = dfs(v, t, min(rest, c));
+                c -= pushed;
+                ver[id ^ <span class="hljs-number">1</span>].w += pushed;
+                rest -= pushed;
+            }
+        }
+        <span class="hljs-keyword">return</span> f - rest;
+    }
+};</code></pre>
+              </div>
+
+              <h2 id="matching">二分图匹配</h2>
+              <p>将源点连接左部点、右部点连接汇点，每条容量均设为 1，即可把最大匹配转化为最大流。建图方向决定了残量网络是否会允许非法选择。</p>
+
+              <table>
+                <thead>
+                  <tr><th>边</th><th>容量</th><th>含义</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>$S \to L$</td><td>1</td><td>每个左部点最多匹配一次</td></tr>
+                  <tr><td>$L \to R$</td><td>1</td><td>允许的匹配关系</td></tr>
+                  <tr><td>$R \to T$</td><td>1</td><td>每个右部点最多匹配一次</td></tr>
+                </tbody>
+              </table>
+
+              <hr />
+              <p>这篇笔记会继续补充最小割、费用流及常见建图模型。</p>
+            </article>
+
+            <section class="post-interaction-demo" aria-labelledby="discussionTitle">
+              <div class="interaction-summary">
+                <button type="button" class="like-button" data-like-button aria-pressed="false">
+                  <i data-lucide="heart" aria-hidden="true"></i>
+                  <span data-like-count>12</span>
+                </button>
+                <span><strong data-comment-count>1</strong> 条评论</span>
+              </div>
+
+              <h2 id="discussionTitle">讨论</h2>
+              <form class="comment-form" data-comment-form>
+                <label>
+                  <span>昵称</span>
+                  <input type="text" name="nickname" maxlength="20" placeholder="选填" />
+                </label>
+                <label class="comment-field">
+                  <span>评论</span>
+                  <textarea name="content" maxlength="500" rows="3" placeholder="写下你的想法" required></textarea>
+                </label>
+                <button class="comment-submit" type="submit">发送</button>
+              </form>
+
+              <div class="comment-list" data-comment-list>
+                <article class="comment-item">
+                  <header><strong>Anonymous</strong><time>2026.07.02</time></header>
+                  <p>这里的反向边提醒很有用，写费用流时也容易在这一处出错。</p>
+                </article>
+              </div>
+            </section>
+
+            <footer class="article-end">
+              <a href="../posts/"><i data-lucide="arrow-left" aria-hidden="true"></i>返回文章列表</a>
+              <a href="#articleTitle">回到顶部<i data-lucide="arrow-up" aria-hidden="true"></i></a>
+            </footer>
+          </main>
+
+          <aside class="article-aside" aria-label="文章目录">
+            <div class="demo-toc" data-toc>
+              <button class="toc-toggle-demo" type="button" data-toc-toggle aria-expanded="true">
+                <span>目录</span>
+                <i data-lucide="panel-right-close" aria-hidden="true"></i>
+              </button>
+              <div class="toc-progress-demo" aria-hidden="true"><span data-toc-progress></span></div>
+              <nav class="toc-list-demo">
+                <button type="button" data-toc-target="overview">讲解</button>
+                <button class="is-sub" type="button" data-toc-target="max-flow">最大流</button>
+                <button type="button" data-toc-target="complexity">复杂度与容量</button>
+                <button type="button" data-toc-target="template">模板实现</button>
+                <button type="button" data-toc-target="matching">二分图匹配</button>
+                <button type="button" data-toc-target="discussionTitle">讨论</button>
+              </nav>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <span>© 2026 Keronshans</span>
+        <div>
+          <a href="../">首页</a>
+          <a href="../posts/">文章</a>
+          <a href="#articleTitle">回到顶部</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

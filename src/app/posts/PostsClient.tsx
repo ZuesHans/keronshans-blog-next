@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { CATEGORY_GROUPS } from "@/lib/categories";
+import { CATEGORY_GROUPS, getCategoryColorClass } from "@/lib/categories";
 
 const ALL_CATEGORY = "全部";
 
@@ -23,7 +23,7 @@ interface TagInfo {
 
 export default function PostsClient({
   initialPosts,
-  initialTags: _initialTags,
+  initialTags,
 }: {
   initialPosts: PostMeta[];
   initialTags: TagInfo[];
@@ -40,33 +40,24 @@ export default function PostsClient({
     if (tag) setActiveTag(tag);
   }, []);
 
-  const categorySummaries = useMemo(() => {
-    const grouped = new Map<string, PostMeta[]>();
-    initialPosts.forEach((post) => {
-      grouped.set(post.category, [...(grouped.get(post.category) || []), post]);
-    });
-
-    return CATEGORY_GROUPS.map((group) => {
-      const posts = grouped.get(group.name) || [];
-      return {
-        ...group,
-        count: posts.length,
-        latest: posts[0],
-      };
-    });
-  }, [initialPosts]);
+  const categorySummaries = useMemo(
+    () => CATEGORY_GROUPS.map((group) => ({
+      ...group,
+      count: initialPosts.filter((post) => post.category === group.name).length,
+    })),
+    [initialPosts]
+  );
 
   const filteredPosts = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
+    const query = searchQuery.trim().toLocaleLowerCase();
     return initialPosts.filter((post) => {
       if (activeCategory !== ALL_CATEGORY && post.category !== activeCategory) return false;
       if (activeTag && !post.tags.includes(activeTag)) return false;
-      if (!q) return true;
-      return (
-        post.title.toLowerCase().includes(q) ||
-        post.excerpt.toLowerCase().includes(q) ||
-        post.tags.some((tag) => tag.toLowerCase().includes(q))
-      );
+      if (!query) return true;
+      return [post.title, post.excerpt, ...post.tags]
+        .join(" ")
+        .toLocaleLowerCase()
+        .includes(query);
     });
   }, [activeCategory, activeTag, initialPosts, searchQuery]);
 
@@ -97,88 +88,87 @@ export default function PostsClient({
   };
 
   return (
-    <div className="posts-shell max-w-6xl mx-auto px-5 sm:px-6 py-10">
-      <header className="posts-hero">
-        <div className="page-kicker mb-3">Archive</div>
-        <h1 className="page-heading mb-3">文章分类</h1>
-        <p>
-          这里按照类型分类，比如这是美味的小鱼干，这是美味的三文鱼刺身...😋
-        </p>
-        <div className="soft-divider" />
+    <div className="posts-page -mt-16">
+      <header className="posts-cover">
+        <div className="posts-cover-shade" aria-hidden="true" />
+        <div className="site-shell posts-cover-content">
+          <p>Archive / {initialPosts.length} Posts</p>
+          <h1>文章</h1>
+        </div>
       </header>
 
-      <section className="posts-category-index" aria-label="文章分类">
-        <button
-          onClick={() => selectCategory(ALL_CATEGORY)}
-          className={`posts-category-row ${activeCategory === ALL_CATEGORY ? "is-active" : ""}`}
-        >
-          <span>全部文章</span>
-          <small>完整索引</small>
-          <strong>{initialPosts.length}</strong>
-        </button>
-
-        {categorySummaries.map((group) => (
-          <button
-            key={group.name}
-            onClick={() => selectCategory(group.name)}
-            className={`posts-category-row ${activeCategory === group.name ? "is-active" : ""}`}
-          >
-            <span>{group.name}</span>
-            <small>{group.latest?.title || group.description}</small>
-            <strong>{group.count}</strong>
+      <div className="site-shell posts-content">
+        <section className="posts-category-tabs" aria-label="文章分类">
+          <button type="button" onClick={() => selectCategory(ALL_CATEGORY)} className={activeCategory === ALL_CATEGORY ? "is-active" : ""}>
+            全部 <span>{initialPosts.length}</span>
           </button>
-        ))}
-      </section>
+          {categorySummaries.map((group) => (
+            <button key={group.name} type="button" onClick={() => selectCategory(group.name)} className={activeCategory === group.name ? "is-active" : ""}>
+              {group.name} <span>{group.count}</span>
+            </button>
+          ))}
+        </section>
 
-      <section className="posts-control-bar">
-        <div className="relative">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: "var(--owl-textMuted)" }}>
-            <circle cx="11" cy="11" r="8" />
-            <path d="m21 21-4.3-4.3" />
-          </svg>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="搜索标题、摘要、标签..."
-            className="cyber-input pl-9"
-          />
-        </div>
-        <button onClick={clearFilters} className="cyber-btn">
-          清除筛选
-        </button>
-      </section>
+        <section className="posts-control-bar">
+          <label className="posts-search-field">
+            <span className="sr-only">筛选文章</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+            <input type="search" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="筛选标题或标签" className="cyber-input" />
+          </label>
+          <button type="button" onClick={clearFilters} className="cyber-btn">清除筛选</button>
+        </section>
 
-      <div className="active-filter-bar">
-        <span>
-          当前显示 <strong>{filteredPosts.length}</strong> 篇
-          {activeCategory !== ALL_CATEGORY ? ` · ${activeCategory}` : " · 全部分类"}
-        </span>
-        {activeTag && <span className="tag-pill">#{activeTag}</span>}
-      </div>
-
-      <section className="posts-directory">
-        {filteredPosts.length === 0 ? (
-          <div className="cyber-card p-10 text-center" style={{ color: "var(--owl-textSecondary)" }}>
-            没有匹配的文章喵🙁，换个分类或关键词试试吧。
-          </div>
-        ) : (
-          filteredPosts.map((post) => (
-            <Link key={post.id} href={`/posts/${post.id}`}>
-              <article className="posts-directory-item">
-                <div>
-                  <h2>
-                    {post.pinned && <em>置顶</em>}
-                    {post.title}
-                  </h2>
-                  <span>{post.date} · {post.category}</span>
-                </div>
-                <span aria-hidden="true">→</span>
-              </article>
-            </Link>
-          ))
+        {initialTags.length > 0 && (
+          <details className="posts-tag-disclosure" open={Boolean(activeTag) || undefined}>
+            <summary>标签 <span>{initialTags.length}</span></summary>
+            <div className="posts-tag-cloud">
+              {initialTags.map(({ tag, count }) => (
+                <button key={tag} type="button" onClick={() => selectTag(tag)} className={activeTag === tag ? "is-active" : ""}>
+                  #{tag} <span>{count}</span>
+                </button>
+              ))}
+            </div>
+          </details>
         )}
-      </section>
+
+        <div className="active-filter-bar">
+          <span>当前显示 <strong>{filteredPosts.length}</strong> 篇</span>
+          {activeTag && <span className="tag-pill">#{activeTag}</span>}
+        </div>
+
+        <section className="posts-directory">
+          {filteredPosts.length === 0 ? (
+            <div className="cyber-card p-10 text-center" style={{ color: "var(--owl-textSecondary)" }}>
+              没有匹配的文章。
+            </div>
+          ) : (
+            filteredPosts.map((post) => (
+              <Link key={post.id} href={`/posts/${post.id}`}>
+                <article className="posts-directory-item">
+                  <time>{post.date}</time>
+                  <div className="posts-directory-body">
+                    <div className="posts-directory-meta">
+                      {post.pinned && <em>置顶</em>}
+                      <span className={`category-chip ${getCategoryColorClass(post.category)}`}>{post.category}</span>
+                    </div>
+                    <h2>{post.title}</h2>
+                    {post.excerpt && <p>{post.excerpt}</p>}
+                    {post.tags.length > 0 && (
+                      <div className="posts-directory-tags">
+                        {post.tags.slice(0, 5).map((tag) => <span key={tag}>#{tag}</span>)}
+                      </div>
+                    )}
+                  </div>
+                  <span className="posts-directory-arrow" aria-hidden="true">→</span>
+                </article>
+              </Link>
+            ))
+          )}
+        </section>
+      </div>
     </div>
   );
 }

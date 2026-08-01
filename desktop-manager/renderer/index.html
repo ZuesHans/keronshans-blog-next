@@ -38,10 +38,11 @@
             <button id="openProjectBtn">打开工作区 VS Code</button>
             <button id="openItemBtn">打开当前文件</button>
             <button id="previewBtn">预览</button>
-            <button id="buildBtn">构建检查</button>
-            <button id="syncSearchBtn">更新搜索索引</button>
-            <button id="gitBtn">GitHub 备份</button>
-            <button id="deployBtn">发布 CF</button>
+            <button id="refreshBtn">刷新内容</button>
+            <button id="buildBtn" class="publish-action">构建检查</button>
+            <button id="syncSearchBtn" class="publish-action">更新搜索索引</button>
+            <button id="gitBtn" class="publish-action">GitHub 备份</button>
+            <button id="deployBtn" class="publish-action">发布 CF</button>
           </div>
         </header>
 
@@ -128,9 +129,12 @@
                 <input name="tags" id="fieldTags" placeholder="DP, 图论, 模板" />
               </label>
 
-              <label class="snippet-only">
-                描述
-                <textarea name="description" id="fieldDescription" rows="3"></textarea>
+              <label class="markdown-only">
+                <span class="label-row">
+                  <span>描述 / 首页摘要</span>
+                  <span id="descriptionCount">0 / 240</span>
+                </span>
+                <textarea name="description" id="fieldDescription" rows="4" maxlength="240" placeholder="用一两句话说明这篇内容，首页和文章列表会显示这里"></textarea>
               </label>
 
               <label class="problem-only">
@@ -145,6 +149,7 @@
 
               <div class="meta-line" id="metaLine"></div>
               <div class="detail-actions">
+                <div class="save-state" id="saveStatus" aria-live="polite">已同步</div>
                 <button type="button" id="saveMetaBtn" class="primary">保存元数据</button>
                 <button type="button" id="editBodyBtn">用 VS Code 编辑正文</button>
               </div>
@@ -198,6 +203,10 @@
         <label>
           标签
           <input id="newTags" placeholder="逗号分隔" />
+        </label>
+        <label class="new-markdown-only">
+          描述 / 首页摘要
+          <textarea id="newDescription" rows="3" maxlength="240" placeholder="可稍后补充"></textarea>
         </label>
         <menu>
           <button value="cancel">取消</button>

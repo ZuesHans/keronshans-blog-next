@@ -92,15 +92,10 @@ export default function ToolsPage() {
   const baseToKey = (v: Base) => v === 2 ? "bin" as const : v === 8 ? "oct" as const : v === 10 ? "dec" as const : "hex" as const;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-display font-bold mb-2">
-          <span className="neon-text">⚡</span> 二进制工具箱
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400 font-mono text-sm">
-          &gt; ACM必备 | 进制转换 & 位运算
-        </p>
-        <div className="mt-2 h-[1px] bg-gradient-to-r from-neon-pink via-neon-yellow to-neon-blue opacity-50" />
+    <div className="app-page max-w-5xl">
+      <div className="app-page-header">
+        <h1>二进制工具箱</h1>
+        <p>进制转换与位运算</p>
       </div>
 
       <Link href="/blog-search-lab" className="cyber-card mb-6 block p-5">

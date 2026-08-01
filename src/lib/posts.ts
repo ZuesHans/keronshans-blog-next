@@ -4,6 +4,7 @@ import matter from "gray-matter";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { CATEGORY_GROUPS, getCategoryColorClass } from "./categories";
 import { toUrlSafeId } from "./postSlug";
+import { normalizeSearchContent, type SearchDocument } from "./search";
 
 export interface PostMeta {
   id: string;
@@ -49,13 +50,8 @@ function formatDate(value: unknown): string {
   return String(value).slice(0, 10);
 }
 
-function makeExcerpt(content: string): string {
-  return content
-    .replace(/^---[\s\S]*?---\n?/, "")
-    .replace(/[#*`[\]<>]/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 180);
+function explicitExcerpt(value: unknown): string {
+  return String(value || "").trim().slice(0, 240);
 }
 
 function parseTags(value: unknown): string[] {
@@ -85,7 +81,6 @@ async function getPostsFromD1(): Promise<PostMeta[] | null> {
 
     return results.map((row: Record<string, unknown>) => {
       const filename = String(row.filename || "");
-      const content = String(row.content || "");
       return {
         id: toUrlSafeId(filename),
         slug: filename,
@@ -93,7 +88,7 @@ async function getPostsFromD1(): Promise<PostMeta[] | null> {
         date: formatDate(row.date),
         tags: parseTags(row.tags),
         cover: "",
-        excerpt: makeExcerpt(content),
+        excerpt: "",
         category: normalizeCategory(row.category, filename),
         pinned: false,
       };
@@ -113,7 +108,7 @@ function getPostsFromFiles(): PostMeta[] {
     .map((filename) => {
       const filePath = path.join(postsPath, filename);
       const fileContent = fs.readFileSync(filePath, "utf-8");
-      const { data, content } = matter(fileContent);
+      const { data } = matter(fileContent);
       return {
         id: toUrlSafeId(filename),
         slug: filename.replace(/\.md$/, ""),
@@ -121,17 +116,85 @@ function getPostsFromFiles(): PostMeta[] {
         date: formatDate(data.date),
         tags: parseTags(data.tags),
         cover: "",
-        excerpt: makeExcerpt(content),
+        excerpt: explicitExcerpt(data.description || data.excerpt),
         category: normalizeCategory(data.category, filename),
         pinned: Boolean(data.pinned),
       };
     });
 }
 
+function preferLocalContent(): boolean {
+  return process.env.NODE_ENV === "development" || process.env.NEXT_PHASE === "phase-production-build";
+}
+
+async function getSearchDocumentsFromD1(): Promise<SearchDocument[] | null> {
+  try {
+    const { env } = await getCloudflareContext({ async: true });
+    if (!env?.DB) return null;
+    const { results } = await env.DB.prepare(
+      "SELECT filename, title, content, date, tags, category, updated_at FROM posts ORDER BY updated_at DESC, created_at DESC"
+    ).all();
+    if (!results || results.length === 0) return null;
+
+    return results.map((row: Record<string, unknown>) => {
+      const filename = String(row.filename || "");
+      return {
+        id: toUrlSafeId(filename),
+        url: `/posts/${toUrlSafeId(filename)}`,
+        title: String(row.title || filename),
+        content: normalizeSearchContent(String(row.content || "")),
+        date: formatDate(row.date),
+        tags: parseTags(row.tags),
+        category: normalizeCategory(row.category, filename),
+        updatedAt: String(row.updated_at || row.date || ""),
+      };
+    });
+  } catch {
+    return null;
+  }
+}
+
+function getSearchDocumentsFromFiles(): SearchDocument[] {
+  const postsPath = path.join(process.cwd(), "content", "posts");
+  if (!fs.existsSync(postsPath)) return [];
+
+  return fs
+    .readdirSync(postsPath)
+    .filter((filename) => filename.endsWith(".md"))
+    .map((filename) => {
+      const filePath = path.join(postsPath, filename);
+      const fileContent = fs.readFileSync(filePath, "utf-8");
+      const { data, content } = matter(fileContent);
+      const id = toUrlSafeId(filename);
+      return {
+        id,
+        url: `/posts/${id}`,
+        title: String(data.title || filename.replace(/\.md$/, "")),
+        content: normalizeSearchContent(content),
+        date: formatDate(data.date),
+        tags: parseTags(data.tags),
+        category: normalizeCategory(data.category, filename),
+        updatedAt: fs.statSync(filePath).mtime.toISOString(),
+      };
+    })
+    .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime());
+}
+
 export async function getAllPosts(): Promise<PostMeta[]> {
+  const filePosts = getPostsFromFiles();
+  if (preferLocalContent() && filePosts.length > 0) {
+    return filePosts.sort((a, b) => Number(b.pinned) - Number(a.pinned) || new Date(b.date).getTime() - new Date(a.date).getTime());
+  }
   const d1Posts = await getPostsFromD1();
-  const posts = d1Posts && d1Posts.length > 0 ? d1Posts : getPostsFromFiles();
+  const posts = d1Posts && d1Posts.length > 0 ? d1Posts : filePosts;
   return posts.sort((a, b) => Number(b.pinned) - Number(a.pinned) || new Date(b.date).getTime() - new Date(a.date).getTime());
+}
+
+export async function getPostSearchDocuments(): Promise<SearchDocument[]> {
+  const fileDocuments = getSearchDocumentsFromFiles();
+  if (preferLocalContent() && fileDocuments.length > 0) return fileDocuments;
+  const d1Documents = await getSearchDocumentsFromD1();
+  return d1Documents && d1Documents.length > 0 ? d1Documents : fileDocuments;
 }
 
 export async function getPostById(id: string): Promise<PostData | null> {
@@ -139,32 +202,34 @@ export async function getPostById(id: string): Promise<PostData | null> {
   const post = posts.find((item) => item.id === id);
   if (!post) return null;
 
-  try {
-    const { env } = await getCloudflareContext({ async: true });
-    if (env?.DB) {
-      const { results } = await env.DB.prepare(
-        "SELECT filename, title, content, date, tags, category FROM posts WHERE filename = ?"
-      )
-        .bind(post.slug)
-        .all();
-      if (results && results.length > 0) {
-        const row = results[0] as Record<string, unknown>;
-        const filename = String(row.filename || post.slug);
-        return {
-          id: post.id,
-          slug: filename,
-          title: String(row.title || post.title),
-          date: formatDate(row.date || post.date),
-          tags: parseTags(row.tags),
-          cover: "",
-          excerpt: post.excerpt,
-          category: normalizeCategory(row.category, filename),
-          pinned: false,
-          content: String(row.content || ""),
-        };
+  if (!preferLocalContent()) {
+    try {
+      const { env } = await getCloudflareContext({ async: true });
+      if (env?.DB) {
+        const { results } = await env.DB.prepare(
+          "SELECT filename, title, content, date, tags, category FROM posts WHERE filename = ?"
+        )
+          .bind(post.slug)
+          .all();
+        if (results && results.length > 0) {
+          const row = results[0] as Record<string, unknown>;
+          const filename = String(row.filename || post.slug);
+          return {
+            id: post.id,
+            slug: filename,
+            title: String(row.title || post.title),
+            date: formatDate(row.date || post.date),
+            tags: parseTags(row.tags),
+            cover: "",
+            excerpt: post.excerpt,
+            category: normalizeCategory(row.category, filename),
+            pinned: false,
+            content: String(row.content || ""),
+          };
+        }
       }
-    }
-  } catch {}
+    } catch {}
+  }
 
   const filePath = path.join(process.cwd(), "content", "posts", `${post.slug}.md`);
   if (!fs.existsSync(filePath)) return null;

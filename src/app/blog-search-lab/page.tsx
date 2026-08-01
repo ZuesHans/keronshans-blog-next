@@ -99,14 +99,13 @@ export default function BlogSearchLabPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-5 sm:px-6 py-10">
-      <header className="mb-8">
+    <div className="app-page max-w-5xl">
+      <header className="app-page-header">
         <div className="page-kicker mb-3">Semantic Search</div>
         <h1 className="page-heading mb-3">语义搜索实验室</h1>
         <p className="max-w-2xl text-sm leading-7" style={{ color: "var(--owl-textSecondary)" }}>
           输入自然语言问题，搜索会返回语义相关的博客片段。它更适合查“这个知识点在哪里讲过”，不是聊天问答。
         </p>
-        <div className="soft-divider" />
       </header>
 
       <form onSubmit={runSearch} className="cyber-card p-4 sm:p-5 mb-6">
