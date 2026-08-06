@@ -8,6 +8,8 @@
     "preview": "node scripts/with-wrangler-env.cjs opennextjs-cloudflare build && node scripts/with-wrangler-env.cjs opennextjs-cloudflare",
     "start": "next start",
     "lint": "next lint",
+    "test:manager": "node --test desktop-manager/*.test.cjs",
+    "test:search": "node --test src/lib/search.test.ts",
     "deploy": "node scripts/with-wrangler-env.cjs opennextjs-cloudflare build && node scripts/with-wrangler-env.cjs opennextjs-cloudflare deploy",
     "manager": "electron desktop-manager/main.cjs"
   },

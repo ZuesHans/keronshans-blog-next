@@ -233,20 +233,15 @@ export default function ProblemsPage() {
   }, [problems]);
 
   if (!loaded) {
-    return <div className="max-w-6xl mx-auto px-4 py-8"><div className="animate-pulse h-10 bg-gray-200 dark:bg-cyber-surface rounded w-48" /></div>;
+    return <div className="app-page"><div className="animate-pulse h-10 bg-gray-200 dark:bg-cyber-surface rounded w-48" /></div>;
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="app-page">
+      <div className="app-page-header flex items-center justify-between gap-5">
         <div>
-          <h1 className="text-4xl font-display font-bold mb-2">
-            <span className="neon-text-blue">◉</span> 题目收集
-          </h1>
-          <p className="text-gray-500 dark:text-gray-400 font-mono text-sm">
-            &gt; PROBLEM.TRACKER | {problems.length} 道题目
-          </p>
-          <div className="mt-2 h-[1px] bg-gradient-to-r from-neon-blue via-neon-purple to-neon-green opacity-50" />
+          <h1>题目收集</h1>
+          <p>{problems.length} 道题目</p>
         </div>
         {isAuth && (
           <button onClick={() => setShowAdd(!showAdd)} className="cyber-btn-blue flex items-center gap-2">

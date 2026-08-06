@@ -94,15 +94,17 @@ export default function TableOfContents() {
 
   return (
     <div className={`toc-panel ${collapsed ? "is-collapsed" : ""}`}>
-      <button type="button" className="toc-toggle" onClick={() => setCollapsed(!collapsed)}>
-        {collapsed ? "目录" : "收起"}
-      </button>
+      <div className="toc-head">
+        {!collapsed && <div className="toc-title">目录</div>}
+        <button type="button" className="toc-toggle" onClick={() => setCollapsed(!collapsed)} aria-expanded={!collapsed}>
+          {collapsed ? "目录" : "收起"}
+        </button>
+      </div>
       {!collapsed && (
         <>
           <div className="toc-progress" aria-hidden="true">
             <span style={{ width: `${progress}%` }} />
           </div>
-          <div className="toc-title">目录</div>
           <nav className="toc-list" aria-label="文章目录">
             {headings.map((heading) => (
               <button

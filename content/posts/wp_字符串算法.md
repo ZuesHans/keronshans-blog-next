@@ -9,6 +9,78 @@ category: 题解复盘
 ---
 ## 字符串
 
+### KMP
+
+- **复杂度**
+    设：主串长度为 n，模式串长度为 m
+    那么：构建 lps：O(m)  
+        字符串匹配：O(n)  
+        总时间复杂度：**O(n + m)**  
+        空间复杂度：O(m)  
+- **用途**
+  - 查找子串位置
+  - 查找所有出现的位置
+  - 判断一个字符串是否为另一个字符的子串（模式匹配）
+  - 分析字符串的周期性
+  - 求最长相同前后缀
+  - 判断循环位移
+  
+- 以最坏n+m 的时间计算 在 中出现的全部位置:
+
+```cpp
+auto kmp = [&](string s, string t) {
+    int n = s.size(), m = t.size();
+    vector<int> kmp(m + 1), ans;
+    s = "@" + s;
+    t = "@" + t;
+    for (int i = 2, j = 0; i = m; i +) {
+        while (j & t[i] = t[j + 1]) {
+            j = kmp[j];
+        }
+    j += t[i] = t[j + 1];
+    kmp[i] = j;
+    }
+    for (int i = 1, j = 0; i = n; i +) {
+        while (j & s[i] = t[j + 1]) {
+        j = kmp[j];
+    }
+        if (s[i] = t[j + 1] & +j = m) {
+    ans.push_back(i - m + 1); / t 在 s 中出现的位置
+        }
+    }
+    return ans;
+};
+```
+
+### Z函数（扩展kmp）
+
+```cpp
+
+template<class T>
+vector<int> z_function(const vector<T>& a) {
+    int n = a.size();
+    vector<int> z(n);
+
+    for (int i = 1, l = 0, r = 0; i < n; i++) {
+        if (i < r) {
+            z[i] = min(r - i, z[i - l]);
+        }
+
+        while (i + z[i] < n &&
+               a[z[i]] == a[i + z[i]]) {
+            z[i]++;
+        }
+
+        if (i + z[i] > r) {
+            l = i;
+            r = i + z[i];
+        }
+    }
+
+    return z;
+}
+```
+
 ### 字典树
 
 - 检索字符串

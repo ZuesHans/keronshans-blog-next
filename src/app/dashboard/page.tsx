@@ -318,7 +318,7 @@ export default function DashboardPage() {
   // Login
   if (!authed) {
     return (
-      <div className="max-w-md mx-auto px-4 py-20">
+      <div className="app-page max-w-md py-20">
         <div className="cyber-card p-8 text-center">
           <h1 className="text-2xl font-display font-bold mb-2 neon-text">作者仪表盘</h1>
           <p className="text-sm text-gray-500 mb-6">请输入密码以管理博客内容</p>
@@ -333,7 +333,7 @@ export default function DashboardPage() {
   // Posts Editor
   if (tab === "posts" && (postView === "edit" || postView === "new")) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-8">
+      <div className="app-page max-w-5xl">
         <div className="flex items-center justify-between mb-6">
           <button onClick={() => setPostView("list")} className="cyber-btn text-sm">&larr; 返回列表</button>
           <h2 className="text-xl font-display font-bold">{postView === "new" ? "新建文章" : "编辑文章"}</h2>
@@ -355,7 +355,7 @@ export default function DashboardPage() {
   // Snippets Editor
   if (tab === "snippets" && (snippetView === "edit" || snippetView === "new")) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-8">
+      <div className="app-page max-w-5xl">
         <div className="flex items-center justify-between mb-6">
           <button onClick={() => setSnippetView("list")} className="cyber-btn text-sm">&larr; 返回列表</button>
           <h2 className="text-xl font-display font-bold">{snippetView === "new" ? "新建代码片段" : "编辑代码片段"}</h2>
@@ -389,7 +389,7 @@ export default function DashboardPage() {
 
   // Main List View with Tabs
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
+    <div className="app-page max-w-5xl">
       {/* Tab Switcher */}
       <div className="flex items-center gap-4 mb-6">
         <button onClick={() => setTab("posts")} className={`text-lg font-display font-bold transition-all ${tab === "posts" ? "neon-text" : "text-gray-400 hover:text-gray-600"}`}>

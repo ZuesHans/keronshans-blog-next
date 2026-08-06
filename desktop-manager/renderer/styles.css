@@ -46,6 +46,19 @@ button:hover {
   color: var(--accent);
 }
 
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  outline-offset: 1px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 button.primary {
   background: var(--accent);
   border-color: var(--accent);
@@ -277,6 +290,14 @@ textarea {
   line-height: 1.5;
 }
 
+.item-summary {
+  display: -webkit-box;
+  margin-top: 4px;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
 .badge {
   display: inline-block;
   padding: 2px 7px;
@@ -307,6 +328,11 @@ textarea {
   gap: 13px;
 }
 
+.detail.is-dirty {
+  border-top: 2px solid color-mix(in srgb, var(--yellow) 70%, transparent);
+  padding-top: 11px;
+}
+
 .detail-title-row,
 .detail-actions,
 .log-head {
@@ -314,6 +340,21 @@ textarea {
   justify-content: space-between;
   gap: 10px;
   align-items: center;
+}
+
+.detail-actions {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.save-state {
+  margin-right: auto;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.save-state.is-dirty {
+  color: var(--yellow);
 }
 
 .grid2 {
@@ -334,6 +375,18 @@ label select,
 label textarea {
   color: var(--text);
   font-size: 14px;
+}
+
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+#descriptionCount {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .checkbox-row {

@@ -1,0 +1,1027 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Keronshans - Technical Editorial Demo</title>
+    <script>
+      document.documentElement.classList.add("js");
+      try {
+        const savedTheme = localStorage.getItem("keronshans-demo-theme");
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        document.documentElement.dataset.theme = savedTheme || (prefersDark ? "dark" : "light");
+      } catch {
+        document.documentElement.dataset.theme = "light";
+      }
+    </script>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #fbfcfd;
+        --surface: #ffffff;
+        --surface-soft: #f5f7fa;
+        --text: #171a1f;
+        --text-soft: #3d444d;
+        --muted: #747c86;
+        --faint: #a3aab2;
+        --line: #e2e6ea;
+        --line-strong: #cbd2d9;
+        --accent: #2563eb;
+        --accent-hover: #174bc0;
+        --accent-soft: #edf3ff;
+        --mark: #dbe7ff;
+        --shadow: 0 18px 55px rgba(19, 34, 55, 0.1);
+        --content: 900px;
+      }
+
+      :root[data-theme="dark"] {
+        color-scheme: dark;
+        --bg: #101216;
+        --surface: #16191f;
+        --surface-soft: #1b1f26;
+        --text: #eef1f5;
+        --text-soft: #c3c9d1;
+        --muted: #8e97a3;
+        --faint: #626b77;
+        --line: #292e36;
+        --line-strong: #3a414c;
+        --accent: #74a3ff;
+        --accent-hover: #a3c2ff;
+        --accent-soft: #182640;
+        --mark: #22385f;
+        --shadow: 0 24px 70px rgba(0, 0, 0, 0.36);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        background: var(--bg);
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        color: var(--text);
+        background: var(--bg);
+        font-family: Inter, "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+        font-size: 15px;
+        line-height: 1.72;
+        letter-spacing: 0;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+        transition: color 180ms ease, background 180ms ease;
+      }
+
+      body.dialog-open {
+        overflow: hidden;
+      }
+
+      button,
+      input {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      button,
+      a {
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      a:focus-visible,
+      button:focus-visible,
+      input:focus-visible {
+        outline: 3px solid color-mix(in srgb, var(--accent) 30%, transparent);
+        outline-offset: 3px;
+      }
+
+      .shell {
+        width: min(var(--content), calc(100% - 40px));
+        margin: 0 auto;
+      }
+
+      .site-header {
+        position: sticky;
+        z-index: 30;
+        top: 0;
+        border-bottom: 1px solid color-mix(in srgb, var(--line) 86%, transparent);
+        background: color-mix(in srgb, var(--bg) 92%, transparent);
+        backdrop-filter: blur(14px);
+      }
+
+      .header-inner {
+        display: flex;
+        align-items: center;
+        min-height: 64px;
+        gap: 22px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 14px;
+        font-weight: 760;
+        line-height: 1;
+      }
+
+      .brand img {
+        width: 31px;
+        height: 31px;
+        object-fit: cover;
+        border: 1px solid var(--line-strong);
+        border-radius: 7px;
+      }
+
+      .brand-dot {
+        color: var(--accent);
+      }
+
+      .desktop-nav {
+        display: flex;
+        align-items: center;
+        gap: 1px;
+        margin-left: auto;
+      }
+
+      .desktop-nav a {
+        padding: 7px 9px;
+        color: var(--muted);
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 630;
+        transition: color 160ms ease, background 160ms ease;
+      }
+
+      .desktop-nav a:hover,
+      .desktop-nav a[aria-current="page"] {
+        color: var(--text);
+        background: var(--surface);
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .icon-button,
+      .search-button,
+      .menu-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 34px;
+        color: var(--muted);
+        border: 1px solid transparent;
+        border-radius: 6px;
+        background: transparent;
+        cursor: pointer;
+        transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+      }
+
+      .icon-button {
+        width: 34px;
+        font-size: 16px;
+      }
+
+      .search-button {
+        gap: 7px;
+        padding: 0 8px;
+        font-size: 11px;
+        font-weight: 650;
+      }
+
+      .search-button kbd {
+        color: var(--faint);
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 9px;
+      }
+
+      .menu-button {
+        display: none;
+        padding: 0 9px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .icon-button:hover,
+      .search-button:hover,
+      .menu-button:hover {
+        color: var(--text);
+        border-color: var(--line);
+        background: var(--surface);
+      }
+
+      .mobile-nav {
+        display: none;
+        padding: 0 0 12px;
+      }
+
+      .mobile-nav.open {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 5px;
+      }
+
+      .mobile-nav a {
+        padding: 8px;
+        color: var(--text-soft);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--surface);
+        font-size: 11px;
+        font-weight: 650;
+        text-align: center;
+      }
+
+      .intro {
+        padding: 72px 0 58px;
+        border-bottom: 1px solid var(--line-strong);
+      }
+
+      .intro-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 34px;
+      }
+
+      .intro-copy {
+        max-width: 720px;
+      }
+
+      .kicker {
+        margin: 0 0 13px;
+        color: var(--accent);
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .intro h1 {
+        margin: 0;
+        font-size: 60px;
+        line-height: 1.08;
+        font-weight: 770;
+        letter-spacing: 0;
+      }
+
+      .intro-lead {
+        max-width: 650px;
+        margin: 21px 0 0;
+        color: var(--text-soft);
+        font-size: 17px;
+        line-height: 1.85;
+      }
+
+      .intro-avatar {
+        width: 58px;
+        height: 58px;
+        margin-top: 5px;
+        object-fit: cover;
+        border: 1px solid var(--line-strong);
+        border-radius: 8px;
+        box-shadow: 7px 7px 0 var(--mark);
+      }
+
+      .intro-detail {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px 24px;
+        margin-top: 31px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .intro-detail p {
+        margin: 0;
+      }
+
+      .intro-detail a {
+        color: var(--accent);
+        font-weight: 680;
+        transition: color 160ms ease;
+      }
+
+      .intro-detail a:hover {
+        color: var(--accent-hover);
+      }
+
+      .intro-stats {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 10px;
+      }
+
+      .intro-stats span + span::before {
+        margin-right: 14px;
+        color: var(--line-strong);
+        content: "/";
+      }
+
+      .posts-section {
+        padding: 51px 0 72px;
+      }
+
+      .section-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 22px;
+        margin-bottom: 22px;
+      }
+
+      .section-head h2 {
+        margin: 0;
+        font-size: 24px;
+        line-height: 1.3;
+        font-weight: 740;
+      }
+
+      .section-head p {
+        margin: 3px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .archive-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 680;
+      }
+
+      .archive-link::after {
+        content: "\2192";
+        transition: transform 160ms ease;
+      }
+
+      .archive-link:hover::after {
+        transform: translateX(3px);
+      }
+
+      .post-list {
+        border-top: 1px solid var(--line-strong);
+      }
+
+      .post-row {
+        position: relative;
+        display: grid;
+        grid-template-columns: 100px minmax(0, 1fr) 92px;
+        align-items: start;
+        min-height: 128px;
+        gap: 25px;
+        padding: 24px 2px;
+        border-bottom: 1px solid var(--line);
+        transition: background 160ms ease;
+      }
+
+      .post-row:hover {
+        background: color-mix(in srgb, var(--surface) 78%, transparent);
+      }
+
+      .post-date {
+        padding-top: 4px;
+        color: var(--faint);
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 10px;
+      }
+
+      .post-main {
+        min-width: 0;
+      }
+
+      .post-title {
+        display: inline;
+        font-size: 18px;
+        line-height: 1.42;
+        font-weight: 720;
+        text-decoration: underline;
+        text-decoration-color: transparent;
+        text-underline-offset: 4px;
+        transition: color 160ms ease, text-decoration-color 160ms ease;
+      }
+
+      .post-row:hover .post-title {
+        color: var(--accent);
+        text-decoration-color: var(--accent);
+      }
+
+      .post-summary {
+        display: -webkit-box;
+        max-width: 600px;
+        margin: 8px 0 0;
+        overflow: hidden;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.68;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+      }
+
+      .post-tag {
+        justify-self: end;
+        margin-top: 4px;
+        padding: 2px 6px;
+        color: var(--text-soft);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        background: var(--surface-soft);
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 9px;
+        white-space: nowrap;
+      }
+
+      .post-arrow {
+        position: absolute;
+        right: 4px;
+        bottom: 18px;
+        color: var(--accent);
+        font-size: 14px;
+        opacity: 0;
+        transform: translateX(-4px);
+        transition: opacity 160ms ease, transform 160ms ease;
+      }
+
+      .post-row:hover .post-arrow {
+        opacity: 1;
+        transform: translateX(0);
+      }
+
+      .topics {
+        padding: 0 0 70px;
+      }
+
+      .topics-inner {
+        display: grid;
+        grid-template-columns: 180px minmax(0, 1fr);
+        gap: 36px;
+        padding-top: 29px;
+        border-top: 1px solid var(--line-strong);
+      }
+
+      .topics h2 {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 710;
+      }
+
+      .topic-links {
+        display: flex;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 8px 17px;
+      }
+
+      .topic-links a {
+        color: var(--muted);
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 11px;
+        transition: color 160ms ease;
+      }
+
+      .topic-links a:hover {
+        color: var(--accent);
+      }
+
+      .site-footer {
+        border-top: 1px solid var(--line);
+      }
+
+      .footer-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 82px;
+        gap: 24px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .footer-links {
+        display: flex;
+        gap: 14px;
+      }
+
+      .footer-links a:hover {
+        color: var(--accent);
+      }
+
+      .search-dialog {
+        width: min(650px, calc(100% - 30px));
+        max-height: min(650px, calc(100vh - 40px));
+        padding: 0;
+        color: var(--text);
+        border: 1px solid var(--line-strong);
+        border-radius: 8px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .search-dialog::backdrop {
+        background: rgba(8, 12, 18, 0.46);
+        backdrop-filter: blur(4px);
+      }
+
+      .search-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .search-head input {
+        min-width: 0;
+        height: 42px;
+        flex: 1;
+        padding: 0 10px;
+        color: var(--text);
+        border: 0;
+        background: transparent;
+        outline: 0;
+        font-size: 15px;
+      }
+
+      .close-search {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        color: var(--muted);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--surface-soft);
+        cursor: pointer;
+        font-size: 17px;
+      }
+
+      .search-results {
+        max-height: 500px;
+        padding: 7px;
+        overflow-y: auto;
+      }
+
+      .search-result {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 18px;
+        padding: 12px;
+        border-radius: 6px;
+        transition: background 150ms ease;
+      }
+
+      .search-result:hover {
+        background: var(--accent-soft);
+      }
+
+      .search-result strong {
+        display: block;
+        font-size: 13px;
+      }
+
+      .search-result span,
+      .search-result time {
+        color: var(--muted);
+        font-size: 10px;
+      }
+
+      .search-result time {
+        font-family: "SFMono-Regular", Consolas, monospace;
+      }
+
+      .search-empty {
+        display: none;
+        padding: 35px 16px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .search-empty.visible {
+        display: block;
+      }
+
+      .js .reveal {
+        opacity: 0;
+        transform: translateY(9px);
+        transition: opacity 420ms ease, transform 420ms ease;
+      }
+
+      .js .reveal.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      @media (max-width: 740px) {
+        .desktop-nav {
+          display: none;
+        }
+
+        .menu-button {
+          display: inline-flex;
+        }
+
+        .intro {
+          padding: 56px 0 47px;
+        }
+
+        .intro h1 {
+          font-size: 50px;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .shell {
+          width: min(100% - 28px, 500px);
+        }
+
+        .header-inner {
+          min-height: 60px;
+        }
+
+        .brand-name {
+          display: none;
+        }
+
+        .search-button kbd {
+          display: none;
+        }
+
+        .intro {
+          padding: 44px 0 39px;
+        }
+
+        .intro-heading {
+          gap: 16px;
+        }
+
+        .intro h1 {
+          font-size: 40px;
+        }
+
+        .intro-lead {
+          margin-top: 17px;
+          font-size: 14px;
+          line-height: 1.78;
+        }
+
+        .intro-avatar {
+          width: 50px;
+          height: 50px;
+          margin-right: 6px;
+        }
+
+        .intro-detail {
+          align-items: flex-start;
+          flex-direction: column;
+          margin-top: 23px;
+        }
+
+        .posts-section {
+          padding: 42px 0 55px;
+        }
+
+        .section-head {
+          margin-bottom: 16px;
+        }
+
+        .section-head h2 {
+          font-size: 22px;
+        }
+
+        .post-row {
+          grid-template-columns: minmax(0, 1fr) auto;
+          min-height: 142px;
+          gap: 7px 12px;
+          padding: 21px 1px;
+        }
+
+        .post-date {
+          grid-column: 1;
+          padding: 0;
+        }
+
+        .post-main {
+          grid-column: 1 / -1;
+        }
+
+        .post-title {
+          font-size: 17px;
+        }
+
+        .post-tag {
+          grid-column: 2;
+          grid-row: 1;
+          margin: 0;
+        }
+
+        .post-arrow {
+          display: none;
+        }
+
+        .topics {
+          padding-bottom: 54px;
+        }
+
+        .topics-inner {
+          grid-template-columns: 1fr;
+          gap: 17px;
+        }
+
+        .footer-inner {
+          align-items: flex-start;
+          flex-direction: column;
+          justify-content: center;
+          min-height: 108px;
+          gap: 7px;
+        }
+
+        .search-dialog {
+          width: 100%;
+          max-width: none;
+          height: 100%;
+          max-height: none;
+          margin: 0;
+          border: 0;
+          border-radius: 0;
+        }
+
+        .search-results {
+          max-height: calc(100vh - 68px);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="shell header-inner">
+        <a class="brand" href="#top" aria-label="Keronshans 首页">
+          <img src="../../public/avatar.jpg" alt="" />
+          <span class="brand-name">Keronshans<span class="brand-dot">.</span></span>
+        </a>
+
+        <nav class="desktop-nav" aria-label="主要导航">
+          <a href="#top" aria-current="page">首页</a>
+          <a href="http://127.0.0.1:3000/posts" target="_blank" rel="noreferrer">文章</a>
+          <a href="http://127.0.0.1:3000/problems" target="_blank" rel="noreferrer">题单</a>
+          <a href="http://127.0.0.1:3000/snippets" target="_blank" rel="noreferrer">片段</a>
+          <a href="http://127.0.0.1:3000/talks" target="_blank" rel="noreferrer">说说</a>
+          <a href="http://127.0.0.1:3000/about" target="_blank" rel="noreferrer">关于</a>
+        </nav>
+
+        <div class="header-actions">
+          <button class="search-button" id="searchButton" type="button" aria-haspopup="dialog"><span>搜索</span><kbd>Ctrl K</kbd></button>
+          <button class="icon-button" id="themeButton" type="button" aria-label="切换深色模式" title="切换深色模式"><span aria-hidden="true">◐</span></button>
+          <button class="menu-button" id="menuButton" type="button" aria-expanded="false" aria-controls="mobileNav">菜单</button>
+        </div>
+      </div>
+      <nav class="shell mobile-nav" id="mobileNav" aria-label="手机导航">
+        <a href="http://127.0.0.1:3000/posts" target="_blank" rel="noreferrer">文章</a>
+        <a href="http://127.0.0.1:3000/problems" target="_blank" rel="noreferrer">题单</a>
+        <a href="http://127.0.0.1:3000/snippets" target="_blank" rel="noreferrer">片段</a>
+        <a href="http://127.0.0.1:3000/checkin" target="_blank" rel="noreferrer">打卡</a>
+        <a href="http://127.0.0.1:3000/about" target="_blank" rel="noreferrer">关于</a>
+        <a href="http://127.0.0.1:3000/dashboard" target="_blank" rel="noreferrer">工作台</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="shell intro reveal" aria-labelledby="introTitle">
+        <div class="intro-heading">
+          <div class="intro-copy">
+            <p class="kicker">COMPETITIVE PROGRAMMING / CS NOTES</p>
+            <h1 id="introTitle">Keronshans</h1>
+            <p class="intro-lead">菜菜小猫的窝。这里记录算法竞赛、CS 学习笔记，以及偶尔不想被归类的碎碎念。</p>
+          </div>
+          <img class="intro-avatar" src="../../public/avatar.jpg" alt="Keronshans 的头像" />
+        </div>
+
+        <div class="intro-detail">
+          <p>最近在整理：<a href="http://127.0.0.1:3000/posts/post-206sza" target="_blank" rel="noreferrer">KH_网络流</a></p>
+          <div class="intro-stats" aria-label="网站统计"><span>31 POSTS</span><span>27 TAGS</span><span>2026</span></div>
+        </div>
+      </section>
+
+      <section class="shell posts-section" aria-labelledby="postsTitle">
+        <div class="section-head reveal">
+          <div>
+            <h2 id="postsTitle">最近文章</h2>
+            <p>学习过程中的记录、模板与复盘。</p>
+          </div>
+          <a class="archive-link" href="http://127.0.0.1:3000/posts" target="_blank" rel="noreferrer">查看归档</a>
+        </div>
+
+        <div class="post-list">
+          <a class="post-row reveal" href="http://127.0.0.1:3000/posts/post-206sza" target="_blank" rel="noreferrer">
+            <time class="post-date">2026.07.01</time>
+            <span class="post-main">
+              <span class="post-title">KH_网络流</span>
+              <span class="post-summary">最大流、最小割、残量网络与 Dinic 的实现细节。</span>
+            </span>
+            <span class="post-tag">算法学习</span>
+            <span class="post-arrow" aria-hidden="true">↗</span>
+          </a>
+
+          <a class="post-row reveal" href="http://127.0.0.1:3000/posts/kh-optimize-algo" target="_blank" rel="noreferrer">
+            <time class="post-date">2026.06.20</time>
+            <span class="post-main">
+              <span class="post-title">KH_优化算法</span>
+              <span class="post-summary">三分、随机化、常数优化，以及一些不太好分类的技巧。</span>
+            </span>
+            <span class="post-tag">算法学习</span>
+            <span class="post-arrow" aria-hidden="true">↗</span>
+          </a>
+
+          <a class="post-row reveal" href="http://127.0.0.1:3000/posts/kh-graph-algo" target="_blank" rel="noreferrer">
+            <time class="post-date">2026.06.20</time>
+            <span class="post-main">
+              <span class="post-title">KH图论</span>
+              <span class="post-summary">最短路、连通性、树上问题与图论中的常用思考方式。</span>
+            </span>
+            <span class="post-tag">算法学习</span>
+            <span class="post-arrow" aria-hidden="true">↗</span>
+          </a>
+
+          <a class="post-row reveal" href="http://127.0.0.1:3000/posts/hdu-math" target="_blank" rel="noreferrer">
+            <time class="post-date">2026.06.04</time>
+            <span class="post-main">
+              <span class="post-title">HDU_赛马数学证明</span>
+              <span class="post-summary">从一道结论题重新梳理证明过程，以及比赛中为什么没有想到。</span>
+            </span>
+            <span class="post-tag">题目复盘</span>
+            <span class="post-arrow" aria-hidden="true">↗</span>
+          </a>
+
+          <a class="post-row reveal" href="http://127.0.0.1:3000/posts/kh-binary" target="_blank" rel="noreferrer">
+            <time class="post-date">2026.06.04</time>
+            <span class="post-main">
+              <span class="post-title">KH_二进制</span>
+              <span class="post-summary">位运算、状态压缩和那些经常忘记的二进制小技巧。</span>
+            </span>
+            <span class="post-tag">学习笔记</span>
+            <span class="post-arrow" aria-hidden="true">↗</span>
+          </a>
+
+          <a class="post-row reveal" href="http://127.0.0.1:3000/posts/kh-expected-dp" target="_blank" rel="noreferrer">
+            <time class="post-date">2026.06.04</time>
+            <span class="post-main">
+              <span class="post-title">KH_期望DP与概率论</span>
+              <span class="post-summary">概率模型、期望的线性性质与动态规划中的状态设计。</span>
+            </span>
+            <span class="post-tag">算法学习</span>
+            <span class="post-arrow" aria-hidden="true">↗</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="shell topics reveal" aria-labelledby="topicsTitle">
+        <div class="topics-inner">
+          <h2 id="topicsTitle">常写的主题</h2>
+          <div class="topic-links">
+            <a href="http://127.0.0.1:3000/search?tag=C%2B%2B" target="_blank" rel="noreferrer"># C++ · 27</a>
+            <a href="http://127.0.0.1:3000/search?tag=%E7%AE%97%E6%B3%95" target="_blank" rel="noreferrer"># 算法 · 25</a>
+            <a href="http://127.0.0.1:3000/search?tag=%E6%95%B0%E5%AD%A6" target="_blank" rel="noreferrer"># 数学 · 5</a>
+            <a href="http://127.0.0.1:3000/search?tag=%E5%9B%BE%E8%AE%BA" target="_blank" rel="noreferrer"># 图论 · 4</a>
+            <a href="http://127.0.0.1:3000/search?tag=Trick" target="_blank" rel="noreferrer"># Trick · 4</a>
+            <a href="http://127.0.0.1:3000/search?tag=DP" target="_blank" rel="noreferrer"># DP · 2</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <span>© 2026 Keronshans · CP Notebook / CS Learning / Daily</span>
+        <div class="footer-links">
+          <a href="http://127.0.0.1:3000/about" target="_blank" rel="noreferrer">关于</a>
+          <a href="http://127.0.0.1:3000/dashboard" target="_blank" rel="noreferrer">工作台</a>
+          <a href="#top">回到顶部</a>
+        </div>
+      </div>
+    </footer>
+
+    <dialog class="search-dialog" id="searchDialog" aria-label="文章搜索">
+      <div class="search-head">
+        <input id="searchInput" type="search" placeholder="搜索文章标题或标签..." maxlength="80" autocomplete="off" aria-label="搜索文章" />
+        <button class="close-search" id="closeSearch" type="button" aria-label="关闭搜索">×</button>
+      </div>
+      <div class="search-results" aria-live="polite">
+        <a class="search-result" data-search="KH 网络流 算法学习 C++ 图论" href="http://127.0.0.1:3000/posts/post-206sza" target="_blank" rel="noreferrer"><span><strong>KH_网络流</strong><span>算法学习 · C++ · 图论</span></span><time>07.01</time></a>
+        <a class="search-result" data-search="KH 优化算法 算法学习 C++ Trick" href="http://127.0.0.1:3000/posts/kh-optimize-algo" target="_blank" rel="noreferrer"><span><strong>KH_优化算法</strong><span>算法学习 · C++ · Trick</span></span><time>06.20</time></a>
+        <a class="search-result" data-search="KH 图论 算法学习 C++" href="http://127.0.0.1:3000/posts/kh-graph-algo" target="_blank" rel="noreferrer"><span><strong>KH图论</strong><span>算法学习 · C++ · 图论</span></span><time>06.20</time></a>
+        <a class="search-result" data-search="HDU 赛马 数学证明 题目复盘 数学" href="http://127.0.0.1:3000/posts/hdu-math" target="_blank" rel="noreferrer"><span><strong>HDU_赛马数学证明</strong><span>题目复盘 · 数学</span></span><time>06.04</time></a>
+        <a class="search-result" data-search="KH 二进制 学习笔记 C++ Trick" href="http://127.0.0.1:3000/posts/kh-binary" target="_blank" rel="noreferrer"><span><strong>KH_二进制</strong><span>学习笔记 · C++ · Trick</span></span><time>06.04</time></a>
+        <a class="search-result" data-search="KH 期望 DP 概率论 数学" href="http://127.0.0.1:3000/posts/kh-expected-dp" target="_blank" rel="noreferrer"><span><strong>KH_期望DP与概率论</strong><span>算法学习 · DP · 数学</span></span><time>06.04</time></a>
+        <div class="search-empty" id="searchEmpty">没有找到匹配的文章。</div>
+      </div>
+    </dialog>
+
+    <script>
+      const root = document.documentElement;
+      const themeButton = document.getElementById("themeButton");
+      const menuButton = document.getElementById("menuButton");
+      const mobileNav = document.getElementById("mobileNav");
+      const searchButton = document.getElementById("searchButton");
+      const searchDialog = document.getElementById("searchDialog");
+      const searchInput = document.getElementById("searchInput");
+      const closeSearch = document.getElementById("closeSearch");
+      const searchItems = Array.from(document.querySelectorAll(".search-result"));
+      const searchEmpty = document.getElementById("searchEmpty");
+
+      function updateThemeLabel() {
+        const dark = root.dataset.theme === "dark";
+        themeButton.setAttribute("aria-label", dark ? "切换浅色模式" : "切换深色模式");
+        themeButton.setAttribute("title", dark ? "切换浅色模式" : "切换深色模式");
+      }
+
+      function toggleTheme() {
+        root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
+        try { localStorage.setItem("keronshans-demo-theme", root.dataset.theme); } catch {}
+        updateThemeLabel();
+      }
+
+      function openSearch() {
+        searchDialog.showModal();
+        document.body.classList.add("dialog-open");
+        requestAnimationFrame(() => searchInput.focus());
+      }
+
+      function closeSearchDialog() {
+        searchDialog.close();
+        document.body.classList.remove("dialog-open");
+        searchInput.value = "";
+        searchItems.forEach((item) => { item.hidden = false; });
+        searchEmpty.classList.remove("visible");
+      }
+
+      function filterResults() {
+        const query = searchInput.value.trim().toLocaleLowerCase();
+        let visible = 0;
+        searchItems.forEach((item) => {
+          const matches = !query || item.dataset.search.toLocaleLowerCase().includes(query);
+          item.hidden = !matches;
+          if (matches) visible += 1;
+        });
+        searchEmpty.classList.toggle("visible", visible === 0);
+      }
+
+      themeButton.addEventListener("click", toggleTheme);
+      menuButton.addEventListener("click", () => {
+        const open = mobileNav.classList.toggle("open");
+        menuButton.setAttribute("aria-expanded", String(open));
+      });
+      searchButton.addEventListener("click", openSearch);
+      closeSearch.addEventListener("click", closeSearchDialog);
+      searchInput.addEventListener("input", filterResults);
+      searchDialog.addEventListener("click", (event) => {
+        if (event.target === searchDialog) closeSearchDialog();
+      });
+      searchDialog.addEventListener("close", () => document.body.classList.remove("dialog-open"));
+      document.addEventListener("keydown", (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLocaleLowerCase() === "k") {
+          event.preventDefault();
+          if (!searchDialog.open) openSearch();
+        }
+      });
+
+      const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+            revealObserver.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.08 });
+
+      document.querySelectorAll(".reveal").forEach((element) => revealObserver.observe(element));
+      updateThemeLabel();
+    </script>
+  </body>
+</html>

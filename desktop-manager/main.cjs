@@ -3,24 +3,25 @@ const fs = require("fs");
 const path = require("path");
 const { spawn } = require("child_process");
 const matter = require("gray-matter");
+const { updateMarkdownFile, writeFileAtomic, writeMarkdown } = require("./file-store.cjs");
+const {
+  CATEGORY_NAMES,
+  CATEGORY_PREFIX,
+  inferMarkdownKindFromData,
+  normalizeCategory,
+  normalizeDescription,
+  parseCategory,
+  postSummary,
+} = require("./metadata.cjs");
 
 const APP_ROOT = path.resolve(__dirname, "..");
 const DEFAULT_CONTENT_ROOT = path.join(APP_ROOT, "content");
 const OPEN_NEXT_DIR = path.join(APP_ROOT, ".open-next");
 const WORKSPACE_CONFIG_FILE = "manager-workspace.json";
 
-const CATEGORY_PREFIX = {
-  "算法板子": "KH_",
-  "题解复盘": "wp_",
-  "学习笔记": "",
-  "专题训练": "sp_",
-  "碎碎念": "",
-};
-
-const CATEGORY_NAMES = Object.keys(CATEGORY_PREFIX);
-
 let mainWindow = null;
 let previewProcess = null;
+let activePublishTask = null;
 let workspaceInput = APP_ROOT;
 let activeWorkspace = null;
 
@@ -49,16 +50,19 @@ function loadWorkspaceInput() {
 function saveWorkspaceInput(input) {
   try {
     fs.mkdirSync(path.dirname(configPath()), { recursive: true });
-    fs.writeFileSync(configPath(), `${JSON.stringify({ workspace: input }, null, 2)}\n`, "utf-8");
+    writeFileAtomic(configPath(), `${JSON.stringify({ workspace: input }, null, 2)}\n`);
   } catch {}
 }
 
 function nowText() {
-  return new Date().toISOString().replace("T", " ").slice(0, 19);
+  const now = new Date();
+  const date = [now.getFullYear(), now.getMonth() + 1, now.getDate()].map((value) => String(value).padStart(2, "0"));
+  const time = [now.getHours(), now.getMinutes(), now.getSeconds()].map((value) => String(value).padStart(2, "0"));
+  return `${date.join("-")} ${time.join(":")}`;
 }
 
 function todayText() {
-  return new Date().toISOString().slice(0, 10);
+  return nowText().slice(0, 10);
 }
 
 function slugify(text) {
@@ -83,15 +87,6 @@ function parseTags(value) {
   return [];
 }
 
-function parseCategory(filename, frontmatter = {}) {
-  if (CATEGORY_NAMES.includes(frontmatter.category)) return frontmatter.category;
-  if (filename.startsWith("KH") || filename.startsWith("ZU_")) return "算法板子";
-  if (filename.startsWith("wp_")) return "题解复盘";
-  if (filename.startsWith("sp_")) return "专题训练";
-  if (filename.toLowerCase() === "diary.md") return "碎碎念";
-  return "学习笔记";
-}
-
 function isMarkdownFile(filePath) {
   return [".md", ".mdx"].includes(path.extname(filePath).toLowerCase());
 }
@@ -102,13 +97,9 @@ function extractCode(content) {
 }
 
 function inferMarkdownKind(filePath) {
-  const parentName = path.basename(path.dirname(filePath)).toLowerCase();
-  if (parentName.includes("snippet") || parentName.includes("template")) return "snippet";
   try {
     const parsed = matter(fs.readFileSync(filePath, "utf-8"));
-    if (parsed.data.language || parsed.data.description || parsed.data.created_at || parsed.data.updated_at) {
-      return "snippet";
-    }
+    return inferMarkdownKindFromData(filePath, parsed.data);
   } catch {}
   return "post";
 }
@@ -319,6 +310,7 @@ function readMarkdownFile(filePath, kind) {
       summary: code.slice(0, 160),
     };
   }
+  const description = normalizeDescription(parsed.data.description || parsed.data.excerpt);
   return {
     kind,
     filename,
@@ -326,10 +318,11 @@ function readMarkdownFile(filePath, kind) {
     title: parsed.data.title || basename,
     category: parseCategory(filename, parsed.data),
     pinned: Boolean(parsed.data.pinned),
+    description,
     tags,
     date: String(parsed.data.date || "").slice(0, 10) || todayText(),
     mtime: stat.mtimeMs,
-    summary: parsed.content.replace(/[#*`[\]<>]/g, "").replace(/\s+/g, " ").trim().slice(0, 160),
+    summary: postSummary(description, parsed.content),
   };
 }
 
@@ -337,37 +330,58 @@ function listMarkdownFiles(dir) {
   if (!fs.existsSync(dir)) return [];
   return fs.readdirSync(dir)
     .map((filename) => path.join(dir, filename))
-    .filter((filePath) => fs.statSync(filePath).isFile() && isMarkdownFile(filePath));
+    .filter((filePath) => {
+      try {
+        return fs.statSync(filePath).isFile() && isMarkdownFile(filePath);
+      } catch {
+        return false;
+      }
+    });
 }
 
-function readMarkdownList(dir, kind) {
-  return listMarkdownFiles(dir)
-    .map((filePath) => readMarkdownFile(filePath, kind))
+function readMarkdownEntries(filePaths, kind, warnings = null, filterByKind = false) {
+  return filePaths
+    .flatMap((filePath) => {
+      try {
+        if (filterByKind && inferMarkdownKind(filePath) !== kind) return [];
+        return [readMarkdownFile(filePath, kind)];
+      } catch (error) {
+        if (!warnings) throw error;
+        warnings.push({
+          kind,
+          path: filePath,
+          message: error instanceof Error ? error.message : String(error),
+        });
+        return [];
+      }
+    })
     .sort((a, b) => b.mtime - a.mtime);
 }
 
-function readMixedMarkdownList(dir, kind) {
-  return listMarkdownFiles(dir)
-    .filter((filePath) => inferMarkdownKind(filePath) === kind)
-    .map((filePath) => readMarkdownFile(filePath, kind))
-    .sort((a, b) => b.mtime - a.mtime);
+function readMarkdownList(dir, kind, warnings = null) {
+  return readMarkdownEntries(listMarkdownFiles(dir), kind, warnings);
 }
 
-function readWorkspaceMarkdown(ws, kind) {
+function readMixedMarkdownList(dir, kind, warnings = null) {
+  return readMarkdownEntries(listMarkdownFiles(dir), kind, warnings, true);
+}
+
+function readWorkspaceMarkdown(ws, kind, warnings = null) {
   if (ws.singleFile) {
-    return ws.singleFile.kind === kind ? [readMarkdownFile(ws.singleFile.path, kind)] : [];
+    if (ws.singleFile.kind !== kind) return [];
+    return readMarkdownEntries([ws.singleFile.path], kind, warnings);
   }
   if (kind === "post" && !ws.includePosts) return [];
   if (kind === "snippet" && !ws.includeSnippets) return [];
-  if (ws.mixedMarkdownDir) return readMixedMarkdownList(ws.mixedMarkdownDir, kind);
-  return readMarkdownList(kind === "post" ? ws.postsDir : ws.snippetsDir, kind);
+  if (ws.mixedMarkdownDir) return readMixedMarkdownList(ws.mixedMarkdownDir, kind, warnings);
+  return readMarkdownList(kind === "post" ? ws.postsDir : ws.snippetsDir, kind, warnings);
 }
 
-function loadProblems(filePath = currentWorkspace().problemsFile) {
+function loadProblems(filePath = currentWorkspace().problemsFile, warnings = null) {
   if (!fs.existsSync(filePath)) return [];
   try {
     const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-    if (!Array.isArray(data)) return [];
+    if (!Array.isArray(data)) throw new Error("根节点必须是数组");
     return data.map((item) => ({
       id: String(item.id || Date.now().toString(36)),
       title: String(item.title || ""),
@@ -382,14 +396,19 @@ function loadProblems(filePath = currentWorkspace().problemsFile) {
       updated_at: String(item.updated_at || nowText()),
       kind: "problem",
     }));
-  } catch {
-    return [];
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (warnings) {
+      warnings.push({ kind: "problem", path: filePath, message });
+      return [];
+    }
+    throw new Error(`题目文件无法解析：${message}`);
   }
 }
 
 function saveProblems(problems, filePath = currentWorkspace().problemsFile) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, `${JSON.stringify(problems, null, 2)}\n`, "utf-8");
+  writeFileAtomic(filePath, `${JSON.stringify(problems, null, 2)}\n`);
 }
 
 function collectTags(posts, snippets, problems) {
@@ -418,9 +437,10 @@ function workspacePathHints(ws) {
 
 function getSnapshot() {
   const ws = currentWorkspace();
-  const posts = readWorkspaceMarkdown(ws, "post");
-  const snippets = readWorkspaceMarkdown(ws, "snippet");
-  const problems = ws.includeProblems ? loadProblems(ws.problemsFile) : [];
+  const warnings = [];
+  const posts = readWorkspaceMarkdown(ws, "post", warnings);
+  const snippets = readWorkspaceMarkdown(ws, "snippet", warnings);
+  const problems = ws.includeProblems ? loadProblems(ws.problemsFile, warnings) : [];
   return {
     root: ws.root,
     input: ws.input,
@@ -440,12 +460,8 @@ function getSnapshot() {
     problems,
     tags: collectTags(posts, snippets, problems),
     categories: CATEGORY_NAMES,
+    warnings,
   };
-}
-
-function writeMarkdown(filePath, data, content) {
-  const next = matter.stringify(String(content || "").replace(/^\n+/, ""), data);
-  fs.writeFileSync(filePath, next, "utf-8");
 }
 
 function resolveInside(root, target) {
@@ -472,15 +488,18 @@ function resolveManagedMarkdownPath(kind, itemOrFilename) {
   return resolveInside(kind === "post" ? ws.postsDir : ws.snippetsDir, itemOrFilename);
 }
 
-function updateMarkdownFile(filePath, patch) {
-  if (!fs.existsSync(filePath)) throw new Error(`File not found: ${filePath}`);
-  const parsed = matter(fs.readFileSync(filePath, "utf-8"));
-  const data = { ...parsed.data, ...patch };
-  writeMarkdown(filePath, data, parsed.content);
-}
-
 function updateMarkdownMeta(kind, filename, patch) {
-  updateMarkdownFile(resolveManagedMarkdownPath(kind, filename), patch);
+  const nextPatch = { ...patch };
+  if (nextPatch.title !== undefined) {
+    nextPatch.title = String(nextPatch.title || "").trim();
+    if (!nextPatch.title) throw new Error("标题不能为空");
+  }
+  if (nextPatch.tags !== undefined) nextPatch.tags = parseTags(nextPatch.tags);
+  if (nextPatch.description !== undefined) nextPatch.description = normalizeDescription(nextPatch.description);
+  if (kind === "post" && nextPatch.category !== undefined) {
+    nextPatch.category = normalizeCategory(nextPatch.category) || "学习笔记";
+  }
+  updateMarkdownFile(resolveManagedMarkdownPath(kind, filename), nextPatch);
 }
 
 function createPost(payload) {
@@ -489,14 +508,17 @@ function createPost(payload) {
   const title = String(payload.title || "").trim();
   if (!title) throw new Error("请输入文章标题");
   fs.mkdirSync(ws.postsDir, { recursive: true });
-  const category = CATEGORY_NAMES.includes(payload.category) ? payload.category : "学习笔记";
+  const category = normalizeCategory(payload.category) || "学习笔记";
   const prefix = CATEGORY_PREFIX[category] || "";
-  const filename = uniqueFilename(ws.postsDir, `${prefix}${slugify(title) || "untitled"}.md`);
+  const slug = slugify(title) || "untitled";
+  const stem = prefix && slug.toLowerCase().startsWith(prefix.toLowerCase()) ? slug : `${prefix}${slug}`;
+  const filename = uniqueFilename(ws.postsDir, `${stem}.md`);
   const data = {
     title,
     date: payload.date || todayText(),
     category,
     pinned: Boolean(payload.pinned),
+    description: normalizeDescription(payload.description),
     tags: parseTags(payload.tags),
   };
   writeMarkdown(path.join(ws.postsDir, filename), data, "\n");
@@ -517,7 +539,7 @@ function createSnippet(payload) {
     title,
     language,
     tags: parseTags(payload.tags),
-    description: payload.description || "",
+    description: normalizeDescription(payload.description),
     created_at: nowText(),
     updated_at: nowText(),
   };
@@ -631,29 +653,42 @@ function runCommand(label, command, args, onLog) {
   });
 }
 
-async function runPublishTask(task, payload, event) {
+function runCommandCapture(command, args) {
+  return new Promise((resolve) => {
+    const child = spawn(command, args, { cwd: APP_ROOT, shell: false });
+    let output = "";
+    let errorOutput = "";
+    child.stdout.on("data", (chunk) => (output += chunk.toString()));
+    child.stderr.on("data", (chunk) => (errorOutput += chunk.toString()));
+    child.on("close", (code) => resolve({ ok: code === 0, output: output.trim(), error: errorOutput.trim() }));
+    child.on("error", (error) => resolve({ ok: false, output: "", error: error.message }));
+  });
+}
+
+async function executePublishTask(task, payload, event) {
   const send = (text) => event.sender.send("manager:log", text);
   if (task === "build") {
     const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
     return runCommand("build", npmCommand, ["run", "build"], send);
   }
   if (task === "git") {
-    const status = await new Promise((resolve) => {
-      const child = spawn("git", ["status", "--short"], { cwd: APP_ROOT, shell: false });
-      let output = "";
-      child.stdout.on("data", (chunk) => (output += chunk.toString()));
-      child.on("close", () => resolve(output.trim()));
-    });
-    if (!status) {
+    const statusResult = await runCommandCapture("git", ["status", "--short"]);
+    if (!statusResult.ok) {
+      send(`读取 Git 状态失败：${statusResult.error}\n`);
+      return false;
+    }
+    if (!statusResult.output) {
       send("工作区没有需要提交的改动。\n");
       return true;
     }
-    send(`待提交改动:\n${status}\n`);
+    send(`待提交改动:\n${statusResult.output}\n`);
     const message = String(payload?.message || "").trim() || `chore: update blog ${nowText()}`;
     if (!(await runCommand("git add", "git", ["add", "-A"], send))) return false;
     const committed = await runCommand("git commit", "git", ["commit", "-m", message], send);
     if (!committed) return false;
-    return runCommand("git push", "git", ["push", "origin", "main"], send);
+    const branchResult = await runCommandCapture("git", ["branch", "--show-current"]);
+    const branch = branchResult.ok && branchResult.output ? branchResult.output : "main";
+    return runCommand("git push", "git", ["push", "origin", branch], send);
   }
   if (task === "deploy") {
     if (previewProcess && !previewProcess.killed) {
@@ -667,6 +702,69 @@ async function runPublishTask(task, payload, event) {
     return runCommand("sync search index", "powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", path.join("scripts", "sync-search-index.ps1")], send);
   }
   throw new Error(`Unknown task: ${task}`);
+}
+
+async function runPublishTask(task, payload, event) {
+  if (activePublishTask) throw new Error(`已有任务正在运行：${activePublishTask}`);
+  activePublishTask = task;
+  try {
+    return await executePublishTask(task, payload, event);
+  } finally {
+    activePublishTask = null;
+  }
+}
+
+async function isPreviewReady() {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 1500);
+  try {
+    const response = await fetch("http://127.0.0.1:3000/", { signal: controller.signal });
+    return response.status < 500;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function waitForPreview(timeoutMs = 30000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (await isPreviewReady()) return true;
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+  return false;
+}
+
+async function openPreview() {
+  if (await isPreviewReady()) {
+    await shell.openExternal("http://127.0.0.1:3000/");
+    return true;
+  }
+
+  if (!previewProcess || previewProcess.killed) {
+    const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
+    previewProcess = spawn(npmCommand, ["run", "dev", "--", "-p", "3000"], {
+      cwd: APP_ROOT,
+      shell: false,
+      env: { ...process.env, NEXT_TELEMETRY_DISABLED: "1" },
+    });
+    previewProcess.stdout.on("data", (chunk) => mainWindow?.webContents.send("manager:log", chunk.toString()));
+    previewProcess.stderr.on("data", (chunk) => mainWindow?.webContents.send("manager:log", chunk.toString()));
+    previewProcess.on("error", (error) => {
+      mainWindow?.webContents.send("manager:log", `\n[preview] ${error.message}\n`);
+      previewProcess = null;
+    });
+    previewProcess.on("close", (code) => {
+      mainWindow?.webContents.send("manager:log", `\n[preview] exited with code ${code}\n`);
+      previewProcess = null;
+    });
+  }
+
+  const ready = await waitForPreview();
+  if (!ready) throw new Error("本地预览在 30 秒内没有启动成功，请查看运行日志");
+  await shell.openExternal("http://127.0.0.1:3000/");
+  return true;
 }
 
 async function selectWorkspace() {
@@ -718,6 +816,17 @@ function createWindow() {
   mainWindow.loadFile(path.join(__dirname, "renderer", "index.html"));
 }
 
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
+
+if (!hasSingleInstanceLock) {
+  app.quit();
+} else {
+app.on("second-instance", () => {
+  if (!mainWindow) return;
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.focus();
+});
+
 app.whenReady().then(() => {
   ensureDefaultDirs();
   workspaceInput = loadWorkspaceInput();
@@ -763,15 +872,5 @@ ipcMain.handle("manager:cleanupOpenNext", async () => {
   if (fs.existsSync(OPEN_NEXT_DIR)) fs.rmSync(OPEN_NEXT_DIR, { recursive: true, force: true });
   return true;
 });
-ipcMain.handle("manager:preview", () => {
-  if (previewProcess && !previewProcess.killed) {
-    shell.openExternal("http://localhost:3000");
-    return true;
-  }
-  const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
-  previewProcess = spawn(npmCommand, ["run", "dev"], { cwd: APP_ROOT, shell: false });
-  previewProcess.stdout.on("data", (chunk) => mainWindow?.webContents.send("manager:log", chunk.toString()));
-  previewProcess.stderr.on("data", (chunk) => mainWindow?.webContents.send("manager:log", chunk.toString()));
-  setTimeout(() => shell.openExternal("http://localhost:3000"), 3500);
-  return true;
-});
+ipcMain.handle("manager:preview", () => openPreview());
+}

@@ -7,7 +7,7 @@ import Navigation from "@/components/Navigation";
 
 export const metadata: Metadata = {
   title: "Keronshans",
-  description: "小猫的小窝：算法竞赛、CS 学习与日常整理。",
+  description: "Keronshans",
 };
 
 export default function RootLayout({

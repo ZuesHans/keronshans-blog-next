@@ -64,7 +64,7 @@ export default function AboutPage() {
                 style={{ borderColor: "rgba(255,255,255,0.62)" }}
               />
               <div className="pb-1 text-white">
-                <div className="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-white/72">
+                <div className="mb-2 text-xs font-semibold uppercase tracking-normal text-white/70">
                   Profile
                 </div>
                 <h1 className="font-display text-5xl font-medium leading-none sm:text-7xl">
@@ -73,11 +73,11 @@ export default function AboutPage() {
               </div>
             </div>
 
-            <p className="max-w-2xl text-base leading-8 text-white/86 sm:text-lg">
+            <p className="max-w-2xl text-base leading-8 text-white/90 sm:text-lg">
               ACMer / CS 新生 || 这里是我的题解、模板、笔记和碎碎念的归档处 | 一点点把生活和学习重新排版的地方。
             </p>
 
-            <div className="mt-7 flex flex-wrap gap-3 text-sm text-white/82">
+            <div className="mt-7 flex flex-wrap gap-3 text-sm text-white/80">
               <span className="rounded-md border border-white/28 bg-white/10 px-3 py-1.5 backdrop-blur">
                 tp : 广州
               </span>
@@ -92,7 +92,7 @@ export default function AboutPage() {
 
           <a
             href="#about-content"
-            className="mt-12 inline-flex w-fit items-center gap-2 text-sm font-medium text-white/78 transition hover:text-white"
+            className="mt-12 inline-flex w-fit items-center gap-2 text-sm font-medium text-white/80 transition hover:text-white"
           >
             往下有小猫粮~
             <span aria-hidden="true">↓</span>
@@ -117,7 +117,7 @@ export default function AboutPage() {
 
             <section className="border-y py-7" style={{ borderColor: "var(--owl-border)" }}>
               <div className="mb-5 flex items-center justify-between gap-4">
-                <h3 className="text-sm font-semibold uppercase tracking-widest" style={{ color: "var(--owl-text)" }}>
+                <h3 className="text-sm font-semibold uppercase tracking-normal" style={{ color: "var(--owl-text)" }}>
                   Interests
                 </h3>
                 <span className="text-xs" style={{ color: "var(--owl-textMuted)" }}>
@@ -135,7 +135,7 @@ export default function AboutPage() {
 
             <section>
               <div className="mb-5 flex items-center justify-between gap-4">
-                <h3 className="text-sm font-semibold uppercase tracking-widest" style={{ color: "var(--owl-text)" }}>
+                <h3 className="text-sm font-semibold uppercase tracking-normal" style={{ color: "var(--owl-text)" }}>
                   Awards
                 </h3>
                 <span className="text-xs" style={{ color: "var(--owl-textMuted)" }}>
@@ -159,7 +159,7 @@ export default function AboutPage() {
 
           <aside className="space-y-6 lg:pt-16">
             <section className="cyber-card p-5">
-              <h3 className="mb-4 text-sm font-semibold uppercase tracking-widest" style={{ color: "var(--owl-text)" }}>
+              <h3 className="mb-4 text-sm font-semibold uppercase tracking-normal" style={{ color: "var(--owl-text)" }}>
                 Links
               </h3>
               <div className="space-y-2">

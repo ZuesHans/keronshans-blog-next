@@ -199,20 +199,15 @@ export default function SnippetsPage() {
   }, [snippets]);
 
   if (!loaded) {
-    return <div className="max-w-6xl mx-auto px-4 py-8"><div className="animate-pulse h-10 bg-gray-200 dark:bg-cyber-surface rounded w-48" /></div>;
+    return <div className="app-page"><div className="animate-pulse h-10 bg-gray-200 dark:bg-cyber-surface rounded w-48" /></div>;
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="app-page">
+      <div className="app-page-header flex items-center justify-between gap-5">
         <div>
-          <h1 className="text-4xl font-display font-bold mb-2">
-            <span className="neon-text-pink">◈</span> 代码片段
-          </h1>
-          <p className="text-gray-500 dark:text-gray-400 font-mono text-sm">
-            &gt; SNIPPET.LIBRARY | {snippets.length} 个片段
-          </p>
-          <div className="mt-2 h-[1px] bg-gradient-to-r from-neon-pink via-neon-blue to-neon-green opacity-50" />
+          <h1>代码模板</h1>
+          <p>{snippets.length} 个片段</p>
         </div>
         {isAuth ? (
           <button onClick={openAdd} className="cyber-btn-pink flex items-center gap-2">

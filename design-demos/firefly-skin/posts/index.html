@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Keronshans 文章列表视觉皮肤 Demo" />
+    <title>文章 - Keronshans 皮肤 Demo</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.js" defer></script>
+    <script src="../script.js" defer></script>
+  </head>
+  <body data-page="posts">
+    <a class="skip-link" href="#main">跳到正文</a>
+
+    <header class="site-header" data-header>
+      <div class="shell nav-inner">
+        <a class="brand" href="../" aria-label="Keronshans 首页">
+          <span class="brand-mark" aria-hidden="true">K</span>
+          <span>Keronshans</span>
+        </a>
+
+        <nav class="desktop-nav" aria-label="主要导航">
+          <a href="../">首页</a>
+          <a class="active" href="./">文章</a>
+          <a href="http://127.0.0.1:3000/problems" target="_blank" rel="noreferrer">题单</a>
+          <a href="http://127.0.0.1:3000/templates" target="_blank" rel="noreferrer">模板</a>
+          <a href="http://127.0.0.1:3000/checkin" target="_blank" rel="noreferrer">打卡</a>
+        </nav>
+
+        <div class="nav-actions">
+          <a
+            class="icon-button"
+            href="http://127.0.0.1:3000/search"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="打开全局搜索"
+            title="全局搜索"
+          >
+            <i data-lucide="search" aria-hidden="true"></i>
+          </a>
+          <button class="icon-button" type="button" data-theme-toggle aria-label="切换深色模式" title="切换深色模式">
+            <i data-lucide="moon" aria-hidden="true"></i>
+          </button>
+          <button
+            class="icon-button mobile-menu-button"
+            type="button"
+            data-menu-toggle
+            aria-expanded="false"
+            aria-controls="mobileMenu"
+            aria-label="打开导航"
+            title="导航"
+          >
+            <i data-lucide="menu" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+
+      <nav class="mobile-nav" id="mobileMenu" data-mobile-menu aria-label="手机导航">
+        <a href="../">首页</a>
+        <a href="./">文章</a>
+        <a href="http://127.0.0.1:3000/problems" target="_blank" rel="noreferrer">题单</a>
+        <a href="http://127.0.0.1:3000/templates" target="_blank" rel="noreferrer">模板</a>
+        <a href="http://127.0.0.1:3000/checkin" target="_blank" rel="noreferrer">打卡</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="archive-hero" aria-labelledby="archiveTitle">
+        <div class="hero-shade" aria-hidden="true"></div>
+        <div class="shell archive-hero-content">
+          <p>Archive / 31 Posts</p>
+          <h1 id="archiveTitle">文章</h1>
+          <span>算法、题目复盘、学习笔记与日常记录。</span>
+        </div>
+      </section>
+
+      <section class="archive-band" aria-label="文章筛选与列表">
+        <div class="shell archive-shell">
+          <div class="archive-controls">
+            <div class="category-tabs" role="tablist" aria-label="文章分类">
+              <button class="category-tab active" type="button" data-category="全部" role="tab" aria-selected="true">全部 <span>31</span></button>
+              <button class="category-tab" type="button" data-category="算法学习" role="tab" aria-selected="false">算法学习 <span>11</span></button>
+              <button class="category-tab" type="button" data-category="题目复盘" role="tab" aria-selected="false">题目复盘 <span>14</span></button>
+              <button class="category-tab" type="button" data-category="学习笔记" role="tab" aria-selected="false">学习笔记 <span>3</span></button>
+              <button class="category-tab" type="button" data-category="碎碎念" role="tab" aria-selected="false">碎碎念 <span>3</span></button>
+            </div>
+
+            <label class="archive-search">
+              <i data-lucide="search" aria-hidden="true"></i>
+              <span class="sr-only">筛选文章</span>
+              <input data-post-search type="search" maxlength="80" autocomplete="off" placeholder="筛选标题或标签" />
+            </label>
+          </div>
+
+          <div class="archive-status" aria-live="polite">
+            <span>当前显示 <strong data-result-count>0</strong> 篇</span>
+            <button type="button" data-clear-filter>清除筛选</button>
+          </div>
+
+          <div class="post-list" data-post-list></div>
+          <div class="empty-state" data-empty-state hidden>
+            <i data-lucide="file-search" aria-hidden="true"></i>
+            <p>没有找到匹配的文章。</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <span>© 2026 Keronshans</span>
+        <div>
+          <a href="../">首页</a>
+          <a href="http://127.0.0.1:3000/about" target="_blank" rel="noreferrer">关于</a>
+          <a href="#main">回到顶部</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

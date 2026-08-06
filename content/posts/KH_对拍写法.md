@@ -1,12 +1,98 @@
 ---
 title: KH_对拍写法
-date: ''
+date: '2026-08-05'
 tags:
   - 杂谈
   - python
   - C++
-category: 算法板子
+category: 算法学习
+pinned: false
+description: 实战用来跑对拍的教程，包含高精度随机数据与python对拍教程
 ---
+
+## 随机数生成器的cpp写法
+
+- `mt19937 rng(seed);` 初始化引擎
+- `uniform_int_distribution<int> dist(1, 100);`
+
+- **高级随机数**
+
+```cpp
+#include <bits/stdc++.h>
+
+#include <chrono> // 用于高精度时间种子
+
+using namespace std;
+
+int main() {
+    // 初始化种子：使用高精度时间，防止同一秒内运行生成相同数据
+    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+    //完全可以写114514
+    
+    // 2. 初始化引擎：mt19937 (Mersenne Twister 算法)
+    mt19937 rng(seed); 
+    // 如果你需要生成 long long 范围的数，请用 mt19937_64
+    mt19937_64 rng64(seed);
+
+    // 3. 定义分布：生成 [L, R] 之间的整数
+    uniform_int_distribution<int> dist(1, 100);
+    cout << dist(rng) << endl;      // 输出 1~100 的 int
+
+    
+    uniform_int_distribution<long long> dist_ll(1e10, 1e18);
+    cout << dist_ll(rng64) << endl; // 输出 10^10 ~ 10^18 的 long long
+
+    return 0;
+}
+```
+
+- **一般随机数**
+
+```cpp
+#include <bits/stdc++.h> // 万能头
+using namespace std;
+
+int main() {
+    // 初始化随机种子，不写这个的话每次运行结果都一样
+    srand(time(0)); 
+
+    // 假设我们要生成 n=10, 范围 1-100 的数组
+    int n = 10;
+    printf("%d\n", n);
+
+    for (int i = 0; i < n; i++) {
+        // rand() % 100 得到 0-99
+        // + 1 得到 1-100
+        printf("%d ", rand() % 100 + 1);
+    }
+    puts(""); // 换行
+
+    return 0;
+}
+
+```
+
+## 查看代码运行时间
+
+```cpp
+
+signed main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    auto start = chrono::steady_clock::now();
+
+    solve();
+
+    auto finish = chrono::steady_clock::now();
+    cerr << "运行时间："
+         << chrono::duration<double, milli>(finish - start).count()
+         << " ms\n";
+
+    return 0;
+}
+```
 
 ## python 的随机数生成器写法
 
@@ -178,68 +264,6 @@ if errorlevel 1 (
 )
 
 goto loop
-
-```
-
-## 随机数生成器的cpp写法
-
-- `mt19937 rng(seed);` 初始化引擎
-- `uniform_int_distribution<int> dist(1, 100);`
-
-- **高级随机数**
-
-```cpp
-#include <bits/stdc++.h>
-
-#include <chrono> // 用于高精度时间种子
-
-using namespace std;
-
-int main() {
-    // 初始化种子：使用高精度时间，防止同一秒内运行生成相同数据
-    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-    //完全可以写114514
-    
-    // 2. 初始化引擎：mt19937 (Mersenne Twister 算法)
-    mt19937 rng(seed); 
-    // 如果你需要生成 long long 范围的数，请用 mt19937_64
-    mt19937_64 rng64(seed);
-
-    // 3. 定义分布：生成 [L, R] 之间的整数
-    uniform_int_distribution<int> dist(1, 100);
-    cout << dist(rng) << endl;      // 输出 1~100 的 int
-
-    
-    uniform_int_distribution<long long> dist_ll(1e10, 1e18);
-    cout << dist_ll(rng64) << endl; // 输出 10^10 ~ 10^18 的 long long
-
-    return 0;
-}
-```
-
-- **一般随机数**
-
-```cpp
-#include <bits/stdc++.h> // 万能头
-using namespace std;
-
-int main() {
-    // 初始化随机种子，不写这个的话每次运行结果都一样
-    srand(time(0)); 
-
-    // 假设我们要生成 n=10, 范围 1-100 的数组
-    int n = 10;
-    printf("%d\n", n);
-
-    for (int i = 0; i < n; i++) {
-        // rand() % 100 得到 0-99
-        // + 1 得到 1-100
-        printf("%d ", rand() % 100 + 1);
-    }
-    puts(""); // 换行
-
-    return 0;
-}
 
 ```
 

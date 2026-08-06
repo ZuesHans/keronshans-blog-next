@@ -6,7 +6,9 @@ tags:
   - C++
   - 模板
 highlight_shrink: false
-category: 算法板子
+category: 算法学习
+pinned: true
+description: 基础算法模板，包括大部分简单稳定的算法写法
 ---
 
 

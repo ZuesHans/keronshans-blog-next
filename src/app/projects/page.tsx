@@ -22,8 +22,8 @@ function ProjectAction({ link }: { link: ProjectLink }) {
 
 export default function ProjectsPage() {
   return (
-    <div className="mx-auto max-w-6xl px-5 py-12 sm:px-6 sm:py-16">
-      <section className="mb-10 border-b pb-8" style={{ borderColor: "var(--owl-border)" }}>
+    <div className="app-page">
+      <section className="app-page-header">
         <div className="page-kicker mb-3">Projects</div>
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
           <div>
@@ -127,7 +127,7 @@ export default function ProjectsPage() {
                         </div>
 
                         <div className="mb-4">
-                          <div className="mb-2 text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--project-accent)" }}>
+                          <div className="mb-2 text-xs font-semibold uppercase tracking-normal" style={{ color: "var(--project-accent)" }}>
                             {project.category}
                           </div>
                           <h3 className="font-display text-2xl font-medium leading-tight" style={{ color: "var(--owl-text)" }}>

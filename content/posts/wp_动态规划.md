@@ -1,13 +1,15 @@
 ---
 title: wp_动态规划
-date: ''
+date: '2026-08-06'
 tags:
   - 算法
   - DP
   - 动态规划
   - C++
 math: true
-category: 题解复盘
+category: 题目复盘
+pinned: false
+description: ''
 ---
 
 ## 动态规划入门
@@ -1455,6 +1457,70 @@ void solve()
     cout << '\n';
 }
 
+```
+
+---
+
+### 状压dp
+
+#### [Lazy suffling](https://ac.nowcoder.com/acm/contest/133877/L)
+
+- **核心模型**:用状压dp来求图上拓扑序数量（题目中有偏序关系建图）
+
+- **关键代码**:
+
+```cpp
+
+void solve()
+{
+    int n;
+    cin >> n;
+    vi p(n);
+    vi z(n);
+    for (int i = 0; i < n; i++)
+    {
+        cin >> p[i];
+    }
+    bool can=1;
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = i; j < n; j++)
+        {
+            if (p[i] > p[j])
+            {
+                z[i] |= 1ll << (j);
+                can=0;
+            }
+        }
+    }
+    vi dp((1ll << n) + 2);
+    dp[0] = 1;
+    for (int now = 0; now < (1ll << n); now++)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            if (now >> i & 1)
+            {
+                continue;
+            }
+            if ((z[i] & now) == z[i])
+            {
+                dp[(now | (1ll << i))] = dp[(now | (1ll << i))] + dp[now];
+                dp[(now | (1ll << i))] %= MOD;
+            }
+           
+        }
+    }
+    if(can)
+    {
+        int out=1;
+        for(int i=1;i<=n;i++){
+            out*=i;
+            out%=MOD;
+}
+cout<<out<<'\n';return;}
+     cout << dp[(1ll << n) - 1]*2%MOD << '\n';
+}
 ```
 
 ---

@@ -5,8 +5,9 @@ tags:
   - 算法
   - C++
   - 图论
-category: 算法板子
+category: 算法学习
 pinned: false
+description: 关于图论的经典算法教学
 ---
 
 ## 拓扑排序
