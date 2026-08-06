@@ -1,12 +1,14 @@
 ---
 title: wp_图论与搜索
-date: ''
+date: '2026-08-06'
 tags:
   - 算法
   - 图论
   - C++
 math: true
-category: 题解复盘
+category: 题目复盘
+pinned: false
+description: ''
 ---
 
 
@@ -2126,6 +2128,648 @@ int main() {
 
 ---
 
+### 二分图匹配
+
+#### [二分图（边数）最大匹配(左右部点匹配)](https://www.luogu.com.cn/problem/P3386)
+
+- **核心模型**:普通匈牙利算法  复杂度O(NM);
+
+- **关键代码**:
+
+```cpp
+
+void solve()
+{
+    int n, m;
+    cin >> n >> m;
+    int e;
+    cin >> e;
+    vector<vi> mp(n + 1);
+    vi mch(m + 1);
+
+    for (int i = 0; i < e; i++)
+    {
+        int u, v;
+        cin >> u >> v;
+        mp[u].push_back(v);
+    }
+    vi vis(m + 1);
+    auto dfs = [&](int now, auto self) -> int
+    {
+        for (auto v : mp[now])
+        {
+            if (vis[v])
+            {
+                continue;
+            }
+            vis[v] = 1;
+            if (!mch[v] || self(mch[v], self))
+            {
+                mch[v] = now;
+                return 1;
+            }
+        }
+        return 0;
+    };
+    int ans = 0;
+    for (int i = 1; i <= n; i++)
+    {
+        fill(all(vis), 0);
+        if (dfs(i, dfs))
+            ans++;
+        
+    }
+    cout << ans << '\n';
+}
+
+```
+
+#### [无向图上做二分图匹配（包括染色判定二分图）](https://acm.hdu.edu.cn/showproblem.php?pid=2444)
+
+- **题目意思**:现在给出所有互相认识的学生对。你的任务是将这些学生分成两个组，使得同一组中的任意两名学生都互不认识。例如，A 和 B 认识，B 和 C 认识，但这并不意味着 A 和 C 也认识。请计算最多可以安排多少对学生入住双人宿舍。n 和 m（1 < n ≤ 200）
+- **做法：**做法包括两步，一个是判断给出的信息是否能链接成二分+二分图黑白染色（bfs，相邻点染相反颜色，绕道和自己一个颜色的就无法被染色成功），一个是二分图最大（数量）匹配
+- **关键代码**:
+
+```cpp
+
+int n, m;
+void solve()
+{
+
+    vector<vi> mp(n + 1);
+    for (int i = 0; i < m; i++)
+    {
+        int u, v;
+        cin >> u >> v;
+        mp[u].push_back(v);
+        mp[v].push_back(u);
+    }
+    vi color(n + 1, -1);
+    int cnt_zuo = 0;
+    int cnt_you = 0;
+    vi lab(n + 1);
+
+    for (int i = 1; i <= n; i++)
+    {
+
+        if (color[i] != -1)
+            continue;
+
+        auto bfs = [&](int now) -> bool
+        {
+            queue<int> q;
+            q.emplace(now);
+            color[now] = 0;
+            while (!q.empty())
+            {
+                int u = q.front();
+                q.pop();
+
+                for (int v : mp[u])
+                {
+                    if (color[v] == -1)
+                    {
+                        color[v] = color[u] ^ 1;
+                        q.push(v);
+                    }
+                    else if (color[v] == color[u])
+                    {
+                        return 0;
+                    }
+                }
+            }
+            return 1;
+        };
+
+        if (!bfs(i))
+        {
+            cout << "No" << '\n';
+            return;
+        }
+    }
+    // assert(find(all(color),-1)==color.end());
+    for (int i = 1; i <= n; i++)
+    {
+        cnt_zuo += color[i];
+        cnt_you += (color[i] ^ 1);
+        if (color[i] == 1)
+        {
+            lab[i] = 1;
+        }
+    }
+    vi mch(n + 1);
+    vi vis(n + 1);
+    auto dfs = [&](int now, auto self) -> int
+    {
+        for (auto v : mp[now])
+        {
+            if (lab[v])
+                continue;
+            if (vis[v])
+            {
+                continue;
+            }
+            vis[v] = 1;
+            if (!mch[v] || self(mch[v], self))
+            {
+                mch[v] = now;
+                return 1;
+            }
+        }
+        return 0;
+    };
+    int ans = 0;
+    for (int i = 1; i <=n; i++)
+    {
+        if (!lab[i])
+            continue;
+        fill(all(vis), 0);
+        if (dfs(i, dfs))
+            ans++;
+    }
+    cout << ans << '\n';
+}
+```
+
+#### [HopcroftKarp求二分图最大匹配](https://judge.yosupo.jp/problem/bipartitematching)
+
+- **核心模型**:复杂度O(n根号M)，常数及其小，过nm均2e5的测试点只需要60ms
+- 其实写起来感觉不如写Dinic，认识到这个算法主要因为在wida上面看到了这个模板
+
+- **关键代码**:
+
+<details>
+
+<summary>易读版本（900ms）</summary>
+
+```cpp
+struct HopcroftKarp
+{
+    int n, m; // 左部点数量、右部点数量
+
+    vector<vi> mp;
+
+    // mch_zuo[u]：左点 u 匹配的右点
+    // mch_you[v]：右点 v 匹配的左点
+    // 0 表示没有匹配
+    vi mch_zuo;
+    vi mch_you;
+
+    // BFS 分层
+    // dep[0] 表示到达未匹配右点的最短距离
+    vi dep;
+
+    HopcroftKarp(int n, int m) : n(n), m(m)
+    {
+        mp.resize(n + 1);
+        mch_zuo.resize(n + 1);
+        mch_you.resize(m + 1);
+        dep.resize(n + 1);
+    }
+
+    // 添加一条左点 u 到右点 v 的边
+    // 左右两边都使用 1-index
+    void add(int u, int v)
+    {
+        mp[u].push_back(v);
+    }
+
+    /*
+        从所有未匹配左点同时出发，建立分层图。
+
+        转移方式：
+
+        左点 u
+          -> 右点 v
+          -> v 当前匹配的左点 mch_you[v]
+    */
+    bool bfs()
+    {
+        queue<int> q;
+
+        fill(all(dep), INF);
+
+        // 所有未匹配左点都是 BFS 起点
+        for (int u = 1; u <= n; u++)
+        {
+            if (mch_zuo[u] == 0)
+            {
+                dep[u] = 0;
+                q.push(u);
+            }
+        }
+
+        /*
+            0 号点代表“未匹配右点”。
+
+            dep[0] 就是当前最短增广路的长度。
+        */
+        dep[0] = INF;
+
+        while (!q.empty())
+        {
+            int u = q.front();
+            q.pop();
+
+            /*
+                已经找到更短的增广路，
+                就不需要继续扩展更深的层。
+            */
+            if (dep[u] >= dep[0])
+                continue;
+
+            for (int v : mp[u])
+            {
+                // v 当前匹配的左点
+                // 如果 v 未匹配，则 nxt == 0
+                int nxt = mch_you[v];
+
+                if (dep[nxt] == INF)
+                {
+                    dep[nxt] = dep[u] + 1;
+
+                    // 0 是虚拟点，不需要放入队列
+                    if (nxt != 0)
+                    {
+                        q.push(nxt);
+                    }
+                }
+            }
+        }
+
+        // 能到达虚拟点 0，说明存在增广路
+        return dep[0] != INF;
+    }
+
+    /*
+        只沿着 BFS 建立的分层图寻找增广路。
+    */
+    bool dfs(int u)
+    {
+        // 到达虚拟点，说明找到未匹配右点
+        if (u == 0)
+            return true;
+
+        for (int v : mp[u])
+        {
+            int nxt = mch_you[v];
+
+            /*
+                只能从当前层走向下一层。
+            */
+            if (dep[nxt] != dep[u] + 1)
+                continue;
+
+            /*
+                dfs(nxt) 成功意味着：
+
+                1. nxt == 0，右点 v 本来就未匹配；
+                2. 或者成功给 v 原来的左点 nxt
+                   重新找到了一个右点。
+            */
+            if (dfs(nxt))
+            {
+                mch_zuo[u] = v;
+                mch_you[v] = u;
+                return true;
+            }
+        }
+
+        /*
+            当前分层中，从 u 无法找到增广路。
+
+            设为 INF，防止本轮重复搜索。
+        */
+        dep[u] = INF;
+
+        return false;
+    }
+
+    int work()
+    {
+        int ans = 0;
+
+        /*
+            每一轮：
+
+            1. BFS 建立最短增广路的分层；
+            2. DFS 尽量找到多条最短增广路。
+        */
+        while (bfs())
+        {
+            for (int u = 1; u <= n; u++)
+            {
+                if (mch_zuo[u] == 0 && dfs(u))
+                {
+                    ans++;
+                }
+            }
+        }
+
+        return ans;
+    }
+
+    // 返回匹配方案 {左点, 右点}
+    vector<pii> answer()
+    {
+        vector<pii> ans;
+
+        for (int u = 1; u <= n; u++)
+        {
+            if (mch_zuo[u] != 0)
+            {
+                ans.push_back({u, mch_zuo[u]});
+            }
+        }
+
+        return ans;
+    }
+};
+void solve()
+{
+    int n1, n2, e;
+    cin >> n1 >> n2 >> e;
+    HopcroftKarp hk(n1+1, n2+1);
+    for (int i = 0; i < e; i++)
+    {
+        int u, v;
+        cin >> u >> v;
+        u++, v++;
+        hk.add(u, v);
+    }
+    cout << hk.work() << '\n';
+    vector<pii> ans = hk.answer();
+    for (auto [a, b] : ans)
+    {
+        cout << a-1 << ' ' << b-1 << '\n';
+    }
+}
+
+```
+
+</details>
+
+<details>
+
+<summary>常数优化坂本</summary>
+
+```cpp
+
+struct HopcroftKarp {
+    int n, m;
+    vector<array<int, 2>> ver;
+    vector<int> l, r;
+    HopcroftKarp(int n, int m) : n(n), m(m) { // 左右半部
+        l.assign(n, -1);
+        r.assign(m, -1);
+    }
+    void add(int x, int y) {
+       // x--, y--; // 这个板子是 0-idx 的
+        ver.push_back({x, y});
+    }
+    int work() {
+        vector<int> adj(ver.size());
+        mt19937 rgen(chrono::steady_clock::now().time_since_epoch().count());
+        shuffle(ver.begin(), ver.end(), rgen); // 随机化防卡
+        vector<int> deg(n + 1);
+        for (auto &[u, v] : ver) {
+            deg[u]++;
+        }
+        for (int i = 1; i <= n; i++) {
+            deg[i] += deg[i - 1];
+        }
+        for (auto &[u, v] : ver) {
+            adj[--deg[u]] = v;
+        }
+        int ans = 0;
+        vector<int> a, p, q(n);
+        while (true) {
+            a.assign(n, -1), p.assign(n, -1);
+            int t = 0;
+            for (int i = 0; i < n; i++) {
+                if (l[i] == -1) {
+                    q[t++] = a[i] = p[i] = i;
+                }
+            }
+            bool match = false;
+            for (int i = 0; i < t; i++) {
+                int x = q[i];
+                if (~l[a[x]]) continue;
+                for (int j = deg[x]; j < deg[x + 1]; j++) {
+                    int y = adj[j];
+                    if (r[y] == -1) {
+                        while (~y) {
+                            r[y] = x;
+                            swap(l[x], y);
+                            x = p[x];
+                        }
+                        match = true;
+                        ++ans;
+                        break;
+                    }
+                    if (p[r[y]] == -1) {
+                        q[t++] = y = r[y];
+                        p[y] = x;
+                        a[y] = a[x];
+                    }
+                }
+            }
+            if (!match) break;
+        }
+        return ans;
+    }
+    vector<array<int, 2>> answer() {
+        vector<array<int, 2>> ans;
+        for (int i = 0; i < n; i++) {
+            if (~l[i]) {
+                ans.push_back({i, l[i]});
+            }
+        }
+        return ans;
+    }
+};
+signed main() {
+    int n1, n2, m;
+    cin >> n1 >> n2 >> m;
+    HopcroftKarp flow(n1, n2);
+    while (m--) {
+        int x, y;
+        cin >> x >> y;
+        flow.add(x, y);
+    }
+    cout << flow.work() << "\n";
+    auto match = flow.answer();
+    for (auto [u, v] : match) {
+        cout << u << " " << v << "\n";
+    }
+}
+
+```
+
+</details>
+
+#### Dinic求二分图匹配（具体观看kh_网络流部分文章）有：\(O(E\sqrt V)\)
+
+#### [二分图最大权匹配](https://www.luogu.com.cn/problem/P6577)
+
+- **核心模型**:`顶标始终满足 lx[u] + ly[v] >= w[u][v]`，最终匹配完全落在相等子图中，因此满足互补松弛条件，是最优匹配
+
+- **关键代码**:
+
+```cpp
+
+void solve()
+{
+    int n, m;
+    cin >> n >> m;
+    vector<vector<pii>> mp(n + 1);
+    vi ansl(n + 1, -1), ansr(n + 1, -1), pre(n + 1), lx(n + 1,-LINF), ly(n + 1, 0);
+    // ansl ansr 格子匹配的点 lx ly顶标 pre 交替树上通过哪个左点到达右点now
+
+    for (int i = 0; i < m; i++)
+    {
+        int u, v;
+        cin >> u >> v;
+        int w;
+        cin >> w;
+        mp[u].push_back({v, w});
+    }
+    for (int i = 1; i <= n; i++)
+    {
+        for (auto [to, w] : mp[i])
+            lx[i] = max(lx[i], w);
+        // 构建顶标初始值
+    }
+    auto bfs = [&](int now) -> bool
+    {
+        vi slack(n + 1, 1e18); // 当前交替树上距离连接右点y还差多少
+        vi visl(n + 1), visr(n + 1);
+        queue<int> q;
+        /*
+        check算法流程：引入一个右边点，也就是左边点即将匹配的右边点
+        检查她是否能匹配？如果能匹配就先匹配上
+        如果他不能匹配就while循环找增广路，直到找不到
+        */
+        auto chek = [&](int y) -> bool
+        {
+            visr[y] = 1;
+            if (ansr[y] != -1) // 如果右点已经被占用，沿匹配边走向对应左点
+            {
+                int next_x = ansr[y];
+                q.push(next_x);
+                visl[next_x] = 1;
+                return 0;
+            }
+            while (y != -1)
+            {
+                int x = pre[y];
+                int old_Y = ansl[x];
+                // 更新答案，沿 pre[] 翻转增广路
+                ansl[x] = y;
+                ansr[y] = x;
+
+                y = old_Y;
+            }
+            return 1;
+        };
+        q.push(now);
+       // 队列只装左点：从左点扫描边；右点若被占用，再沿匹配边回到左点
+        visl[now] = 1;
+        while (1)
+        {
+            // 沿当前相等边扩展交替树
+            while (!q.empty())
+            {
+                int now = q.front();
+                q.pop();
+                for (auto [nxt, val] : mp[now])
+                {
+                    if (visr[nxt])
+                        continue;
+                    int del = lx[now] + ly[nxt] - val;
+                    if (del < slack[nxt])
+                    {
+                        pre[nxt] = now;
+                        slack[nxt] = del;
+                        if (!slack[nxt] && chek(nxt))
+                            return 1;
+                    }
+                }
+            }
+            // 相等边走不动了，计算最小调整量
+            int wgt = 1e18;
+
+            for (int y = 1; y <= n; y++)
+            {
+                if (!visr[y])
+                {
+                    wgt = min(wgt, slack[y]);
+                }
+            }
+            if (wgt == 1e18)
+            {
+                // 不存在完美匹配
+                return 0;
+            }
+            // 修改顶标
+            for (int i = 1; i <= n; i++)
+            {
+                if (visl[i])
+                {
+                    lx[i] -= wgt;
+                }
+                if (visr[i])
+                {
+                    ly[i] += wgt;
+                }
+                else
+                {
+                    slack[i] -= wgt;
+                }
+            }
+
+            // 处理刚刚出现的相等边
+            for (int y = 1; y <= n; y++)
+            {
+                if (!visr[y] && slack[y] == 0)
+                {
+                    if (chek(y))
+                    {
+                        return 1;
+                    }
+                }
+            }
+        }
+    };
+
+    for (int i = 1; i <= n; i++)
+    {
+        if(bfs(i))
+        {
+            cout<<"No"<<'\n';
+            return ;
+        }
+       
+    }
+    int ans = 0;
+
+    for (int i = 1; i <= n; ++i)
+    {
+        ans += lx[i] + ly[i];
+    }
+    //输出最大匹配权值
+    cout << ans << '\n';
+    //输出匹配的右边点
+    for (int i = 1; i <= n; ++i)
+    {
+        cout << ansr[i] << " \n"[i == n];
+    }
+}
+
+```
+
+---
+
 ### 分层图
 
 #### [逃出生天](https://codeforces.com/gym/106210/problem/C)
@@ -2222,7 +2866,7 @@ void solve()
 
 - **核心模型**:分层图dp
 - **思维误区 (Bug)**:一开始看见权值/2地往下递减错误的想用bfs。bfs本质上就是一点一点枚举路径，复杂度是指数级别的
-- **修正逻辑 (Patch)**:ce[v][k] 是指：从v出发走k步最大地值。题目是要求/边权，我们可以反向思考成从某点出发*边权。可以证明出单调性
+- **修正逻辑 (Patch)**:`ce[v][k]` 是指：从v出发走k步最大地值。题目是要求/边权，我们可以反向思考成从某点出发*边权。可以证明出单调性
 - 发现重复子问题 → 想到DP
 - 发现步数上界只有30 → 把步数作为DP的维度
 - 发现正向状态太多 → 翻转问题方向

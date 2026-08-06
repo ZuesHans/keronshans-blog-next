@@ -6,6 +6,11 @@ import PostInteraction from "./PostInteraction";
 import TableOfContents from "@/components/TableOfContents";
 import SearchHighlight from "@/components/SearchHighlight";
 
+// Posts are shipped as static pages so an unavailable D1 record cannot make an
+// already-published article return a 404 at runtime.
+export const dynamic = "force-static";
+export const dynamicParams = false;
+
 export async function generateStaticParams() {
   const posts = await getAllPosts();
   return posts.map((post) => ({ id: post.id }));
@@ -19,13 +24,10 @@ function estimateReadingTime(content: string): number {
 
 export default async function PostPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ highlight?: string }>;
 }) {
   const { id } = await params;
-  const { highlight = "" } = await searchParams;
   const post = await getPostById(id);
   if (!post) notFound();
 
@@ -61,7 +63,7 @@ export default async function PostPage({
 
             <article className="reader-card">
               <MarkdownRenderer content={post.content} />
-              <SearchHighlight query={highlight} />
+              <SearchHighlight />
             </article>
 
             <PostInteraction postId={id} />

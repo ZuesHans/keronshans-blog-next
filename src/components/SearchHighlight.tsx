@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { getTextHighlightRanges, normalizeSearchQuery } from "@/lib/search";
 
 const EXCLUDED_SELECTOR = [
@@ -23,7 +24,10 @@ function removeHighlights(container: ParentNode) {
   });
 }
 
-export default function SearchHighlight({ query }: { query: string }) {
+export default function SearchHighlight() {
+  const searchParams = useSearchParams();
+  const query = searchParams.get("highlight") || "";
+
   useEffect(() => {
     const container = document.querySelector(".markdown-body");
     if (!container) return;
