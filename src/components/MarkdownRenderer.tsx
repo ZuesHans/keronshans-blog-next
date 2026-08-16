@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeHighlight from "rehype-highlight";
 import rehypeKatex from "rehype-katex";
+import rehypeRaw from "rehype-raw";
 
 interface MarkdownRendererProps {
   content: string;
@@ -74,6 +75,7 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[
+          rehypeRaw,
           rehypeKatex,
           [rehypeHighlight, { aliases: { cpp: ["c++", "cc", "cxx", "h", "hpp"] } }],
         ]}

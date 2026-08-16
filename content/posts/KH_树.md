@@ -187,6 +187,85 @@ void build_cartesian_tree(int n) {
 
 ## 树上算法
 
+### 树链剖分
+
+#### 树剖求LCA：from widas （加入了个人理解的魔改）
+
+```cpp
+
+struct HLD {
+    int n, idx;
+    vector<vector<int>> ver;
+    vector<int> siz, dep; //子树大小，节点深度
+    vector<int> top, son, parent; //重链的连头  重儿子  父亲
+    vector<int> dfn;
+    HLD(int n) {
+        this->n = n;
+        ver.resize(n + 1);
+        siz.resize(n + 1);
+        dep.resize(n + 1);
+
+        top.resize(n + 1);
+        son.resize(n + 1);
+        parent.resize(n + 1);
+
+        dfn.resize(n+1);
+    }
+    void add(int x, int y) { // 建立双向边
+        ver[x].push_back(y);
+        ver[y].push_back(x);
+    }
+    void dfs1(int x) { //维护pa dep son siz
+        siz[x] = 1;
+        dep[x] = dep[parent[x]] + 1;
+        for (auto y : ver[x]) {
+            if (y == parent[x]) continue;
+            parent[y] = x;
+            dfs1(y);
+            siz[x] += siz[y];
+            if (siz[y] > siz[son[x]]) {
+                son[x] = y;
+            }
+        }
+    }
+    void dfs2(int x, int up) { //维护 top
+        top[x] = up;
+        dfn[x] = ++idx;
+        if (son[x]) dfs2(son[x], up); //重儿子
+        for (auto y : ver[x]) {  // 轻儿子
+            if (y == parent[x] || y == son[x]) continue;
+            dfs2(y, y);
+        }
+    }
+    void work(int root = 1) { // 在此初始化
+        dfs1(root);
+        dfs2(root, root);
+    }
+
+    int lca(int x, int y) { //查询树上lca
+        while (top[x] != top[y]) {
+            if (dep[top[x]] > dep[top[y]]) {
+                x = parent[top[x]];
+            } else {
+                y = parent[top[y]];
+            }
+        }
+        return dep[x] < dep[y] ? x : y;
+    }
+    int clac(int x, int y) { // 查询两点间距离
+        return dep[x] + dep[y] - 2 * dep[lca(x, y)];
+    }
+   
+    bool is_an(int x,int y)  // x是否是y的祖先
+    {
+        return dfn[x]<=dfn[y]&&dfn[y]<dfn[x]+siz[x];
+    }
+
+
+};
+
+```
+
 ### 树上点分治
 
 #### [模板：树上点分治](https://www.luogu.com.cn/problem/P3806)
@@ -314,3 +393,493 @@ void solve()
 ```
 
 ---
+
+### 虚树
+
+#### 板子
+
+- **复杂度**
+设关键点数量为 k：
+虚树节点数：最多 2k - 1
+排序：O(k log k)
+LCA：调用 k - 1 次
+建边：O(k)
+
+- 前提：你目前已经有：dfn dep lca 两点是否是公共祖先
+
+```cpp
+int dfn[MAXN];
+int dep[MAXN];
+
+int lca(int u, int v);
+
+// 必须是包含自身的祖先判断：is_an(u, u) == true
+   bool is_an(int x, int y) {
+        return dfn[x] <= dfn[y] &&
+               dfn[y] < dfn[x] + siz[x];
+    }
+```
+
+- 虚树部分直接写成：
+
+```cpp
+vector<vector<pair<int, int>>> vir;
+vector<int> vir_node;
+初始化一次：
+vir.resize(n + 1);
+```
+
+- 核心函数：
+  - 假设要导入结构体可以：`int build_virtual_tree(HLD &tr,vector<int> point,bool force_root = false,int root)`
+
+```cpp
+int build_virtual_tree(vector<int> point,bool force_root = false,int root) {
+    // 清理上一次虚树的边
+    for (int u : vir_node) {
+        vir[u].clear();
+    }
+
+    vir_node.clear();
+
+    if (force_root) {
+        point.push_back(root);
+    }
+
+    if (point.empty()) {
+        return 0;
+    }
+
+    auto cmp = [&](int u, int v) {
+        return dfn[u] < dfn[v];
+    };
+
+    // 关键点按 DFS 序排序并去重
+    sort(point.begin(), point.end(), cmp);
+    point.erase(
+        unique(point.begin(), point.end()),
+        point.end()
+    );
+
+    int k = point.size();
+
+    // 加入相邻关键点的 LCA
+    point.reserve(2 * k);
+
+    for (int i = 0; i + 1 < k; ++i) {
+        point.push_back(lca(point[i], point[i + 1]));
+    }
+
+    // LCA 加入后，必须重新排序去重
+    sort(point.begin(), point.end(), cmp);
+    point.erase(
+        unique(point.begin(), point.end()),
+        point.end()
+    );
+
+    vir_node = point;
+
+    // 单调栈建边
+    vector<int> stk;
+    stk.reserve(point.size());
+
+    stk.push_back(point[0]);
+
+    for (int i = 1; i < static_cast<int>(point.size()); ++i) {
+        int u = point[i];
+
+        // 弹出所有不是 u 祖先的节点
+        while (!is_an(stk.back(), u)) {
+            stk.pop_back();
+        }
+
+        int fa = stk.back();
+
+        // 虚树边：fa -> u
+        // dep 差表示原树路径长度
+        vir[fa].push_back({
+            u,
+            dep[u] - dep[fa]
+        });
+
+        stk.push_back(u);
+    }
+
+    // point[0] 就是虚树根
+    return point[0];
+}
+```
+
+- 调用
+
+```cpp
+vector<int> key = {4, 5, 6};
+
+int root = build_virtual_tree(key, true, 1);
+
+for (auto [v, len] : vir[root]) {
+    // v 是 root 的虚树儿子
+    // len 是原树中 root 到 v 的距离
+}
+```
+
+- **各种LCA 实现方式**
+  - `倍增` `Euler Tour + RMQ` `HLD` `Tarjan 离线 LCA`
+
+#### [Escape Root](https://ac.nowcoder.com/acm/contest/133884/D)
+
+- **题意**:m 个人分别在时刻si 出现在树上结点xi，随后以单位速度沿最短路走向根1。任意时刻若至少两人在同一位置，则这些人同时消失；位置也可以在边内部。未发生碰撞并到达根的人成功逃脱，输出每个人的结果。n, m ≤2×105
+- **虚树**:在保持关键节点祖先关系、路径关系和距离信息的前提下，删除所有无用节点，并把无用链压缩成边。
+- **关键代码**:
+
+```cpp
+struct VirtualTree
+{
+    HLD &tree;
+
+    // 虚树父亲 -> 儿子
+    vector<vector<pii>> ver;
+
+    // 当前虚树中出现的所有节点
+    vi node;
+
+    VirtualTree(HLD &tree) : tree(tree)
+    {
+        ver.resize(tree.n + 1);
+    }
+
+    // point：关键点
+    // force_root：是否强制加入原树根
+    // 返回虚树根
+    int build(vi point, bool force_root = false, int root = 1)
+    {
+        for (auto x : node)
+            ver[x].clear();
+
+        node.clear();
+
+        if (force_root)
+            point.push_back(root);
+
+        if (point.empty())
+            return 0;
+
+        auto cmp = [&](int x, int y)
+        {
+            return tree.dfn[x] < tree.dfn[y];
+        };
+
+        sort(all(point), cmp);
+        point.erase(unique(all(point)), point.end());
+
+        int len = point.size();
+
+        point.reserve(len * 2);
+
+        for (int i = 0; i + 1 < len; i++)
+            point.push_back(tree.lca(point[i], point[i + 1]));
+
+        sort(all(point), cmp);
+        point.erase(unique(all(point)), point.end());
+
+        node = point;
+
+        vi stk;
+        stk.reserve(point.size());
+        stk.push_back(point[0]);
+
+        for (int i = 1; i < point.size(); i++)
+        {
+            int x = point[i];
+
+            while (!tree.is_an(stk.back(), x))
+                stk.pop_back();
+
+            int fa = stk.back();
+
+            // first：儿子
+            // second：原树上的边距离
+            ver[fa].push_back({x, tree.dep[x] - tree.dep[fa]});
+
+            stk.push_back(x);
+        }
+
+        return point[0];
+    }
+
+};
+struct info
+{
+    int s, x;
+    int val;
+    int idx;
+};
+
+void solve()
+{
+    int n, m;
+    cin >> n >> m;
+    HLD lca(n);
+    for (int i = 0; i < n - 1; i++)
+    {
+        int u, v;
+        cin >> u >> v;
+
+        lca.add(u, v);
+    }
+    lca.work(1); // 预处理
+    vector<info> bb(m);
+    for (int i = 0; i < m; i++)
+    {
+
+        cin >> bb[i].x >> bb[i].s;
+
+        bb[i].val = bb[i].s + lca.clac(bb[i].x, 1); // 权值
+        bb[i].idx = i + 1;
+    }
+    sort(all(bb), [](info a, info b)
+         { return a.val < b.val; }); // 按照权值牌序
+
+    vi ans(m + 1);       // 答案
+    VirtualTree vt(lca); // 建立虚树
+    vector<int> pt;      // 关键点集
+    vi dp(n + 1, 0);
+    vector<pii> lab;
+    for (int i = 0; i < m; i++)
+    {
+        if (i && bb[i].val != bb[i - 1].val)
+        {
+            int root = vt.build(pt, true, 1); // 建树
+            for (auto nd : vt.node)
+            {
+                dp[nd] = 0;
+            }
+            for (int i = 0; i < lab.size(); i++)
+            {
+                if (dp[lab[i].first])
+                    dp[lab[i].first] = -1;
+                else
+                    dp[lab[i].first] = lab[i].second; // 编号
+            }
+
+            auto dfs = [&](auto &&self, int x, int fa) -> void
+            {
+                for (auto [y, dis] : vt.ver[x])
+                {
+                    if (y == fa)
+                        continue;
+                    self(self, y, x);
+                    if (dp[x] == 0)
+                    {
+                        if (dp[y] == -1)
+                            dp[y] = 0;
+                        dp[x] = dp[y];
+                    }
+                    else
+                    {
+                        if (dp[y] == 0 || dp[y] == -1)
+                        {
+                        }
+                        else
+                        {
+                            dp[x] = -1;
+                        }
+                    }
+                }
+            };
+            dfs(dfs, root, 0);
+
+            if (dp[root] != -1 && dp[root] != 0)
+                ans[dp[root]] = 1;
+
+            pt.clear();
+            lab.clear();
+        }
+        pt.push_back({bb[i].x});
+        lab.push_back({bb[i].x, bb[i].idx});
+    }
+    int root = vt.build(pt, true, 1); // 建树
+    for (auto nd : vt.node)
+    {
+        dp[nd] = 0;
+    }
+    for (int i = 0; i < lab.size(); i++)
+    {
+        if (dp[lab[i].first])
+            dp[lab[i].first] = -1;
+        else
+            dp[lab[i].first] = lab[i].second; // 编号
+    }
+
+    auto dfs = [&](auto &&self, int x, int fa) -> void
+    {
+        for (auto [y, dis] : vt.ver[x])
+        {
+            if (y == fa)
+                continue;
+            self(self, y, x);
+            if (dp[x] == 0)
+            {
+                if (dp[y] == -1)
+                    dp[y] = 0;
+                dp[x] = dp[y];
+            }
+            else
+            {
+                if (dp[y] == 0 || dp[y] == -1)
+                {
+                }
+                else
+                {
+                    dp[x] = -1;
+                }
+            }
+        }
+    };
+    dfs(dfs, root, 0);
+    if (dp[root] != -1 && dp[root] != 0)
+        ans[dp[root]] = 1;
+    for (int i = 1; i <= m; i++)
+    {
+        if (ans[i])
+            cout << 1;
+        else
+            cout << 0;
+    }
+}
+```
+
+---
+
+### Euler + RMQ 卡log复杂度求lca（预处理nlogn，只是在巨多次询问的时候会被卡）
+
+```cpp
+
+struct EulerLCA {
+    int n;
+    int timer;
+
+    vector<vector<int>> ver;
+
+    // 原树深度
+    vector<int> dep;
+
+    // Euler 序
+    vector<int> euler;
+
+    // first[u]：u 第一次出现在 Euler 序中的位置
+    vector<int> first;
+
+    // lg[i] = floor(log2(i))
+    vector<int> lg;
+
+    // st[k][i]：从 euler[i] 开始，长度 2^k 的区间最浅节点
+    vector<vector<int>> st;
+
+    EulerLCA(int n) {
+        this->n = n;
+
+        ver.resize(n + 1);
+        dep.resize(n + 1);
+        first.resize(n + 1);
+    }
+
+    void add(int x, int y) {
+        ver[x].push_back(y);
+        ver[y].push_back(x);
+    }
+
+    void dfs(int x, int fa) {
+        first[x] = euler.size();
+        euler.push_back(x);
+
+        for (int y : ver[x]) {
+            if (y == fa) {
+                continue;
+            }
+
+            dep[y] = dep[x] + 1;
+
+            dfs(y, x);
+
+            // 从 y 的子树返回 x
+            euler.push_back(x);
+        }
+    }
+
+    void work(int root = 1) {
+        euler.clear();
+
+        dep[root] = 0;
+        dfs(root, 0);
+
+        int m = euler.size();
+
+        // 预处理 log
+        lg.resize(m + 1);
+
+        for (int i = 2; i <= m; ++i) {
+            lg[i] = lg[i / 2] + 1;
+        }
+
+        int K = lg[m] + 1;
+
+        st.assign(K, vector<int>(m));
+
+        // k = 0，区间长度为 1
+        for (int i = 0; i < m; ++i) {
+            st[0][i] = euler[i];
+        }
+
+        // Sparse Table
+        for (int k = 1; k < K; ++k) {
+            int len = 1 << k;
+            int half = len >> 1;
+
+            for (int i = 0; i + len <= m; ++i) {
+                int x = st[k - 1][i];
+                int y = st[k - 1][i + half];
+
+                st[k][i] =
+                    dep[x] < dep[y] ? x : y;
+            }
+        }
+    }
+
+    int lca(int x, int y) {
+        int l = first[x];
+        int r = first[y];
+
+        if (l > r) {
+            swap(l, r);
+        }
+
+        int k = lg[r - l + 1];
+
+        int x1 = st[k][l];
+        int x2 = st[k][r - (1 << k) + 1];
+
+        return dep[x1] < dep[x2] ? x1 : x2;
+    }
+
+    int dist(int x, int y) {
+        int z = lca(x, y);
+
+        return dep[x] + dep[y] - 2 * dep[z];
+    }
+};
+
+//使用
+EulerLCA tree(n);
+
+for (int i = 1; i < n; ++i) {
+    int x, y;
+    cin >> x >> y;
+
+    tree.add(x, y);
+}
+
+tree.work(1);
+
+int z = tree.lca(x, y);
+int d = tree.dist(x, y);
+```
