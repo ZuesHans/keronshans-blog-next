@@ -748,6 +748,176 @@ void solve()
 }
 ```
 
+#### [世界树](https://www.luogu.com.cn/problem/P3233)
+
+- 虚树的部分很简单先不说：我们考虑一下将问题转化->给定一棵带权树上面有一些点，每个点都有一定的影响范围，求能够覆盖整棵树所有点的影响范围的最大值最小。数据范围4e5
+- **关键代码**:
+
+```cpp
+
+struct HLD
+{
+    int n, idx;
+    vector<vi> ver;
+    vi siz, dep;
+    vi top, son, pa;
+    vi dfn;
+    HLD(int n)
+    {
+
+        this->n = n;
+        idx = 0;
+        ver.resize(n + 1);
+        siz.resize(n + 1);
+        dep.resize(n + 1);
+        top.resize(n + 1);
+        son.resize(n + 1);
+        pa.resize(n + 1);
+        dfn.resize(n + 1);
+    }
+    void add(int x, int y)
+    {
+        ver[x].push_back(y);
+        ver[y].push_back(x);
+    }
+    void dfs1(int x)
+    {
+        siz[x] = 1;
+        dep[x] = dep[pa[x]] + 1;
+        for (auto y : ver[x])
+        {
+            if (y == pa[x])
+                continue;
+            pa[y] = x;
+            dfs1(y);
+            siz[x] += siz[y];
+            if (siz[y] > siz[son[x]])
+            {
+                son[x] = y;
+            }
+        }
+    }
+    void dfs2(int x, int up)
+    {
+        top[x] = up;
+        dfn[x] = ++idx;
+
+        if (son[x])
+            dfs2(son[x], up);
+        for (auto y : ver[x])
+        {
+            if (y == pa[x] || y == son[x])
+                continue;
+            dfs2(y, y);
+        }
+    }
+
+    void init(int root)
+    {
+        dfs1(root), dfs2(root, root);
+    }
+
+    int lca(int x, int y)
+    {
+        while (top[x] != top[y])
+        {
+            if (dep[top[x]] > dep[top[y]])
+            {
+                x = pa[top[x]];
+            }
+            else
+            {
+                y = pa[top[y]];
+            }
+        }
+        return dep[x] < dep[y] ? x : y;
+    }
+    int clac(int x, int y)
+    {
+        return dep[x] + dep[y] - 2 * dep[lca(x, y)];
+    }
+    bool is_an(int x, int y)
+    {
+        return dfn[x] <= dfn[y] && dfn[y] < dfn[x] + siz[x];
+    }
+};
+
+void solve()
+{
+    int n;
+    cin >> n;
+    HLD tr(n);
+    for (int i = 0; i < n - 1; i++)
+    {
+        int u, v;
+        cin >> u >> v;
+        tr.add(u, v);
+    }
+    tr.init(1);
+    int q;
+    cin >> q;
+    vi pt;
+    vector<vector<pii>> vir(n + 1);
+    vi vir_pt;
+    vi dis(n + 1), bel(n + 1), ans(n + 1);
+    vector<bool> key(n + 1);
+    int m;
+
+    for (int i = 0; i < q; i++)
+    {
+        cin >> m;
+        pt.clear();
+        pt.push_back(1);
+        rep(j, 0, m - 1)
+        {
+            int y;
+            cin >> y;
+            pt.push_back(y);
+        }
+
+        for (auto u : vir_pt)
+        {
+            vir[u].clear();
+        }
+
+        auto cmp = [&tr](int u, int v) -> bool
+        {
+            return tr.dfn[u] < tr.dfn[v];
+        };
+
+        sort(all(pt), cmp);
+        // pt.erase(unique(all(pt)), pt.end());
+        // int k=pt.size();
+        pt.reserve(2 * m);
+        for (int j = 0; j + 1 < m; j++)
+        {
+            pt.push_back(tr.lca(pt[j], pt[j + 1]));
+        }
+        sort(all(pt), cmp);
+        pt.erase(unique(all(pt)), pt.end());
+        vir_pt = pt;
+
+        vector<int> stk;
+        stk.reserve(pt.size());
+        stk.push_back(pt[0]);
+
+        for (int j = 1; j < static_cast<int>(pt.size()); j++)
+        {
+            int u = pt[j];
+            while (!tr.is_an(stk.back(), u))
+            {
+                stk.pop_back();
+            }
+            int fa = stk.back();
+            vir[fa].push_back({u, tr.dep[u] - tr.dep[fa]});
+            stk.push_back(u);
+        }
+
+        int root = pt[0];
+    }
+}
+```
+
 ---
 
 ### Euler + RMQ 卡log复杂度求lca（预处理nlogn，只是在巨多次询问的时候会被卡）

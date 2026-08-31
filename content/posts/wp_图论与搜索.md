@@ -3036,6 +3036,85 @@ void solve()
 }
 ```
 
+### trick 树上拓扑序
+
+#### [黔灵猕猴](https://codeforces.com/gym/615540/attachments)
+
+- **核心模型**:求树上拓扑序
+
+- 任意一次 DFS 前序遍历或 BFS 层序遍历，都能得到一个合法拓扑序。
+
+- 拓扑序数量可以用树形 DP 计算。设：
+
+  - sz[u]：以 u 为根的子树大小
+  - f[u]：u 的子树内合法拓扑序数量
+  - 若 u 的孩子为 v1, v2, ..., vk，则
+\[
+sz_u=1+\sum_{i=1}^{k}sz_{v_i}
+\]\[
+f_u=
+\frac{(sz_u-1)!}{\prod_{i=1}^{k}sz_{v_i}!}
+\prod_{i=1}^{k}f_{v_i}
+\]含义是：u 必须放在最前面，之后把各个孩子子树的拓扑序交错合并。
+展开后可以得到经典树上钩长公式：
+\[
+\boxed{f_{\text{root}}=\frac{n!}{\prod_{u=1}^{n}sz_u}}
+\]
+
+- **关键代码**:
+
+```cpp
+void solve()
+{
+    int n;
+    cin >> n;
+    vector<vi> mp(n + 1);
+    int s;
+    cin >> s;
+    for (int i = 1; i < n; i++)
+    {
+        int u, v;
+        cin >> u >> v;
+        mp[u].push_back(v);
+        mp[v].push_back(u);
+    }
+    vi siz(n + 1);
+    auto dfs = [&](int now, int fa, auto &&self) -> void
+    {
+        siz[now] = 1;
+        for (auto it : mp[now])
+        {
+            if (it == fa)
+                continue;
+            self(it, now, self);
+            siz[now] += siz[it];
+        }
+    };
+    dfs(s, 0, dfs);
+    
+    int ans = 1;
+    for (int i = 1; i <= n; i++)
+    {
+        ans *= i;
+        ans %= MOD;
+    }
+   
+    int mu = 1;
+    for (int i = 1; i <= n; i++)
+    {
+        mu *= siz[i];
+        //cerr<<siz[i]<<' ';
+        mu %= MOD;
+    }
+    //cerr<<'\n';
+     
+    cout << ans * qpow(mu, MOD - 2,MOD)%MOD << '\n';
+}
+
+```
+
+---
+
 ### bitset优化bfs
 
 #### [B.《金牌题》](https://hydro.ac/d/XJUCPC/p/12?tid=6a15a69ac1224fa17414cc50)
