@@ -1,15 +1,3 @@
--- 博客文章
-CREATE TABLE IF NOT EXISTS posts (
-  filename TEXT PRIMARY KEY,
-  title TEXT NOT NULL,
-  content TEXT NOT NULL DEFAULT '',
-  date TEXT NOT NULL DEFAULT '',
-  tags TEXT NOT NULL DEFAULT '[]',
-  category TEXT NOT NULL DEFAULT '笔记',
-  created_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours')),
-  updated_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours'))
-);
-
 -- 说说/留言
 CREATE TABLE IF NOT EXISTS talks (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,6 +24,9 @@ CREATE TABLE IF NOT EXISTS comments (
   post_id TEXT NOT NULL,
   nickname TEXT NOT NULL DEFAULT '匿名',
   content TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'approved',
+  revision INTEGER NOT NULL DEFAULT 1,
+  deleted_at TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours'))
 );
 
@@ -47,22 +38,25 @@ CREATE TABLE IF NOT EXISTS likes (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   post_id TEXT NOT NULL,
   ip TEXT NOT NULL DEFAULT '',
+  actor_hash TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours'))
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_likes_post_ip_unique ON likes(post_id, ip);
 CREATE INDEX IF NOT EXISTS idx_likes_post_id ON likes(post_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_likes_post_actor_hash ON likes(post_id, actor_hash);
 
--- 代码片段
-CREATE TABLE IF NOT EXISTS snippets (
-  id TEXT PRIMARY KEY,
-  title TEXT NOT NULL,
-  code TEXT NOT NULL DEFAULT '',
-  language TEXT NOT NULL DEFAULT 'C++',
-  tags TEXT NOT NULL DEFAULT '[]',
+CREATE TABLE IF NOT EXISTS interaction_mutations (
+  site_id TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  mutation_id TEXT NOT NULL,
+  request_hash TEXT NOT NULL,
+  resource_id TEXT NOT NULL,
+  response_json TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours')),
-  updated_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours'))
+  PRIMARY KEY (site_id, kind, mutation_id)
 );
+CREATE INDEX IF NOT EXISTS idx_interaction_mutations_created_at ON interaction_mutations(created_at);
 
 -- 题目收集
 CREATE TABLE IF NOT EXISTS problems (
@@ -101,3 +95,10 @@ CREATE TABLE IF NOT EXISTS oj_synced_problems (
   updated_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours')),
   synced_at TEXT NOT NULL DEFAULT (datetime('now', '+8 hours'))
 );
+
+CREATE TABLE IF NOT EXISTS rate_limit_buckets (
+  bucket_key TEXT PRIMARY KEY,
+  count INTEGER NOT NULL,
+  reset_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_rate_limit_expiry ON rate_limit_buckets(reset_at);

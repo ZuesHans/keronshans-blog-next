@@ -1,19 +1,36 @@
 import { getAllPosts, getPostById } from "@/lib/posts";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import PostInteraction from "./PostInteraction";
 import TableOfContents from "@/components/TableOfContents";
 import SearchHighlight from "@/components/SearchHighlight";
+import type { Metadata } from "next";
 
 // Posts are shipped as static pages so an unavailable D1 record cannot make an
 // already-published article return a 404 at runtime.
 export const dynamic = "force-static";
-export const dynamicParams = false;
+// Legacy ID aliases redirect to the current slug; new content is part of the
+// immutable published snapshot.
+export const dynamicParams = true;
 
 export async function generateStaticParams() {
   const posts = await getAllPosts();
-  return posts.map((post) => ({ id: post.id }));
+  return posts.map((post) => ({ id: post.slug }));
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const post = await getPostById(id);
+  if (!post) return { title: "文章不存在 | Keronshans" };
+  const description = post.excerpt || `${post.title}，Keronshans 的公开笔记。`;
+  const canonical = `/posts/${post.slug}`;
+  return {
+    title: `${post.title} | Keronshans`,
+    description,
+    alternates: { canonical },
+    openGraph: { title: post.title, description, type: "article", publishedTime: post.date || undefined, url: canonical },
+  };
 }
 
 function estimateReadingTime(content: string): number {
@@ -30,6 +47,7 @@ export default async function PostPage({
   const { id } = await params;
   const post = await getPostById(id);
   if (!post) notFound();
+  if (post.slug !== id) permanentRedirect(`/posts/${post.slug}`);
 
   const readingTime = estimateReadingTime(post.content);
 
@@ -66,7 +84,7 @@ export default async function PostPage({
               <SearchHighlight />
             </article>
 
-            <PostInteraction postId={id} />
+            <PostInteraction postId={post.id} />
 
             <footer className="article-end-links">
               <Link href="/posts"><span aria-hidden="true">←</span>返回文章列表</Link>

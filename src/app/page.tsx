@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import { CATEGORY_GROUPS, getAllPosts, getCategoryColorClass } from "@/lib/posts";
+import { CATEGORY_GROUPS, getAllPosts } from "@/lib/posts";
+import PostCard from "@/components/theme/PostCard";
+
+export const dynamic = "force-static";
 
 export default async function HomePage() {
   const posts = await getAllPosts();
@@ -15,13 +18,41 @@ export default async function HomePage() {
       <section className="home-cover" aria-labelledby="homeTitle">
         <div className="home-cover-shade" aria-hidden="true" />
         <div className="site-shell home-cover-content">
-          <h1 id="homeTitle">Keronshans</h1>
-          <p>菜菜小猫的窝</p>
-          <div className="home-cover-actions">
-            <Link href="/posts" className="primary-command">
-              浏览文章 <span aria-hidden="true">→</span>
-            </Link>
-            <Link href="/about" className="secondary-command">关于我</Link>
+          <div className="home-intro">
+            <p className="home-kicker"><span aria-hidden="true" /> PERSONAL DEV LOG / EST. 2026</p>
+            <h1 id="homeTitle">Keronshans<span className="home-title-caret" aria-hidden="true">_</span></h1>
+            <p className="home-lede">把算法、代码和生活中的灵感，写成可以反复翻阅的笔记。</p>
+            <div className="home-cover-actions">
+              <Link href="/posts" className="primary-command">
+                浏览文章 <span aria-hidden="true">↗</span>
+              </Link>
+              <Link href="/about" className="secondary-command">认识我 <span aria-hidden="true">→</span></Link>
+            </div>
+            <div className="home-hero-stats" aria-label="站点内容概览">
+              <span><strong>{posts.length}</strong> 篇公开文章</span>
+              <span><strong>{CATEGORY_GROUPS.length}</strong> 个主题分类</span>
+              <span>持续更新中<span className="home-status-dot" aria-hidden="true" /></span>
+            </div>
+          </div>
+
+          <div className="home-terminal" aria-hidden="true">
+            <div className="home-terminal-head">
+              <div className="home-terminal-dots"><i /><i /><i /></div>
+              <span>~/keronshans/about.ts</span>
+              <span>⌘</span>
+            </div>
+            <div className="home-terminal-body">
+              <div><span>01</span><code><em>type</em> Note = <b>&quot;算法&quot;</b> | <b>&quot;模板&quot;</b> | <b>&quot;日常&quot;</b>;</code></div>
+              <div><span>02</span><code /></div>
+              <div><span>03</span><code><em>const</em> notebook = {'{'}</code></div>
+              <div><span>04</span><code>  owner: <b>&quot;Keronshans&quot;</b>,</code></div>
+              <div><span>05</span><code>  focus: [<b>&quot;ACM / XCPC&quot;</b>, <b>&quot;C++&quot;</b>],</code></div>
+              <div><span>06</span><code>  status: <b>&quot;keep learning&quot;</b>,</code></div>
+              <div><span>07</span><code>{'}'};</code></div>
+              <div><span>08</span><code /></div>
+              <div><span>09</span><code><em>export default</em> notebook;</code></div>
+            </div>
+            <div className="home-terminal-foot"><span><i /> All systems online</span><span>TypeScript · UTF-8</span></div>
           </div>
         </div>
       </section>
@@ -30,30 +61,14 @@ export default async function HomePage() {
         <div className="site-shell">
           <header className="home-band-heading">
             <div>
-              <span>Recently updated</span>
+              <span>01 / RECENT WRITING</span>
               <h2 id="latestTitle">最近更新</h2>
             </div>
             <Link href="/posts">全部文章 <span aria-hidden="true">↗</span></Link>
           </header>
 
           <div className="home-post-grid">
-            {featuredPosts.map((post) => (
-              <Link key={post.id} href={`/posts/${post.id}`} className="home-post-card">
-                <article>
-                  <div className="home-post-meta">
-                    {post.pinned && <span className="pinned-label">置顶</span>}
-                    <span className={`category-chip ${getCategoryColorClass(post.category)}`}>{post.category}</span>
-                    <time>{post.date}</time>
-                  </div>
-                  <h3>{post.title}</h3>
-                  {post.excerpt && <p>{post.excerpt}</p>}
-                  <div className="home-post-foot">
-                    <span>{post.tags.slice(0, 4).map((tag) => `#${tag}`).join("  ")}</span>
-                    <span aria-hidden="true">↗</span>
-                  </div>
-                </article>
-              </Link>
-            ))}
+            {featuredPosts.map((post) => <PostCard key={post.id} post={post} />)}
           </div>
         </div>
       </section>
@@ -61,7 +76,9 @@ export default async function HomePage() {
       <section className="home-category-band" aria-labelledby="categoryTitle">
         <div className="site-shell home-category-layout">
           <div>
+            <span>02 / EXPLORE</span>
             <h2 id="categoryTitle">沿着分类继续看</h2>
+            <p>从解题笔记到日常记录，挑一个感兴趣的方向继续逛。</p>
           </div>
           <div className="home-category-grid">
             {visibleCategories.map((group) => (

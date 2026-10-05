@@ -12,10 +12,10 @@ export default function CopyBtn({ slug, title }: CopyBtnProps) {
 
   const handleCopy = async () => {
     try {
-      const res = await fetch(`/api/template/${slug}`);
+      const res = await fetch(`/api/snippets?id=${encodeURIComponent(slug)}`);
       if (res.ok) {
         const data = await res.json();
-        await navigator.clipboard.writeText(data.content);
+        await navigator.clipboard.writeText(data.code || "");
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       }

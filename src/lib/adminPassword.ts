@@ -1,9 +1,14 @@
+import { authenticateAccess } from "./access";
+
 export function getAdminPassword(): string {
   return process.env.ADMIN_PASSWORD || "";
 }
 
-export const ADMIN_SESSION_COOKIE = "keronshans_admin_session";
+export const ADMIN_SESSION_COOKIE = process.env.NODE_ENV === "production"
+  ? "__Host-keronshans_admin_session"
+  : "keronshans_admin_session";
 export const ADMIN_SESSION_MAX_AGE_SECONDS = 60 * 60 * 6;
+export const ADMIN_CSRF_COOKIE = "keronshans_admin_csrf";
 
 const encoder = new TextEncoder();
 
@@ -38,8 +43,11 @@ async function sha256(value: string): Promise<string> {
   return bytesToBase64Url(new Uint8Array(digest));
 }
 
+const MIN_SESSION_SECRET_LENGTH = 32;
+
 function getSessionSecret(): string {
-  return process.env.ADMIN_SESSION_SECRET || getAdminPassword();
+  const secret = process.env.ADMIN_SESSION_SECRET || "";
+  return secret.length >= MIN_SESSION_SECRET_LENGTH ? secret : "";
 }
 
 async function signPayload(payload: string): Promise<string> {
@@ -66,10 +74,26 @@ function getCookie(request: Request, name: string): string {
     ?.slice(prefix.length) || "";
 }
 
+function expectedAdminOrigin(request: Request): string {
+  return process.env.ADMIN_ORIGIN || new URL(request.url).origin;
+}
+
+export function isAdminMutationOriginValid(request: Request): boolean {
+  const origin = request.headers.get("origin");
+  return Boolean(origin && origin === expectedAdminOrigin(request));
+}
+
+export function isAdminCsrfValid(request: Request): boolean {
+  const cookie = getCookie(request, ADMIN_CSRF_COOKIE);
+  const header = request.headers.get("x-csrf-token") || "";
+  return Boolean(cookie && header && timingSafeEqual(cookie, header));
+}
+
 export async function verifyAdminPassword(input: string): Promise<boolean> {
+  if (process.env.NODE_ENV === "production") return false;
   const password = getAdminPassword();
   const candidate = String(input || "").trim();
-  if (!password || !candidate) return false;
+  if (!password || !getSessionSecret() || !candidate) return false;
   const [candidateHash, passwordHash] = await Promise.all([sha256(candidate), sha256(password)]);
   return timingSafeEqual(candidateHash, passwordHash);
 }
@@ -99,7 +123,7 @@ export function adminCookieOptions(request: Request) {
   const url = new URL(request.url);
   return {
     httpOnly: true,
-    secure: url.protocol === "https:",
+    secure: process.env.NODE_ENV === "production" || url.protocol === "https:",
     sameSite: "strict" as const,
     path: "/",
     maxAge: ADMIN_SESSION_MAX_AGE_SECONDS,
@@ -107,5 +131,10 @@ export function adminCookieOptions(request: Request) {
 }
 
 export async function authenticateAdmin(request: Request): Promise<boolean> {
+  if (process.env.NODE_ENV === "production") return authenticateAccess(request);
   return verifyAdminSessionToken(getCookie(request, ADMIN_SESSION_COOKIE));
+}
+
+export async function authenticateAdminMutation(request: Request): Promise<boolean> {
+  return (await authenticateAdmin(request)) && isAdminMutationOriginValid(request) && isAdminCsrfValid(request);
 }

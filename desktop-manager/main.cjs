@@ -3,10 +3,10 @@ const fs = require("fs");
 const path = require("path");
 const { spawn } = require("child_process");
 const matter = require("gray-matter");
-const { updateMarkdownFile, writeFileAtomic, writeMarkdown } = require("./file-store.cjs");
+const { randomUUID } = require("node:crypto");
+const { updateMarkdownFile, writeFileAtomic, writeMarkdown, revisionOf } = require("./file-store.cjs");
 const {
   CATEGORY_NAMES,
-  CATEGORY_PREFIX,
   inferMarkdownKindFromData,
   normalizeCategory,
   normalizeDescription,
@@ -15,14 +15,15 @@ const {
 } = require("./metadata.cjs");
 
 const APP_ROOT = path.resolve(__dirname, "..");
-const DEFAULT_CONTENT_ROOT = path.join(APP_ROOT, "content");
+const DEFAULT_CONTENT_ROOT = path.resolve(process.env.BLOG_AUTHOR_ROOT || path.join(app.getPath("documents"), "keronshans-author", "Published"));
 const OPEN_NEXT_DIR = path.join(APP_ROOT, ".open-next");
 const WORKSPACE_CONFIG_FILE = "manager-workspace.json";
 
 let mainWindow = null;
 let previewProcess = null;
 let activePublishTask = null;
-let workspaceInput = APP_ROOT;
+function backupRoot() { return path.join(app.getPath("userData"), "manager-backups"); }
+let workspaceInput = DEFAULT_CONTENT_ROOT;
 let activeWorkspace = null;
 
 function ensureDefaultDirs() {
@@ -31,6 +32,9 @@ function ensureDefaultDirs() {
   const problemsFile = path.join(DEFAULT_CONTENT_ROOT, "problems.json");
   fs.mkdirSync(postsDir, { recursive: true });
   fs.mkdirSync(snippetsDir, { recursive: true });
+  fs.mkdirSync(path.join(DEFAULT_CONTENT_ROOT, "assets"), { recursive: true });
+  const siteFile = path.join(DEFAULT_CONTENT_ROOT, "site.json");
+  if (!fs.existsSync(siteFile)) writeFileAtomic(siteFile, `${JSON.stringify({ schemaVersion: 1, siteId: "keronshans", title: "Keronshans' Blog", description: "", author: { name: "Keronshans" } }, null, 2)}\n`);
   fs.mkdirSync(path.dirname(problemsFile), { recursive: true });
   if (!fs.existsSync(problemsFile)) fs.writeFileSync(problemsFile, "[]\n", "utf-8");
 }
@@ -44,7 +48,7 @@ function loadWorkspaceInput() {
     const data = JSON.parse(fs.readFileSync(configPath(), "utf-8"));
     if (typeof data.workspace === "string" && fs.existsSync(data.workspace)) return data.workspace;
   } catch {}
-  return APP_ROOT;
+  return DEFAULT_CONTENT_ROOT;
 }
 
 function saveWorkspaceInput(input) {
@@ -122,6 +126,9 @@ function hasAny(paths) {
 
 function buildWorkspace(inputPath) {
   const input = path.resolve(String(inputPath || APP_ROOT));
+  const releaseRoot = path.join(APP_ROOT, ".content");
+  const relativeRelease = path.relative(releaseRoot, input);
+  if (!relativeRelease || (!relativeRelease.startsWith("..") && !path.isAbsolute(relativeRelease))) throw new Error("发行内容 checkout 为只读。请选择独立作者工作区。");
   if (!fs.existsSync(input)) throw new Error(`路径不存在：${input}`);
   const stat = fs.statSync(input);
   if (stat.isFile()) return buildFileWorkspace(input);
@@ -305,7 +312,9 @@ function readMarkdownFile(filePath, kind) {
       language: parsed.data.language || "C++",
       description: parsed.data.description || "",
       tags,
-      date: String(parsed.data.updated_at || parsed.data.created_at || "").slice(0, 10),
+      status: parsed.data.status || "draft",
+      revision: revisionOf(raw),
+      date: String(parsed.data.updatedAt || parsed.data.updated_at || parsed.data.created_at || "").slice(0, 10),
       mtime: stat.mtimeMs,
       summary: code.slice(0, 160),
     };
@@ -317,12 +326,14 @@ function readMarkdownFile(filePath, kind) {
     path: filePath,
     title: parsed.data.title || basename,
     category: parseCategory(filename, parsed.data),
+    status: parsed.data.status || "draft",
     pinned: Boolean(parsed.data.pinned),
     description,
     tags,
     date: String(parsed.data.date || "").slice(0, 10) || todayText(),
     mtime: stat.mtimeMs,
     summary: postSummary(description, parsed.content),
+    revision: revisionOf(raw),
   };
 }
 
@@ -380,7 +391,9 @@ function readWorkspaceMarkdown(ws, kind, warnings = null) {
 function loadProblems(filePath = currentWorkspace().problemsFile, warnings = null) {
   if (!fs.existsSync(filePath)) return [];
   try {
-    const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+    const raw = fs.readFileSync(filePath, "utf-8").trim();
+    if (!raw) return [];
+    const data = JSON.parse(raw);
     if (!Array.isArray(data)) throw new Error("根节点必须是数组");
     return data.map((item) => ({
       id: String(item.id || Date.now().toString(36)),
@@ -489,7 +502,9 @@ function resolveManagedMarkdownPath(kind, itemOrFilename) {
 }
 
 function updateMarkdownMeta(kind, filename, patch) {
-  const nextPatch = { ...patch };
+  const { expectedRevision, body, ...nextPatch } = { ...patch };
+  const filePath = resolveManagedMarkdownPath(kind, filename);
+  let nextBody = body;
   if (nextPatch.title !== undefined) {
     nextPatch.title = String(nextPatch.title || "").trim();
     if (!nextPatch.title) throw new Error("标题不能为空");
@@ -497,10 +512,26 @@ function updateMarkdownMeta(kind, filename, patch) {
   if (nextPatch.tags !== undefined) nextPatch.tags = parseTags(nextPatch.tags);
   if (nextPatch.description !== undefined) nextPatch.description = normalizeDescription(nextPatch.description);
   if (kind === "post" && nextPatch.category !== undefined) {
-    nextPatch.category = normalizeCategory(nextPatch.category) || "学习笔记";
+    nextPatch.category = categoryV1(nextPatch.category);
   }
-  updateMarkdownFile(resolveManagedMarkdownPath(kind, filename), nextPatch);
+  if (nextPatch.language !== undefined) nextPatch.language = languageV1(nextPatch.language);
+  if (kind === "snippet" && nextPatch.language !== undefined && body === undefined) {
+    nextBody = matter(fs.readFileSync(filePath, "utf8")).content.replace(/^```[^\r\n]*\r?\n/m, `\x60\x60\x60${nextPatch.language}\n`);
+  }
+  if (nextPatch.status !== undefined && !["draft", "ready"].includes(nextPatch.status)) throw new Error("发布状态必须为 draft 或 ready");
+  delete nextPatch.updated_at;
+  nextPatch.updatedAt = new Date().toISOString();
+  updateMarkdownFile(filePath, nextPatch, { expectedRevision, body: nextBody, backupRoot: backupRoot() });
 }
+
+function categoryV1(value) {
+  return ({ "算法学习": "algorithm", "题目复盘": "review", "学习笔记": "study", "专题集合": "collection", "碎碎念": "journal" })[normalizeCategory(value)] || "study";
+}
+function languageV1(value) {
+  const language = String(value || "cpp").toLowerCase();
+  return ({ "c++": "cpp", text: "plaintext", js: "javascript", ts: "typescript", py: "python" })[language] || language;
+}
+
 
 function createPost(payload) {
   const ws = currentWorkspace();
@@ -508,15 +539,14 @@ function createPost(payload) {
   const title = String(payload.title || "").trim();
   if (!title) throw new Error("请输入文章标题");
   fs.mkdirSync(ws.postsDir, { recursive: true });
-  const category = normalizeCategory(payload.category) || "学习笔记";
-  const prefix = CATEGORY_PREFIX[category] || "";
-  const slug = slugify(title) || "untitled";
-  const stem = prefix && slug.toLowerCase().startsWith(prefix.toLowerCase()) ? slug : `${prefix}${slug}`;
-  const filename = uniqueFilename(ws.postsDir, `${stem}.md`);
+  const id = `post-${randomUUID()}`;
+  const slug = id;
+  const filename = `${slug}.md`;
   const data = {
+    schemaVersion: 1, kind: "post", id, slug, status: "draft", updatedAt: new Date().toISOString(), aliases: [],
     title,
     date: payload.date || todayText(),
-    category,
+    category: categoryV1(payload.category),
     pinned: Boolean(payload.pinned),
     description: normalizeDescription(payload.description),
     tags: parseTags(payload.tags),
@@ -531,17 +561,16 @@ function createSnippet(payload) {
   const title = String(payload.title || "").trim();
   if (!title) throw new Error("请输入模板标题");
   fs.mkdirSync(ws.snippetsDir, { recursive: true });
-  const filename = uniqueFilename(ws.snippetsDir, `${slugify(title) || "snippet"}.md`);
-  const id = filename.replace(/\.md$/, "");
-  const language = payload.language || "C++";
+  const id = `snippet-${randomUUID()}`;
+  const filename = `${id}.md`;
+  const language = languageV1(payload.language);
   const data = {
+    schemaVersion: 1, kind: "snippet", slug: id, status: "draft", updatedAt: new Date().toISOString(),
     id,
     title,
     language,
     tags: parseTags(payload.tags),
     description: normalizeDescription(payload.description),
-    created_at: nowText(),
-    updated_at: nowText(),
   };
   writeMarkdown(path.join(ws.snippetsDir, filename), data, `\`\`\`${language}\n${payload.code || ""}\n\`\`\`\n`);
   return path.join(ws.snippetsDir, filename);
@@ -595,11 +624,11 @@ function renameTag({ from, to }) {
   const ws = currentWorkspace();
   for (const post of readWorkspaceMarkdown(ws, "post")) {
     const tags = post.tags.map((tag) => (tag === oldTag ? newTag : tag));
-    if (JSON.stringify(tags) !== JSON.stringify(post.tags)) updateMarkdownFile(post.path, { tags });
+    if (JSON.stringify(tags) !== JSON.stringify(post.tags)) updateMarkdownFile(post.path, { tags, updatedAt: new Date().toISOString() }, { expectedRevision: post.revision, backupRoot: backupRoot() });
   }
   for (const snippet of readWorkspaceMarkdown(ws, "snippet")) {
     const tags = snippet.tags.map((tag) => (tag === oldTag ? newTag : tag));
-    if (JSON.stringify(tags) !== JSON.stringify(snippet.tags)) updateMarkdownFile(snippet.path, { tags, updated_at: nowText() });
+    if (JSON.stringify(tags) !== JSON.stringify(snippet.tags)) updateMarkdownFile(snippet.path, { tags, updatedAt: new Date().toISOString() }, { expectedRevision: snippet.revision, backupRoot: backupRoot() });
   }
   if (ws.includeProblems) {
     const problems = loadProblems(ws.problemsFile).map(({ kind, ...problem }) => ({
@@ -639,7 +668,7 @@ function openVSCode(targetPath) {
 function runCommand(label, command, args, onLog) {
   return new Promise((resolve) => {
     onLog(`\n$ ${[command, ...args].join(" ")}\n`);
-    const child = spawn(command, args, { cwd: APP_ROOT, shell: false });
+    const child = spawn(command, args, { cwd: APP_ROOT, shell: false, env: { ...process.env, ...(command === process.execPath ? { ELECTRON_RUN_AS_NODE: "1" } : {}) } });
     child.stdout.on("data", (chunk) => onLog(chunk.toString()));
     child.stderr.on("data", (chunk) => onLog(chunk.toString()));
     child.on("close", (code) => {
@@ -655,7 +684,7 @@ function runCommand(label, command, args, onLog) {
 
 function runCommandCapture(command, args) {
   return new Promise((resolve) => {
-    const child = spawn(command, args, { cwd: APP_ROOT, shell: false });
+    const child = spawn(command, args, { cwd: APP_ROOT, shell: false, env: { ...process.env, ...(command === process.execPath ? { ELECTRON_RUN_AS_NODE: "1" } : {}) } });
     let output = "";
     let errorOutput = "";
     child.stdout.on("data", (chunk) => (output += chunk.toString()));
@@ -667,28 +696,51 @@ function runCommandCapture(command, args) {
 
 async function executePublishTask(task, payload, event) {
   const send = (text) => event.sender.send("manager:log", text);
-  if (task === "build") {
+  if (task === "contentSelection") {
+    const selected = await dialog.showOpenDialog(mainWindow, {
+      title: "选择要发布的文章",
+      properties: ["openFile", "multiSelections"],
+      filters: [{ name: "Markdown", extensions: ["md"] }],
+    });
+    if (selected.canceled || !selected.filePaths.length) return false;
+    const output = await dialog.showOpenDialog(mainWindow, {
+      title: "选择独立内容仓库目录",
+      properties: ["openDirectory", "createDirectory"],
+    });
+    if (output.canceled || !output.filePaths.length) return false;
     const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
-    return runCommand("build", npmCommand, ["run", "build"], send);
-  }
-  if (task === "git") {
-    const statusResult = await runCommandCapture("git", ["status", "--short"]);
-    if (!statusResult.ok) {
-      send(`读取 Git 状态失败：${statusResult.error}\n`);
+    const baseArgs = [path.join(APP_ROOT, "scripts", "publish-selection.cjs"), "--out", output.filePaths[0]];
+    selected.filePaths.forEach((filePath) => baseArgs.push("--file", filePath));
+    send(`已选择 ${selected.filePaths.length} 篇文章，正在计算变更预览……\n`);
+    const preview = await runCommandCapture(process.execPath, [...baseArgs, "--dry-run"]);
+    if (!preview.ok) {
+      send(`${preview.error || preview.output}\n`);
       return false;
     }
-    if (!statusResult.output) {
-      send("工作区没有需要提交的改动。\n");
-      return true;
-    }
-    send(`待提交改动:\n${statusResult.output}\n`);
-    const message = String(payload?.message || "").trim() || `chore: update blog ${nowText()}`;
-    if (!(await runCommand("git add", "git", ["add", "-A"], send))) return false;
-    const committed = await runCommand("git commit", "git", ["commit", "-m", message], send);
-    if (!committed) return false;
-    const branchResult = await runCommandCapture("git", ["branch", "--show-current"]);
-    const branch = branchResult.ok && branchResult.output ? branchResult.output : "main";
-    return runCommand("git push", "git", ["push", "origin", branch], send);
+    let summary;
+    try { summary = JSON.parse(preview.output); } catch { send(`预览输出无法解析：${preview.output}\n`); return false; }
+    const changed = (summary.changedFiles || []).map((item) => `${item.change === "added" ? "+" : item.change === "removed" ? "-" : "~"} ${item.path}`).join("\n");
+    send(`预览：${summary.changedFileCount || 0} 个文件将变化\n${changed || "（没有文件变化）"}\n`);
+    const confirm = await dialog.showMessageBox(mainWindow, {
+      type: "question",
+      buttons: ["取消", "创建内容提交"],
+      defaultId: 1,
+      cancelId: 0,
+      title: "确认发布",
+      message: `将发布 ${selected.filePaths.length} 篇文章，变更 ${summary.changedFileCount || 0} 个文件。`,
+      detail: changed || "没有文件变化，将跳过提交。",
+    });
+    if (confirm.response !== 1) { send("已取消发布。\n"); return false; }
+    const publishArgs = [...baseArgs, "--commit"];
+    if (summary.expectedParentSha) publishArgs.push("--expected-parent-sha", summary.expectedParentSha);
+    return runCommand("content publish", process.execPath, publishArgs, send);
+  }
+  if (task === "build") {
+    return runCommand("build", process.execPath, [path.join(APP_ROOT, "scripts/with-wrangler-env.cjs"), "npm", "run", "build"], send);
+  }
+  if (task === "git") {
+    send("请使用内容选择发布创建独立内容提交；框架提交由命令行完成。\n");
+    return false;
   }
   if (task === "deploy") {
     if (previewProcess && !previewProcess.killed) {
@@ -699,7 +751,8 @@ async function executePublishTask(task, payload, event) {
     return runCommand("deploy", "powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "deploy.ps1", "-SkipGit"], send);
   }
   if (task === "syncSearchIndex") {
-    return runCommand("sync search index", "powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", path.join("scripts", "sync-search-index.ps1")], send);
+    send("搜索索引随固定内容构建生成。\n");
+    return false;
   }
   throw new Error(`Unknown task: ${task}`);
 }
@@ -743,10 +796,10 @@ async function openPreview() {
   }
 
   if (!previewProcess || previewProcess.killed) {
-    const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
-    previewProcess = spawn(npmCommand, ["run", "dev", "--", "-p", "3000"], {
+    previewProcess = spawn(process.execPath, [path.join(APP_ROOT, "scripts/with-wrangler-env.cjs"), "npm", "run", "dev", "--", "-p", "3000"], {
       cwd: APP_ROOT,
       shell: false,
+      env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" },
       env: { ...process.env, NEXT_TELEMETRY_DISABLED: "1" },
     });
     previewProcess.stdout.on("data", (chunk) => mainWindow?.webContents.send("manager:log", chunk.toString()));
@@ -793,18 +846,18 @@ async function selectWorkspace() {
 }
 
 function resetWorkspace() {
-  setWorkspace(APP_ROOT);
   ensureDefaultDirs();
+  setWorkspace(DEFAULT_CONTENT_ROOT);
   return getSnapshot();
 }
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1220,
-    height: 780,
-    minWidth: 980,
-    minHeight: 620,
-    title: "Keronshans Blog Manager",
+    width: 1540,
+    height: 920,
+    minWidth: 1180,
+    minHeight: 700,
+    title: "Keronshans Blog Manager · 文章工作台",
     backgroundColor: "#f7faf7",
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
@@ -833,7 +886,7 @@ app.whenReady().then(() => {
   try {
     currentWorkspace();
   } catch {
-    workspaceInput = APP_ROOT;
+    workspaceInput = DEFAULT_CONTENT_ROOT;
     activeWorkspace = null;
     currentWorkspace();
   }

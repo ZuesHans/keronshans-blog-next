@@ -9,6 +9,11 @@ const CATEGORY_PREFIX = {
 };
 
 const CATEGORY_ALIASES = {
+  algorithm: "算法学习",
+  review: "题目复盘",
+  study: "学习笔记",
+  collection: "专题集合",
+  journal: "碎碎念",
   "算法板子": "算法学习",
   "题解复盘": "题目复盘",
   "专题训练": "专题集合",

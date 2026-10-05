@@ -147,7 +147,8 @@ function rateLimited(retryAfter: number) {
 }
 
 export async function POST(request: Request) {
-  const limit = checkRateLimit(request, "oj-sync", 6, 60 * 1000);
+  const limit = await checkRateLimit(request, "oj-sync", 6, 60 * 1000);
+  if (!limit.available) return NextResponse.json({ error: "Sync service unavailable" }, { status: 503 });
   if (!limit.allowed) return rateLimited(limit.retryAfter);
 
   const contentLength = Number(request.headers.get("content-length") || 0);

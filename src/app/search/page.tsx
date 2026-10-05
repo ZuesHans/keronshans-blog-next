@@ -51,7 +51,7 @@ function FullTextResult({ result, query }: { result: SearchResult; query: string
 
 function PostResult({ post }: { post: PostMeta }) {
   return (
-    <Link href={`/posts/${post.id}`}>
+    <Link href={`/posts/${post.slug}`}>
       <article className="cyber-card p-5 group cursor-pointer">
         <div className="flex items-start gap-4">
           <div className="shrink-0">
@@ -82,7 +82,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     getAllPosts(),
     query && !tag ? getPostSearchDocuments() : Promise.resolve([]),
   ]);
-  const allTags = getAllTags();
+  const allTags = await getAllTags();
   const fullTextResults = query && !tag ? searchDocuments(documents, query) : [];
   const filteredPosts = tag ? allPosts.filter((post) => post.tags.includes(tag)) : query ? [] : allPosts;
   const resultCount = query && !tag ? fullTextResults.length : filteredPosts.length;

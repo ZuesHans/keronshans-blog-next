@@ -1,15 +1,17 @@
-interface PostsKVBinding {
-  get(key: string): Promise<string | null>;
-  put(key: string, value: string): Promise<void>;
-}
-
 interface AppBindings {
   DB: D1Database;
-  KV?: PostsKVBinding;
-  POSTS_KV?: PostsKVBinding;
+  ADMIN_PASSWORD?: string;
+  ADMIN_SESSION_SECRET?: string;
+  ACCESS_TEAM_DOMAIN?: string;
+  ACCESS_AUD?: string;
+  ACCESS_ADMIN_SUBJECTS?: string;
+  PUBLIC_IDENTITY_SECRET?: string;
   OJ_SYNC_TOKEN?: string;
   SEARCH_API_URL?: string;
   SEARCH_API_TOKEN?: string;
+  PRODUCTION_ADMIN_ENABLED?: string;
+  TURNSTILE_SECRET_KEY?: string;
+  TURNSTILE_HOSTNAME?: string;
 }
 
 declare global {

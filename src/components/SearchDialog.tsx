@@ -11,7 +11,8 @@ import {
 } from "@/lib/search";
 
 interface SearchIndexResponse {
-  version?: number;
+  schemaVersion?: number;
+  snapshotDigest?: string;
   documents?: SearchDocument[];
 }
 
@@ -27,13 +28,22 @@ function loadSearchDocuments(): Promise<SearchDocument[]> {
   if (cachedDocuments) return Promise.resolve(cachedDocuments);
   if (pendingDocuments) return pendingDocuments;
 
-  pendingDocuments = fetch("/api/search-index")
+  pendingDocuments = fetch("/api/v1/version", { cache: "no-store" })
+    .then(async (versionResponse) => {
+      if (!versionResponse.ok) throw new Error(`Version request failed: ${versionResponse.status}`);
+      const version = (await versionResponse.json()) as { searchDigest?: string; snapshotDigest?: string };
+      if (!version.searchDigest || !version.snapshotDigest) throw new Error("Version response is invalid");
+      return fetch(`/_content/${encodeURIComponent(version.searchDigest)}/search.json`, { cache: "force-cache" }).then(async (response) => {
+        if (!response.ok) throw new Error(`Search index request failed: ${response.status}`);
+        const data = (await response.json()) as SearchIndexResponse;
+        if (data.schemaVersion !== 1 || data.snapshotDigest !== version.snapshotDigest || !Array.isArray(data.documents)) throw new Error("Search index response is invalid");
+        return data;
+      });
+    })
     .then(async (response) => {
-      if (!response.ok) throw new Error(`Search index request failed: ${response.status}`);
-      const data = (await response.json()) as SearchIndexResponse;
-      if (!Array.isArray(data.documents)) throw new Error("Search index response is invalid");
-      cachedDocuments = data.documents;
-      return data.documents;
+      const data = response as SearchIndexResponse;
+      cachedDocuments = data.documents || [];
+      return cachedDocuments;
     })
     .catch((error) => {
       pendingDocuments = null;

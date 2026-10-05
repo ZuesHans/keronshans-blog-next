@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const matter = require("gray-matter");
-const { updateMarkdownFile, writeMarkdown } = require("./file-store.cjs");
+const { updateMarkdownFile, writeMarkdown, revisionOf, readHistory } = require("./file-store.cjs");
 
 test("updates description atomically without changing article content", (t) => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "blog-manager-"));
@@ -25,4 +25,17 @@ test("updates description atomically without changing article content", (t) => {
   assert.deepEqual(parsed.data.tags, ["测试"]);
   assert.equal(parsed.content, body);
   assert.deepEqual(fs.readdirSync(directory).filter((name) => name.endsWith(".tmp")), []);
+});
+
+test("refuses stale metadata writes and keeps a recoverable revision", (t) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "blog-manager-history-"));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const filePath = path.join(directory, "sample.md");
+  const backupRoot = path.join(directory, "backups");
+  writeMarkdown(filePath, { title: "旧标题" }, "正文");
+  const oldRevision = revisionOf(fs.readFileSync(filePath, "utf8"));
+  fs.appendFileSync(filePath, "\n外部改动");
+  assert.throws(() => updateMarkdownFile(filePath, { title: "覆盖" }, { expectedRevision: oldRevision, backupRoot }), /其他程序修改/);
+  updateMarkdownFile(filePath, { title: "新标题" }, { backupRoot });
+  assert.equal(readHistory(filePath, backupRoot).length, 1);
 });

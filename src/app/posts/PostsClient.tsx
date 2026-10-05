@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { CATEGORY_GROUPS, getCategoryColorClass } from "@/lib/categories";
+import { CATEGORY_GROUPS } from "@/lib/categories";
+import PostList from "@/components/theme/PostList";
 
 const ALL_CATEGORY = "全部";
 
 interface PostMeta {
   id: string;
+  slug: string;
   title: string;
   date: string;
   tags: string[];
@@ -139,35 +140,7 @@ export default function PostsClient({
           {activeTag && <span className="tag-pill">#{activeTag}</span>}
         </div>
 
-        <section className="posts-directory">
-          {filteredPosts.length === 0 ? (
-            <div className="cyber-card p-10 text-center" style={{ color: "var(--owl-textSecondary)" }}>
-              没有匹配的文章。
-            </div>
-          ) : (
-            filteredPosts.map((post) => (
-              <Link key={post.id} href={`/posts/${post.id}`}>
-                <article className="posts-directory-item">
-                  <time>{post.date}</time>
-                  <div className="posts-directory-body">
-                    <div className="posts-directory-meta">
-                      {post.pinned && <em>置顶</em>}
-                      <span className={`category-chip ${getCategoryColorClass(post.category)}`}>{post.category}</span>
-                    </div>
-                    <h2>{post.title}</h2>
-                    {post.excerpt && <p>{post.excerpt}</p>}
-                    {post.tags.length > 0 && (
-                      <div className="posts-directory-tags">
-                        {post.tags.slice(0, 5).map((tag) => <span key={tag}>#{tag}</span>)}
-                      </div>
-                    )}
-                  </div>
-                  <span className="posts-directory-arrow" aria-hidden="true">→</span>
-                </article>
-              </Link>
-            ))
-          )}
-        </section>
+        <PostList posts={filteredPosts} />
       </div>
     </div>
   );

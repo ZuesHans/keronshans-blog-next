@@ -1,26 +1,31 @@
 import { NextResponse } from "next/server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { authenticateAdmin } from "@/lib/adminPassword";
+import { authenticateAdminMutation } from "@/lib/adminPassword";
+import { readJsonBody } from "@/lib/request";
 
 export async function GET() {
   try {
     const { env } = await getCloudflareContext({ async: true });
-    const { results } = await env.DB.prepare("SELECT * FROM checkins ORDER BY created_at DESC").all();
-    return NextResponse.json(results);
+    const { results } = await env.DB.prepare("SELECT id, type, count, created_at FROM checkins ORDER BY created_at DESC LIMIT 50").all();
+    return NextResponse.json((results || []).map((row: Record<string, unknown>) => ({ id: row.id, type: row.type, count: row.count, date: row.created_at })));
   } catch {
-    return NextResponse.json([]);
+    return NextResponse.json({ error: "Interaction service unavailable" }, { status: 503, headers: { "Cache-Control": "no-store" } });
   }
 }
 
 export async function POST(request: Request) {
   try {
     const { env } = await getCloudflareContext({ async: true });
-    if (!(await authenticateAdmin(request))) {
+    if (!(await authenticateAdminMutation(request))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { date, type, count, note } = await request.json();
-    if (!date || !type || !count || count < 1) {
+    const bodyResult = await readJsonBody(request, 8192);
+    if (!bodyResult.ok || !bodyResult.value || typeof bodyResult.value !== "object" || Array.isArray(bodyResult.value)) {
+      return NextResponse.json({ error: bodyResult.ok ? "Invalid data" : bodyResult.error }, { status: bodyResult.ok ? 400 : bodyResult.status });
+    }
+    const { date, type, count, note } = bodyResult.value as { date?: unknown; type?: unknown; count?: unknown; note?: unknown };
+    if (typeof date !== "string" || typeof type !== "string" || !Number.isInteger(count) || (count as number) < 1 || (typeof note !== "undefined" && typeof note !== "string")) {
       return NextResponse.json({ error: "Invalid data" }, { status: 400 });
     }
 
@@ -39,7 +44,7 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const { env } = await getCloudflareContext({ async: true });
-    if (!(await authenticateAdmin(request))) {
+    if (!(await authenticateAdminMutation(request))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

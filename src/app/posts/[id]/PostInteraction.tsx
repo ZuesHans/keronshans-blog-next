@@ -1,17 +1,18 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { verifyPassword } from "@/lib/auth";
+import { getCsrfToken, verifyPassword } from "@/lib/auth";
+import InteractionChallenge from "@/components/InteractionChallenge";
 
 interface Comment {
   id: number;
-  post_id: string;
   nickname: string;
   content: string;
-  created_at: string;
+  createdAt: string;
 }
 
 export default function PostInteraction({ postId }: { postId: string }) {
+  const interactionsEnabled = process.env.NODE_ENV !== "production" || Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
   const [comments, setComments] = useState<Comment[]>([]);
   const [likes, setLikes] = useState(0);
   const [liked, setLiked] = useState(false);
@@ -25,6 +26,10 @@ export default function PostInteraction({ postId }: { postId: string }) {
   const [adminPassword, setAdminPassword] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [likeError, setLikeError] = useState("");
+  const [challengeToken, setChallengeToken] = useState("");
+  const [challengeRevision, setChallengeRevision] = useState(0);
+  const [notice, setNotice] = useState("");
+  const newMutationId = () => typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
   const fetchComments = useCallback(async () => {
     try {
@@ -59,11 +64,11 @@ export default function PostInteraction({ postId }: { postId: string }) {
       const res = await fetch("/api/likes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId }),
+        body: JSON.stringify({ postId, challengeToken, clientMutationId: newMutationId() }),
       });
       if (res.ok) {
         setLiked(true);
-        setLikes((l) => l + 1);
+        await fetchLikes();
         const likedPosts = JSON.parse(localStorage.getItem("keronshans_liked_posts") || "[]");
         likedPosts.push(postId);
         localStorage.setItem("keronshans_liked_posts", JSON.stringify(likedPosts));
@@ -75,6 +80,8 @@ export default function PostInteraction({ postId }: { postId: string }) {
       }
     } catch {
       setLikeError("Network error");
+    } finally {
+      setChallengeToken(""); setChallengeRevision((value) => value + 1);
     }
   };
 
@@ -90,10 +97,13 @@ export default function PostInteraction({ postId }: { postId: string }) {
           postId,
           nickname: nickname || "",
           content: commentContent.trim(),
+          clientMutationId: newMutationId(),
+          challengeToken,
         }),
       });
       if (res.ok) {
         setCommentContent("");
+        setNotice("评论已提交，等待审核。");
         await fetchComments();
       } else {
         const data = await res.json().catch(() => ({}));
@@ -103,6 +113,7 @@ export default function PostInteraction({ postId }: { postId: string }) {
       setError("Network error");
     } finally {
       setSubmitting(false);
+      setChallengeToken(""); setChallengeRevision((value) => value + 1);
     }
   };
 
@@ -111,6 +122,7 @@ export default function PostInteraction({ postId }: { postId: string }) {
     try {
       const res = await fetch(`/api/comments?id=${commentId}`, {
         method: "DELETE",
+        headers: { "X-CSRF-Token": getCsrfToken() },
       });
       if (res.ok) {
         setComments((prev) => prev.filter((c) => c.id !== commentId));
@@ -161,7 +173,7 @@ export default function PostInteraction({ postId }: { postId: string }) {
       <div className="flex items-center gap-4">
         <button
           onClick={handleLike}
-          disabled={liked}
+          disabled={liked || !interactionsEnabled || submitting}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-sm transition-all border ${
             liked
               ? "cursor-default"
@@ -198,6 +210,9 @@ export default function PostInteraction({ postId }: { postId: string }) {
       )}
 
       {/* Comment Form */}
+      {notice && <p className="text-sm text-gray-500" role="status">{notice}</p>}
+      {!interactionsEnabled && <p className="text-sm text-gray-500">评论与点赞暂未开放</p>}
+      <InteractionChallenge onToken={setChallengeToken} revision={challengeRevision} />
       <div className="cyber-card p-5">
         <div className="flex flex-col sm:flex-row gap-3 mb-3">
           <input
@@ -205,7 +220,8 @@ export default function PostInteraction({ postId }: { postId: string }) {
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
             placeholder="Nickname (optional)"
-            maxLength={20}
+            maxLength={40}
+            disabled={!interactionsEnabled}
             className="cyber-input w-full sm:w-40"
           />
         </div>
@@ -217,11 +233,12 @@ export default function PostInteraction({ postId }: { postId: string }) {
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleComment()}
             placeholder="Write a comment..."
             maxLength={500}
+            disabled={!interactionsEnabled}
             className="cyber-input flex-1"
           />
           <button
             onClick={handleComment}
-            disabled={!commentContent.trim() || submitting}
+            disabled={!interactionsEnabled || !commentContent.trim() || submitting}
             className="px-4 py-2 rounded-lg font-mono text-sm border border-neon-pink bg-neon-pink/10 text-neon-pink hover:bg-neon-pink/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
           >
             {submitting ? "..." : "发送"}
@@ -235,7 +252,7 @@ export default function PostInteraction({ postId }: { postId: string }) {
       </div>
 
       {/* Admin Login (small link) */}
-      {!isAdmin && (
+      {!isAdmin && process.env.NODE_ENV !== "production" && (
         <div className="flex justify-end">
           <button
             onClick={() => setShowAdminPanel(!showAdminPanel)}
@@ -282,7 +299,7 @@ export default function PostInteraction({ postId }: { postId: string }) {
                   {comment.nickname || "Anonymous"}
                 </span>
                 <span className="text-xs font-mono text-gray-400">
-                  {formatTime(comment.created_at)}
+                  {formatTime(comment.createdAt)}
                 </span>
                 {/* Admin delete button */}
                 {isAdmin && (

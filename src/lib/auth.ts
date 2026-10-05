@@ -1,5 +1,10 @@
 export const AUTH_SESSION_KEY = "keronshans_auth";
 
+export function getCsrfToken(): string {
+  if (typeof document === "undefined") return "";
+  return document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith("keronshans_admin_csrf="))?.slice("keronshans_admin_csrf=".length) || "";
+}
+
 export async function verifyPassword(input: string): Promise<boolean> {
   const password = input.trim();
   if (!password || typeof window === "undefined") return false;
@@ -50,8 +55,6 @@ export function getAdminPassword(): string {
 }
 
 export async function restoreAuthenticatedPassword(): Promise<string> {
-  if (!isAuthenticated()) return "";
-
   if (await verifySession()) return "session";
 
   clearAuthenticated();

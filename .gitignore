@@ -9,7 +9,14 @@ out/
 next-env.d.ts
 .codebuddy/
 .open-next/
-.wrangler/logs/
+.wrangler/
 .wrangler-config/
 public/img/
 blog-manager/
+.playwright-cli/
+output/
+/content/
+/.content/
+src/generated/contentSnapshot.ts
+public/assets/
+*.bundle

@@ -1,159 +1,41 @@
-# Keronshans Blog Next
+# Keronshans Blog 1.0
 
-这是一个 Next.js + Cloudflare Workers/OpenNext 的个人整理站，内容主要放在 `content/`，前端页面和接口放在 `src/`。
+Next.js 15 App Router + React 19，经 OpenNext 部署为 Cloudflare Worker。公开正文来自独立私有 Git 内容仓库，框架仓库不再保存正文、数据库文件或生成产物。当前架构见 [PROJECT_MAP](docs/PROJECT_MAP.md)，发行范围见 [ADR](docs/adr/0004-release-v1-scope.md)。
 
-## 日常修改
+## 本地运行
 
-- 改首页：`src/app/page.tsx`
-- 改导航：`src/components/Navigation.tsx`
-- 改全局配色/卡片/字体：`src/app/globals.css`
-- 改关于页：`src/app/about/page.tsx`
-- 写文章：`content/posts/*.md`，也可以用本地桌面管理器或后台 `/dashboard`
-- 改代码片段：`content/snippets/*.md` 或后台
-
-## 内容分类和置顶
-
-文章分类统一使用这五类：
-
-- 算法学习
-- 题目复盘
-- 学习笔记
-- 专题集合
-- 碎碎念
-
-旧文章 frontmatter 里如果还写着 `算法板子`、`题解复盘`、`专题训练`，站点会自动兼容显示成新分类名。
-
-文章支持置顶，在 frontmatter 里写：
-
-```yaml
-pinned: true
-```
-
-置顶文章会排在普通文章前面，首页最近更新和 `/posts` 文章目录都会显示轻量的“置顶”标记。推荐直接用本地桌面管理器里的“置顶文章”勾选项来维护。
-
-## 本地预览
+需要 Node.js 24、npm、Git，以及独立内容仓库的读取权限。
 
 ```powershell
+npm ci
+npm run check
 npm run dev
 ```
 
-打开终端显示的本地地址，通常是 `http://localhost:3000`。
+`release.json` 固定内容仓库和完整 commit SHA。`content:checkout` 创建只读 `.content/` checkout，拒绝覆盖未提交修改；Windows 禁用换行转换以保证 manifest 字节摘要。开发服务启动时生成资源和路由快照。作者编辑应放在独立工作区，不能直接改发行 checkout。
 
-## 本地桌面管理器
-
-```powershell
-npm run manager
-```
-
-这个命令会打开 Electron 小窗口。默认工作区是当前博客项目，用于管理：
-
-- 文章：`content/posts/*.md`
-- 代码片段：`content/snippets/*.md`
-- 题目：`content/problems.json`
-
-正文仍然推荐用 VS Code 写。管理器里的“打开当前文件”会直接把对应文件交给 VS Code。
-
-管理器左侧有“切换工作区”：
-
-- 选择博客项目根目录时，会解析该目录下的 `content/posts`、`content/snippets` 和 `content/problems.json`
-- 选择 `content` 目录时，会解析这个 `content` 目录本身
-- 选择 `posts` 或 `snippets` 文件夹时，只管理这个文件夹里的 Markdown
-- 选择普通文件夹时，会解析这个文件夹里的 Markdown，并按 frontmatter/目录名推断文章或模板片段
-- 选择单个 `.md`/`.mdx` 文件时，只管理这个文件；保存元数据会写回这个原文件
-- 选择单个 `.json` 文件时，会按题目列表管理；保存会写回这个原 JSON 文件
-
-也就是说，管理器解析出来的东西不会复制到别处：你的文件在哪里，它就从哪里读，修改后也写回哪里。左下角会显示当前正在管理的真实路径；列表标题下面也会显示当前文章/模板/题目实际读取的路径。
-
-注意：网站本地预览和线上发布仍然以当前项目里的 `content/`、后台 API/D1 数据为准。用管理器打开外部文件夹只是本地整理和编辑；如果希望外部文件出现在这个博客站点里，需要把它放回本项目的 `content/posts` 或 `content/snippets`，或者通过后台写入对应数据源。
-
-文章元数据可以在管理器里改：
-
-- 标题
-- 分类
-- 日期
-- 标签
-- 置顶文章
-- 描述 / 首页摘要（最多 240 字）
-
-描述会写入 Markdown frontmatter 的 `description` 字段，并显示在首页最近更新和文章列表。新建文章时可以直接填写，也可以稍后在右侧元数据面板补充。
-
-管理器会在元数据改动后提示未保存状态，支持 `Ctrl/Cmd + S` 保存；切换文章、工作区或关闭窗口前会提醒未保存修改。Markdown 和题目 JSON 使用临时文件替换写入，避免保存中断时留下半个文件。开发预览和生产构建会优先读取本地 `content/`，因此保存后刷新预览即可看到结果。
-
-## 发布前检查
+## 发行
 
 ```powershell
-npm run build
+npm run content:verify
+npm run build:cloudflare
+npm run preview:built -- --port 8787
+npm run check:site -- http://127.0.0.1:8787
+# 关闭预览后部署同一产物
+npm run deploy:built
+npm run check:site -- https://keronshans.top
 ```
 
-只要最后显示构建成功，就可以继续发布。现在构建时可能会看到几行 `Unrecognized Unicode character "∗"`，这是文章内容里的数学符号警告，不影响发布。
+构建生成 `.open-next/release-artifact.json`，部署前核对源码和产物摘要。源码或产物变化必须重建。`deploy.ps1` 使用相同 npm 入口，不会自动提交工作区。
 
-## 推到 GitHub 备份
+GitHub 每次 main push/PR 无条件运行检查。生产 workflow 只接受 main 的手动触发，使用仓库中提交的 pin，串行发布并归档产物、验证公网健康。首次使用需要配置 `CONTENT_REPO_TOKEN`（只读内容仓库）、`CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID` secrets 和 `PRODUCTION_URL` variable。未配置时手动发布明确失败；本地 Cloudflare OAuth 可以独立发行。
 
-```powershell
-git status
-git add -A
-git commit -m "你的修改说明"
-git push origin main
-```
+## 内容与安全
 
-GitHub 仓库是 `https://github.com/ZuesHans/keronshans-blog-next`。旧 Hexo 仓库保存在 `hexo-old` remote，不要往那里推这个新项目。
+选择式 publisher 只导出明确选中的 schema v1 Markdown 和图片引用闭包；整库 publisher 仅扫描 `Published/`。先 dry-run 再创建内容提交，随后在框架 `release.json` 更新 SHA。稳定 ID 不随 slug 改变，旧地址 308，撤稿地址 410。正文 API 只读，D1 仅用于互动和运行数据。详见 [CONTENT-PUBLISHING](docs/CONTENT-PUBLISHING.md)。
 
-## 发布到 Cloudflare
+生产后台默认关闭：`PRODUCTION_ADMIN_ENABLED=false`，旧密码和 HMAC 会话不再用于生产认证。后续启用必须配置 Access 的 team domain、AUD、管理员 sub，并显式开启。密码仅用于本地开发。无 Turnstile 配置时生产评论/点赞写入关闭；已有评论和计数仍可读取。
 
-推荐流程：
+桌面管理器：`npm run manager`。默认作者目录在 Documents/keronshans-author/Published，支持草稿/可发布状态、稳定 ID、并发修改检测和本地备份。发布到独立内容仓库后再更新发行 pin。
 
-```powershell
-npm run build
-powershell -File deploy.ps1 -SkipGit
-```
-
-如果你已经把代码推到 GitHub 了，就用 `-SkipGit`。如果只是想直接部署当前电脑上的版本，也可以用：
-
-```powershell
-npx wrangler deploy
-```
-
-线上地址：`https://keronshans-blog.3180263779.workers.dev`
-
-## 后台密码
-
-后台密码不再写死在代码里，而是读取环境变量 `ADMIN_PASSWORD`。
-
-本地开发时，新建 `.env.local`：
-
-```env
-ADMIN_PASSWORD=换成你的密码
-```
-
-Cloudflare 线上环境需要设置 Secret：
-
-```powershell
-npx wrangler secret put ADMIN_PASSWORD
-```
-
-运行后终端会让你输入密码。不要把真实密码提交到 GitHub，也不要写进代码。
-
-## 已清理的旧静态文件
-
-这个项目现在真正运行的是 Next.js。旧 Hexo 生成出来的根目录 HTML 和静态资源已经清理掉了，比如：
-
-- `index.html`
-- `archives/`
-- `tags/`
-- `page/`
-- `Diary/`
-- `KH_*`、`wp_*`、`ZU_*`、`sp_*` 这类旧文章 HTML 目录
-- `search.xml`
-- 根目录的旧 `css/`、`js/`、`assets/`
-
-不要删 `content/`、`src/`、`public/`、`scripts/`、`package.json`、`wrangler.toml`、`deploy.ps1`。这些是现在的 Next 站点真正需要的文件。
-
-## 创建桌面快捷方式
-
-运行一次：
-
-```powershell
-powershell -File scripts/create-manager-shortcut.ps1
-```
-
-之后桌面会出现 `Keronshans Blog Manager` 图标。双击它会静默启动本地 Electron 管理器，不会额外弹出黑色命令行窗口。
+未来的平台完整规划保留在 [PLATFORM-REBUILD-SPEC](docs/PLATFORM-REBUILD-SPEC.md)，其中独立 controller、GitHub App/OIDC 和外部封存存储属于后续范围，不能视为本版已上线功能。

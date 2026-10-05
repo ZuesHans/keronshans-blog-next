@@ -1,16 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { createContext, useContext, useId, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeHighlight from "rehype-highlight";
 import rehypeKatex from "rehype-katex";
-import rehypeRaw from "rehype-raw";
 
 interface MarkdownRendererProps {
   content: string;
 }
+
+const InCodeBlock = createContext(false);
 
 type HastNode = {
   value?: string;
@@ -37,36 +38,66 @@ function CodeBlock({
 }) {
   const [copied, setCopied] = useState(false);
   const [collapsed, setCollapsed] = useState(true);
+  const codeRegionId = useId();
   const codeString = (textFromNode(node) || String(children)).replace(/\n$/, "");
   const lines = codeString.split("\n").length;
   const canCollapse = lines > 18;
 
   const copyCode = async () => {
-    await navigator.clipboard.writeText(codeString);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1200);
+    try {
+      await navigator.clipboard.writeText(codeString);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      setCopied(false);
+    }
   };
 
   return (
-    <div className="code-panel">
+    <div className="code-panel" data-language={language}>
       <div className="code-toolbar">
-        <span>{language}</span>
-        <div className="flex items-center gap-2">
+        <span className="code-language"><span aria-hidden="true">&lt;/&gt;</span>{language}</span>
+        <div className="code-toolbar-actions">
           {canCollapse && (
-            <button type="button" onClick={() => setCollapsed(!collapsed)} className="code-action">
+            <button type="button" onClick={() => setCollapsed(!collapsed)} className="code-action" aria-expanded={!collapsed} aria-controls={codeRegionId}>
               {collapsed ? `展开 ${lines} 行` : "收起"}
             </button>
           )}
-          <button type="button" onClick={copyCode} className="code-action">
+          <button type="button" onClick={copyCode} className="code-action" aria-label={copied ? "代码已复制" : "复制代码"}>
             {copied ? "已复制" : "复制"}
           </button>
         </div>
       </div>
-      <pre className={canCollapse && collapsed ? "is-collapsed" : undefined}>
-        <code className={className}>{children}</code>
-      </pre>
+      <div id={codeRegionId} className={`code-content${canCollapse && collapsed ? " is-collapsed" : ""}`}>
+        <div className="code-gutter" aria-hidden="true">
+          {Array.from({ length: lines }, (_, index) => <span key={index}>{index + 1}</span>)}
+        </div>
+        <pre><code className={className}>{children}</code></pre>
+      </div>
+      {canCollapse && collapsed && (
+        <button type="button" className="code-expand" onClick={() => setCollapsed(false)} aria-controls={codeRegionId}>
+          展开全部 {lines} 行 <span aria-hidden="true">↓</span>
+        </button>
+      )}
     </div>
   );
+}
+
+function MarkdownCode({ className, children, node, ...props }: {
+  className?: string;
+  children?: React.ReactNode;
+  node?: HastNode;
+}) {
+  const isBlock = useContext(InCodeBlock);
+  if (isBlock) {
+    const languageClass = className?.split(/\s+/).find((name) => name.startsWith("language-"));
+    return (
+      <CodeBlock className={className} language={languageClass?.replace("language-", "") || "text"} node={node}>
+        {children}
+      </CodeBlock>
+    );
+  }
+  return <code className={className} {...props}>{children}</code>;
 }
 
 export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
@@ -75,27 +106,12 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[
-          rehypeRaw,
           rehypeKatex,
           [rehypeHighlight, { aliases: { cpp: ["c++", "cc", "cxx", "h", "hpp"] } }],
         ]}
         components={{
-          pre: ({ children }) => <>{children}</>,
-          code: ({ className, children, node, ...props }) => {
-            const languageClass = className?.split(/\s+/).find((name) => name.startsWith("language-"));
-            if (languageClass) {
-              return (
-                <CodeBlock className={className} language={languageClass.replace("language-", "")} node={node as HastNode}>
-                  {children}
-                </CodeBlock>
-              );
-            }
-            return (
-              <code className={className} {...props}>
-                {children}
-              </code>
-            );
-          },
+          pre: ({ children }) => <InCodeBlock.Provider value>{children}</InCodeBlock.Provider>,
+          code: MarkdownCode,
         }}
       >
         {content}

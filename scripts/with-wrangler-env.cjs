@@ -47,9 +47,9 @@ const resolvedCommand = resolveLocalCommand(command);
 const executable = isWindows ? process.env.ComSpec || "cmd.exe" : resolvedCommand;
 const spawnArgs = isWindows ? ["/d", "/s", "/c", [resolvedCommand, ...args].map(quoteArg).join(" ")] : args;
 const env = {
-  ...process.env,
   ...loadEnvFile(path.join(process.cwd(), ".env")),
   ...loadEnvFile(path.join(process.cwd(), ".env.local")),
+  ...process.env,
   WRANGLER_LOG_PATH: process.env.WRANGLER_LOG_PATH || path.join(process.cwd(), ".wrangler", "logs"),
 };
 

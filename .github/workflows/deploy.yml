@@ -1,51 +1,80 @@
-# GitHub Actions workflow for Cloudflare Workers deployment
-# Requires secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
-# Without secrets, this workflow will be skipped (no failure)
-name: Deploy to Cloudflare Workers
+name: Verify and Release
 
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  deploy:
-    name: Build and Deploy
+  check:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    # Only run if Cloudflare secrets are configured
-    if: vars.CLOUDFLARE_DEPLOY_ENABLED != ''
-
+    timeout-minutes: 20
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm audit --omit=dev
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build for Cloudflare
-        run: npx opennextjs-cloudflare build
+  release:
+    needs: check
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Validate committed release pin and credentials
+        id: pin
         env:
-          NODE_OPTIONS: "--max-old-space-size=4096"
-
-      - name: Copy pre-rendered HTML to assets
+          CONTENT_TOKEN: ${{ secrets.CONTENT_REPO_TOKEN }}
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SITE_URL: ${{ vars.PRODUCTION_URL }}
         run: |
-          mkdir -p .open-next/assets
-          find .next/server/app -name "*.html" -exec cp --parents {} .open-next/assets/ \;
-          if [ -f .next/server/app/_not-found.html ]; then
-            cp .next/server/app/_not-found.html .open-next/assets/404.html
-          fi
-
-      - name: Deploy to Cloudflare Workers
-        uses: cloudflare/wrangler-action@v3
+          node -e 'const p=require("./release.json"); if(p.contentRepository!=="ZuesHans/keronshans-blog-content" || !/^[a-f0-9]{40}$/.test(p.contentSha)) process.exit(1); console.log("repository="+p.contentRepository); console.log("sha="+p.contentSha)' >> "$GITHUB_OUTPUT"
+          test -n "$CONTENT_TOKEN" && test -n "$CF_TOKEN" && test -n "$CF_ACCOUNT" && test -n "$SITE_URL"
+      - uses: actions/checkout@v4
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: "."
-          command: deploy --dry-run=false
+          repository: ${{ steps.pin.outputs.repository }}
+          ref: ${{ steps.pin.outputs.sha }}
+          token: ${{ secrets.CONTENT_REPO_TOKEN }}
+          path: .content
+          persist-credentials: false
+      - run: npm ci
+      - run: npm run content:verify
+      - run: npm run build:cloudflare
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+          NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
+      - name: Archive built release
+        uses: actions/upload-artifact@v4
+        with:
+          name: worker-${{ github.sha }}-${{ steps.pin.outputs.sha }}
+          path: |
+            .open-next/
+            release.json
+          include-hidden-files: true
+          retention-days: 30
+      - run: npm run deploy:built
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - run: npm run check:site -- "$SITE_URL"
+        env:
+          SITE_URL: ${{ vars.PRODUCTION_URL }}

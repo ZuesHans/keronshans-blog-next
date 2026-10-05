@@ -1,371 +1,89 @@
-﻿"use client";
+"use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { restoreAuthenticatedPassword, verifyPassword, setAuthenticated, setAdminPassword } from "@/lib/auth";
+import { useEffect, useMemo, useState } from "react";
 
-interface Snippet {
+type Snippet = {
   id: string;
+  slug: string;
   title: string;
-  code: string;
+  code?: string;
   language: string;
   tags: string | string[];
-  created_at: string;
+  description?: string;
   updated_at: string;
-}
+};
 
-const LANGUAGES = [
-  "C++", "C", "Python", "Java", "JavaScript", "TypeScript",
-  "Go", "Rust", "Shell", "SQL", "Other",
-];
-
-const DEFAULT_TAGS = [
-  "图论", "DP", "数据结构", "数学", "数论", "字符串",
-  "网络流", "计算几何", "博弈", "搜索", "贪心", "暴力",
-  "STL", "位运算", "前缀和", "并查集", "线段树", "树状数组",
-];
-
-function parseTags(tags: string | string[]): string[] {
-  if (Array.isArray(tags)) return tags;
-  try { return JSON.parse(tags); } catch { return []; }
+function tagsOf(value: string | string[]): string[] {
+  if (Array.isArray(value)) return value;
+  try { const parsed = JSON.parse(value); return Array.isArray(parsed) ? parsed.map(String) : []; } catch { return []; }
 }
 
 export default function SnippetsPage() {
   const [snippets, setSnippets] = useState<Snippet[]>([]);
   const [loaded, setLoaded] = useState(false);
-  const [isAuth, setIsAuth] = useState(false);
-  const [password, setPassword] = useState("");
-  const [adminPassword, setAdminPasswordState] = useState("");
-  const [error, setError] = useState("");
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterLang, setFilterLang] = useState("all");
-  const [selectedTag, setSelectedTag] = useState("all");
-
-  const [showAdd, setShowAdd] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [formTitle, setFormTitle] = useState("");
-  const [formCode, setFormCode] = useState("");
-  const [formLang, setFormLang] = useState("C++");
-  const [formTags, setFormTags] = useState<string[]>([]);
-  const [formTagInput, setFormTagInput] = useState("");
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  const fetchSnippets = useCallback(async () => {
-    try {
-      const res = await fetch("/api/snippets");
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data)) setSnippets(data);
-      }
-    } catch {
-      console.error("Failed to fetch snippets");
-    }
-    setLoaded(true);
-  }, []);
+  const [query, setQuery] = useState("");
+  const [language, setLanguage] = useState("all");
+  const [tag, setTag] = useState("all");
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchSnippets();
+    fetch("/api/snippets").then((response) => response.ok ? response.json() : [])
+      .then((value) => setSnippets(Array.isArray(value) ? value : []))
+      .catch(() => setSnippets([])).finally(() => setLoaded(true));
+  }, []);
 
-    let cancelled = false;
-
-    async function restoreAuth() {
-      const storedPassword = await restoreAuthenticatedPassword();
-      if (cancelled || !storedPassword) return;
-      setAdminPasswordState(storedPassword);
-      setIsAuth(true);
-    }
-
-    restoreAuth();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [fetchSnippets]);
-
-  const handleLogin = async () => {
-    if (await verifyPassword(password)) {
-      setAuthenticated();
-      setAdminPassword(password);
-      setAdminPasswordState("session");
-      setPassword("");
-      setIsAuth(true);
-      setError("");
-    } else {
-      setError("密码错误");
-    }
-  };
-
-  const resetForm = () => {
-    setFormTitle(""); setFormCode(""); setFormLang("C++");
-    setFormTags([]); setFormTagInput(""); setEditingId(null);
-  };
-
-  const openAdd = () => { resetForm(); setShowAdd(true); };
-
-  const openEdit = (s: Snippet) => {
-    setEditingId(s.id);
-    setFormTitle(s.title);
-    setFormCode(s.code);
-    setFormLang(s.language);
-    setFormTags(parseTags(s.tags));
-    setFormTagInput("");
-    setShowAdd(true);
-  };
-
-  const handleSave = async () => {
-    if (!formTitle.trim() || !formCode.trim()) return;
-    setSaving(true);
-    setError("");
-
-    const tags = formTags;
-    const genId = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
-
-    try {
-      let res: Response;
-      if (editingId) {
-        res = await fetch("/api/snippets", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: editingId, title: formTitle.trim(), code: formCode, language: formLang, tags }),
-        });
-      } else {
-        res = await fetch("/api/snippets", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: genId(), title: formTitle.trim(), code: formCode, language: formLang, tags }),
-        });
-      }
-      if (res.ok) {
-        await fetchSnippets();
-        resetForm();
-        setShowAdd(false);
-      } else {
-        setError("保存失败");
-      }
-    } catch { setError("网络错误"); }
-    setSaving(false);
-  };
-
-  const handleDelete = async (id: string) => {
-    try {
-      const res = await fetch(`/api/snippets?id=${id}`, {
-        method: "DELETE",
-      });
-      if (res.ok) setSnippets(snippets.filter(s => s.id !== id));
-    } catch {}
-  };
-
-  const handleCopy = async (snippet: Snippet) => {
-    try {
-      await navigator.clipboard.writeText(snippet.code);
-      setCopiedId(snippet.id);
-      setTimeout(() => setCopiedId(null), 2000);
-    } catch {
-      const ta = document.createElement("textarea");
-      ta.value = snippet.code;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-      setCopiedId(snippet.id);
-      setTimeout(() => setCopiedId(null), 2000);
-    }
-  };
-
-  const addTag = (tag: string) => {
-    if (tag && !formTags.includes(tag)) setFormTags([...formTags, tag]);
-    setFormTagInput("");
-  };
-  const removeTag = (tag: string) => setFormTags(formTags.filter(t => t !== tag));
-
+  const languages = useMemo(() => Array.from(new Set(snippets.map((snippet) => snippet.language))).sort(), [snippets]);
+  const tags = useMemo(() => Array.from(new Set(snippets.flatMap((snippet) => tagsOf(snippet.tags)))).sort(), [snippets]);
   const filtered = useMemo(() => {
-    return snippets.filter(s => {
-      const tags = parseTags(s.tags);
-      if (filterLang !== "all" && s.language !== filterLang) return false;
-      if (selectedTag !== "all" && !tags.includes(selectedTag)) return false;
-      if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        if (!s.title.toLowerCase().includes(q) && !s.code.toLowerCase().includes(q) && !tags.some(t => t.toLowerCase().includes(q))) return false;
-      }
-      return true;
+    const needle = query.trim().toLowerCase();
+    return snippets.filter((snippet) => {
+      const snippetTags = tagsOf(snippet.tags);
+      if (language !== "all" && snippet.language !== language) return false;
+      if (tag !== "all" && !snippetTags.includes(tag)) return false;
+      return !needle || [snippet.title, snippet.slug, snippet.language, snippet.description || "", ...snippetTags].join(" ").toLowerCase().includes(needle);
     });
-  }, [snippets, filterLang, selectedTag, searchQuery]);
+  }, [language, query, snippets, tag]);
 
-  const allTags = useMemo(() => {
-    const m = new Map<string, number>();
-    snippets.forEach(s => parseTags(s.tags).forEach(t => m.set(t, (m.get(t) || 0) + 1)));
-    return Array.from(m.entries()).sort((a, b) => b[1] - a[1]);
-  }, [snippets]);
-
-  if (!loaded) {
-    return <div className="app-page"><div className="animate-pulse h-10 bg-gray-200 dark:bg-cyber-surface rounded w-48" /></div>;
+  async function loadCode(snippet: Snippet) {
+    if (snippet.code !== undefined) return snippet.code;
+    const response = await fetch(`/api/snippets?id=${encodeURIComponent(snippet.id)}`);
+    if (!response.ok) return "";
+    const detail = await response.json() as { code?: string };
+    setSnippets((current) => current.map((item) => item.id === snippet.id ? { ...item, code: detail.code || "" } : item));
+    return detail.code || "";
   }
 
+  async function copy(snippet: Snippet) {
+    const code = await loadCode(snippet);
+    try { await navigator.clipboard.writeText(code); } catch { return; }
+    setCopied(snippet.id);
+    window.setTimeout(() => setCopied((current) => current === snippet.id ? null : current), 1500);
+  }
+
+  if (!loaded) return <div className="app-page"><div className="cyber-card p-8 text-center text-gray-500">读取模板快照...</div></div>;
+
   return (
-    <div className="app-page">
-      <div className="app-page-header flex items-center justify-between gap-5">
-        <div>
-          <h1>代码模板</h1>
-          <p>{snippets.length} 个片段</p>
-        </div>
-        {isAuth ? (
-          <button onClick={openAdd} className="cyber-btn-pink flex items-center gap-2">
-            <span className="text-lg leading-none">+</span> 新建片段
-          </button>
-        ) : (
-          <button onClick={() => {}} className="cyber-btn-pink opacity-50 cursor-not-allowed" title="需要密码">
-            <span className="text-lg leading-none">+</span> 新建片段
-          </button>
-        )}
-      </div>
-
-      {!isAuth && (
-        <div className="cyber-card neon-border-pink p-5 mb-6">
-          <p className="text-sm font-mono text-gray-500 mb-3">&gt; 需要密码才能新建/编辑/删除代码片段</p>
-          <div className="flex gap-2">
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleLogin()} placeholder="输入密码..." className="cyber-input flex-1" />
-            <button onClick={handleLogin} className="cyber-btn-pink">验证</button>
-          </div>
-          {error && <p className="text-sm text-red-500 font-mono mt-2">{error}</p>}
-        </div>
-      )}
-
-      {showAdd && isAuth && (
-        <div className="cyber-card neon-border-pink p-6 mb-6 space-y-4">
-          <h3 className="text-lg font-display font-bold text-neon-pink">
-            {editingId ? "编辑片段" : "新建片段"}
-          </h3>
-          <div>
-            <label className="text-xs font-mono text-gray-500 mb-1 block">标题 *</label>
-            <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="例: 线段树模板" className="cyber-input" />
-          </div>
-          <div>
-            <label className="text-xs font-mono text-gray-500 mb-1 block">语言</label>
-            <div className="flex flex-wrap gap-1.5">
-              {LANGUAGES.map(lang => (
-                <button key={lang} onClick={() => setFormLang(lang)} className={`px-2.5 py-1 rounded text-xs font-mono transition-all border ${formLang === lang ? "border-neon-pink bg-neon-pink/10 text-neon-pink" : "border-transparent bg-gray-50 dark:bg-cyber-surface text-gray-500 hover:border-neon-pink/30"}`}>
-                  {lang}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <label className="text-xs font-mono text-gray-500 mb-1 block">代码 *</label>
-            <textarea value={formCode} onChange={(e) => setFormCode(e.target.value)} placeholder="粘贴你的代码片段..." rows={12} className="cyber-input resize-y font-mono text-sm" style={{ tabSize: 2 }} spellCheck={false} />
-          </div>
-          <div>
-            <label className="text-xs font-mono text-gray-500 mb-1 block">标签</label>
-            <div className="flex flex-wrap gap-1 mb-2">
-              {formTags.map(tag => (
-                <span key={tag} className="px-2 py-0.5 rounded-full text-xs font-mono bg-neon-pink/10 text-neon-pink border border-neon-pink/20 flex items-center gap-1">
-                  {tag} <button onClick={() => removeTag(tag)} className="hover:text-red-400">✕</button>
-                </span>
-              ))}
-            </div>
-            <input type="text" value={formTagInput} onChange={(e) => setFormTagInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(formTagInput); } }} placeholder="输入标签后回车..." className="cyber-input flex-1 mb-2" />
-            <div className="flex flex-wrap gap-1">
-              {DEFAULT_TAGS.map(tag => (
-                <button key={tag} onClick={() => addTag(tag)} className="px-1.5 py-0.5 rounded text-[10px] font-mono text-gray-400 bg-gray-50 dark:bg-cyber-surface hover:text-neon-pink hover:bg-neon-pink/10 transition-all">
-                  +{tag}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="flex gap-2 justify-end">
-            <button onClick={() => { resetForm(); setShowAdd(false); }} className="px-4 py-2 rounded font-mono text-sm text-gray-500 hover:text-gray-700 transition-all">取消</button>
-            <button onClick={handleSave} disabled={!formTitle.trim() || !formCode.trim() || saving} className="cyber-btn-pink disabled:opacity-30 disabled:cursor-not-allowed">
-              {saving ? "保存中..." : editingId ? "保存修改" : "创建片段"}
-            </button>
-          </div>
-        </div>
-      )}
-
+    <div className="app-page max-w-6xl">
+      <div className="app-page-header"><h1>代码模板</h1><p>{snippets.length} 个已发布片段 · Published Vault 只读快照</p></div>
       <div className="cyber-card p-4 mb-6 space-y-3">
-        <div className="relative">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
-          </svg>
-          <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="搜索标题、代码、标签..." className="cyber-input pl-9" />
-        </div>
-        <div className="flex flex-wrap gap-2 items-center">
-          <span className="text-xs font-mono text-gray-500">语言:</span>
-          <button onClick={() => setFilterLang("all")} className={`px-2 py-0.5 rounded text-xs font-mono transition-all ${filterLang === "all" ? "bg-neon-pink/10 text-neon-pink" : "text-gray-400 hover:text-gray-600"}`}>全部</button>
-          {LANGUAGES.slice(0, 8).map(lang => (
-            <button key={lang} onClick={() => setFilterLang(filterLang === lang ? "all" : lang)} className={`px-2 py-0.5 rounded text-xs font-mono transition-all ${filterLang === lang ? "bg-neon-pink/10 text-neon-pink" : "text-gray-400 hover:text-gray-600"}`}>
-              {lang}
-            </button>
-          ))}
-        </div>
-        {allTags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            <button onClick={() => setSelectedTag("all")} className={`px-2 py-0.5 rounded text-xs font-mono transition-all ${selectedTag === "all" ? "bg-neon-pink/10 text-neon-pink" : "text-gray-400"}`}>全部标签</button>
-            {allTags.slice(0, 15).map(([tag, count]) => (
-              <button key={tag} onClick={() => setSelectedTag(selectedTag === tag ? "all" : tag)} className={`px-2 py-0.5 rounded text-xs font-mono transition-all ${selectedTag === tag ? "bg-neon-pink/10 text-neon-pink" : "text-gray-400"}`}>
-                #{tag}({count})
-              </button>
-            ))}
-          </div>
-        )}
+        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索标题、描述、语言或标签" className="cyber-input" />
+        <div className="flex flex-wrap gap-2"><span className="text-xs font-mono text-gray-500">语言</span><button onClick={() => setLanguage("all")} className={language === "all" ? "text-neon-pink" : "text-gray-500"}>全部</button>{languages.map((item) => <button key={item} onClick={() => setLanguage(language === item ? "all" : item)} className={language === item ? "text-neon-pink" : "text-gray-500"}>{item}</button>)}</div>
+        <div className="flex flex-wrap gap-2"><span className="text-xs font-mono text-gray-500">标签</span><button onClick={() => setTag("all")} className={tag === "all" ? "text-neon-pink" : "text-gray-500"}>全部</button>{tags.map((item) => <button key={item} onClick={() => setTag(tag === item ? "all" : item)} className={tag === item ? "text-neon-pink" : "text-gray-500"}>#{item}</button>)}</div>
       </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {filtered.length === 0 ? (
-          <div className="col-span-full cyber-card p-12 text-center">
-            <div className="text-5xl mb-4">{"{ }"}</div>
-            <p className="text-gray-400 font-mono">暂无代码片段</p>
-            <p className="text-gray-500 font-mono text-sm mt-1">点击右上角 &quot;新建片段&quot; 开始添加</p>
-          </div>
-        ) : (
-          filtered.map(snippet => {
-            const tags = parseTags(snippet.tags);
-            return (
-              <div key={snippet.id} className="cyber-card neon-border-pink group">
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-neon-pink/10 text-neon-pink border border-neon-pink/30">
-                        {snippet.language}
-                      </span>
-                      <h3 className="font-bold text-sm group-hover:text-neon-pink transition-colors truncate">
-                        {snippet.title}
-                      </h3>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      {isAuth && (
-                        <>
-                          <button onClick={() => openEdit(snippet)} className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-neon-blue text-sm p-1 transition-all" title="编辑">✎</button>
-                          <button onClick={() => handleDelete(snippet.id)} className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 text-sm p-1 transition-all" title="删除">✕</button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <pre className="bg-gray-900 dark:bg-black rounded-lg p-4 text-sm font-mono text-gray-300 overflow-x-auto max-h-60 overflow-y-auto mb-3 scrollbar-thin">
-                    <code>{snippet.code}</code>
-                  </pre>
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-wrap gap-1">
-                      {tags.map(tag => (
-                        <span key={tag} className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-neon-pink/5 text-gray-400 border border-gray-100 dark:border-cyber-border">{tag}</span>
-                      ))}
-                    </div>
-                    <button
-                      onClick={() => handleCopy(snippet)}
-                      className={`px-3 py-1 rounded text-xs font-mono transition-all border ${copiedId === snippet.id ? "border-neon-green bg-neon-green/10 text-neon-green" : "border-neon-pink/30 text-neon-pink hover:bg-neon-pink/10"}`}
-                    >
-                      {copiedId === snippet.id ? "✓ 已复制" : "复制代码"}
-                    </button>
-                  </div>
-                  <div className="text-[10px] font-mono text-gray-500 mt-2">
-                    创建: {snippet.created_at ? new Date(snippet.created_at).toLocaleString("zh-CN") : ""}
-                    {snippet.updated_at !== snippet.created_at && ` · 更新: ${snippet.updated_at ? new Date(snippet.updated_at).toLocaleString("zh-CN") : ""}`}
-                  </div>
-                </div>
-              </div>
-            );
-          })
-        )}
+        {filtered.map((snippet) => {
+          const snippetTags = tagsOf(snippet.tags);
+          return <article key={snippet.id} className="cyber-card p-4">
+            <div className="flex items-center gap-2 mb-2"><span className="px-2 py-0.5 rounded text-[10px] font-mono bg-neon-pink/10 text-neon-pink border border-neon-pink/30">{snippet.language}</span><h2 className="font-bold text-sm truncate">{snippet.title}</h2></div>
+            {snippet.description && <p className="text-xs text-gray-500 mb-3">{snippet.description}</p>}
+            <div className="flex items-center justify-between gap-3"><div className="flex flex-wrap gap-1">{snippetTags.map((item) => <span key={item} className="text-[10px] font-mono text-gray-400">#{item}</span>)}</div><div className="flex gap-2"><button onClick={async () => { setExpanded(expanded === snippet.id ? null : snippet.id); await loadCode(snippet); }} className="text-xs text-neon-blue">{expanded === snippet.id ? "收起" : "预览"}</button><button onClick={() => copy(snippet)} className="text-xs text-neon-pink">{copied === snippet.id ? "已复制" : "复制"}</button></div></div>
+            {expanded === snippet.id && <pre className="mt-3 bg-gray-900 text-gray-200 rounded p-3 text-xs overflow-auto max-h-64 whitespace-pre-wrap">{snippet.code || "加载中..."}</pre>}
+            <div className="text-[10px] font-mono text-gray-500 mt-3">更新: {snippet.updated_at || "未标注"}</div>
+          </article>;
+        })}
       </div>
+      {filtered.length === 0 && <div className="cyber-card p-8 text-center text-gray-500">暂无匹配模板</div>}
     </div>
   );
 }

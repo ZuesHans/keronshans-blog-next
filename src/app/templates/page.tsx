@@ -1,5 +1,1 @@
-import { redirect } from "next/navigation";
-
-export default function TemplatesRedirect() {
-  redirect("/snippets");
-}
+export { default } from "@/app/snippets/page";

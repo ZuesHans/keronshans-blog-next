@@ -1,18 +1,23 @@
 name = "keronshans-blog"
 main = ".open-next/worker.js"
 workers_dev = true
+# next-themes serializes a function into an inline browser script. Injected
+# esbuild __name helpers are only available in the Worker, not in the browser.
+keep_names = false
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 routes = [
+  { pattern = "keronshans.top", custom_domain = true },
   { pattern = "talks.keronshans.top/*", zone_name = "keronshans.top" }
 ]
 
 [vars]
+PRODUCTION_ADMIN_ENABLED = "false"
 SEARCH_API_URL = "https://api.keronshans.top/search"
 
 [assets]
 directory = ".open-next/assets"
-not_found_handling = "single-page-application"
+binding = "ASSETS"
 
 [[d1_databases]]
 binding = "DB"

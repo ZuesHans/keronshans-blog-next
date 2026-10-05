@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Keronshans Blog Manager</title>
+    <title>Keronshans Blog Manager · 文章工作台</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -17,10 +17,12 @@
           </div>
         </div>
         <nav class="nav">
-          <button class="nav-item active" data-view="posts">文章</button>
+          <div class="nav-section">内容维护</div>
+          <button class="nav-item active" data-view="posts">近期题解</button>
+          <button class="nav-item" data-view="tags">标签整理</button>
+          <div class="nav-section secondary">其它内容</div>
           <button class="nav-item" data-view="snippets">模板片段</button>
-          <button class="nav-item" data-view="problems">题目</button>
-          <button class="nav-item" data-view="tags">标签</button>
+          <button class="nav-item" data-view="problems">题目记录</button>
         </nav>
         <div class="workspace-tools">
           <button id="selectWorkspaceBtn">切换工作区</button>
@@ -32,7 +34,7 @@
       <main class="workspace">
         <header class="toolbar">
           <div class="search-wrap">
-            <input id="searchInput" type="search" placeholder="搜索标题、标签、说明..." />
+            <input id="searchInput" type="search" placeholder="搜索标题、标签、说明…（按 / 快速定位）" />
           </div>
           <div class="toolbar-actions">
             <button id="openProjectBtn">打开工作区 VS Code</button>
@@ -40,29 +42,43 @@
             <button id="previewBtn">预览</button>
             <button id="refreshBtn">刷新内容</button>
             <button id="buildBtn" class="publish-action">构建检查</button>
-            <button id="syncSearchBtn" class="publish-action">更新搜索索引</button>
-            <button id="gitBtn" class="publish-action">GitHub 备份</button>
+            <button id="selectionPublishBtn" class="publish-action primary">选择文章发布</button>
             <button id="deployBtn" class="publish-action">发布 CF</button>
           </div>
+          <div class="task-status" id="taskStatus" aria-live="polite">就绪</div>
         </header>
 
         <section class="content">
           <section class="list-panel">
             <div class="list-head">
               <div>
-                <h2 id="viewTitle">文章</h2>
+                <div class="eyebrow">内容库</div>
+                <h2 id="viewTitle">近期题解</h2>
                 <p id="viewHint">管理 content/posts/*.md</p>
               </div>
-              <button id="newBtn" class="primary">新建</button>
+              <div class="list-head-actions">
+                <span class="result-count" id="resultCount">0 项</span>
+                <select id="sortSelect" aria-label="排序方式">
+                  <option value="updated">最近更新</option>
+                  <option value="date">文章日期</option>
+                  <option value="title">标题</option>
+                </select>
+                <button id="newBtn" class="primary">新建题解</button>
+              </div>
             </div>
             <div class="filters" id="filters"></div>
+            <div class="list-columns" id="listColumns"><span>标题 / 分类</span><span>摘要</span><span>日期</span><span>标签</span><span>操作</span></div>
             <div class="items" id="items"></div>
           </section>
 
           <section class="detail-panel">
             <div class="empty" id="emptyState">
-              <h3>选择一项开始管理</h3>
-              <p>正文仍然交给 VS Code，这里负责元数据、标签和发布流程。</p>
+              <div class="empty-icon">✦</div>
+              <div class="eyebrow">维护工作台</div>
+              <h3>从一篇题解开始</h3>
+              <p>左侧选择文章后，在这里整理标题、分类、标签和首页摘要。正文始终在 VS Code 中编辑。</p>
+              <div class="empty-steps"><span><b>1</b> 选择题解</span><span><b>2</b> 整理元数据</span><span><b>3</b> 预览并发布</span></div>
+              <button id="emptyOpenProjectBtn" class="primary">打开项目 VS Code</button>
             </div>
 
             <form id="detailForm" class="detail hidden">
@@ -79,6 +95,11 @@
               <label class="post-only">
                 分类
                 <select name="category" id="fieldCategory"></select>
+              </label>
+
+              <label class="markdown-only">
+                发布状态
+                <select id="fieldPublishStatus"><option value="draft">草稿</option><option value="ready">可发布</option></select>
               </label>
 
               <label class="post-only checkbox-row">
@@ -168,16 +189,6 @@
           </section>
         </section>
 
-        <section class="log-panel">
-          <div class="log-head">
-            <strong>运行日志</strong>
-            <div>
-              <button id="cleanupBtn">修复 .open-next EPERM</button>
-              <button id="clearLogBtn">清空</button>
-            </div>
-          </div>
-          <pre id="logOutput"></pre>
-        </section>
       </main>
     </div>
 

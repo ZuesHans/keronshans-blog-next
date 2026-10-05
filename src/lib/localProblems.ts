@@ -1,5 +1,6 @@
 import fs from "fs";
-import path from "path";
+import { PROBLEMS_FILE } from "./contentRoot";
+import { getSnapshotProblems, hasGeneratedContentSnapshot } from "./contentSnapshot";
 
 export interface LocalProblemRecord {
   id: string;
@@ -15,8 +16,6 @@ export interface LocalProblemRecord {
   updated_at: string;
 }
 
-const PROBLEMS_FILE = path.join(process.cwd(), "content", "problems.json");
-
 function normalizeProblem(item: Partial<LocalProblemRecord>): LocalProblemRecord {
   const now = new Date().toISOString().replace("T", " ").slice(0, 19);
   return {
@@ -25,7 +24,7 @@ function normalizeProblem(item: Partial<LocalProblemRecord>): LocalProblemRecord
     url: String(item.url || ""),
     platform: String(item.platform || "cf"),
     status: String(item.status || "AC"),
-    tags: Array.isArray(item.tags) ? item.tags.map(String) : [],
+    tags: parseTags(item.tags),
     date: String(item.date || ""),
     note: String(item.note || ""),
     analysis: String(item.analysis || ""),
@@ -34,19 +33,30 @@ function normalizeProblem(item: Partial<LocalProblemRecord>): LocalProblemRecord
   };
 }
 
-export function getLocalProblems(): Array<Omit<LocalProblemRecord, "tags"> & { tags: string }> {
+function parseTags(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map(String);
+  if (typeof value === "string") {
+    try { const parsed = JSON.parse(value); return Array.isArray(parsed) ? parsed.map(String) : []; } catch { return []; }
+  }
+  return [];
+}
+
+export function getLocalProblems() {
+  const publicFields = (item: Partial<LocalProblemRecord>) => {
+    const { id, title, url, platform, status, tags, date } = normalizeProblem(item);
+    return { id, title, url, platform, status, tags: JSON.stringify(tags), date };
+  };
+  if (hasGeneratedContentSnapshot()) {
+    const data = getSnapshotProblems();
+    if (!Array.isArray(data)) return [];
+    return data.map((item) => publicFields(item as Partial<LocalProblemRecord>));
+  }
   if (!fs.existsSync(PROBLEMS_FILE)) return [];
   try {
     const raw = fs.readFileSync(PROBLEMS_FILE, "utf-8");
     const data = JSON.parse(raw);
     if (!Array.isArray(data)) return [];
-    return data.map((item) => {
-      const problem = normalizeProblem(item);
-      return {
-        ...problem,
-        tags: JSON.stringify(problem.tags),
-      };
-    });
+    return data.map(publicFields);
   } catch {
     return [];
   }
