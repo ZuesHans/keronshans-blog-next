@@ -2,14 +2,13 @@ import Link from "next/link";
 import Image from "next/image";
 
 const interests = [
+  "他/he/him",
   "C++",
-  "Python",
+  "07",
   "ACM / XCPC",
-  "算法题解",
-  "数据结构",
-  "音乐剧",
-  "Hamilton",
-  "音游|中二 pjsk",
+  "社交恐惧",
+  "音乐剧|Hamilton",
+  "音游|中二节奏",
 ];
 
 const awards = [
@@ -79,7 +78,7 @@ export default function AboutPage() {
 
             <div className="mt-7 flex flex-wrap gap-3 text-sm text-white/80">
               <span className="rounded-md border border-white/28 bg-white/10 px-3 py-1.5 backdrop-blur">
-                tp : 广州
+                TP : 广州
               </span>
               <span className="rounded-md border border-white/28 bg-white/10 px-3 py-1.5 backdrop-blur">
                 Keronshans@gmail.com
@@ -106,22 +105,30 @@ export default function AboutPage() {
             <div>
               <div className="page-kicker mb-3">About</div>
               <h2 className="page-heading mb-4">关于这个博客，也关于我</h2>
-              <p className="max-w-3xl text-base leading-8" style={{ color: "var(--owl-textSecondary)" }}>
-                这个站点更像是我的笔记本大合集。高中的时候就一直喜欢用一本活页本同时做笔记本,规划本,草稿本,传小纸条专用(bushi)和日记本... 现在上了大学有时间捯饬了,加上codex的大力协助,有了第一个便于管理的赛博笔记本(骄傲脸)。
-                不过...虽然大部分入门都是vibe出来的,这个网站还是花了我很多心血,毕竟ai不是万能的。也在这过程中我学习了很多。从一开始简陋的hexo框架到现在这个看起来更加自由的页面...
-                一直都是一个比较内向不被人在意人类,所以能看到这个博客的都是真爱,太感动了喵呜呜。
-                目前还是一个初学者,能写的内容也就是acm错题了(其实cp也是苦手555).不过目前在努力学习中,争取产出更高效的内容
-              </p>
+              <div className="max-w-3xl space-y-4 text-base leading-8" style={{ color: "var(--owl-textSecondary)" }}>
+                <p>
+                  这个站点更像是我的笔记本大合集。高中的时候就一直喜欢用一本活页本同时做笔记本,规划本,草稿本,传小纸条专用(bushi)和日记本... 现在上了大学有时间捯饬了,加上codex的大力协助,有了第一个便于管理的赛博笔记本(骄傲脸)。
+                </p>
+                <p>
+                  不过...虽然大部分入门都是vibe出来的,这个网站还是花了我很多心血,毕竟ai不是万能的。也在这过程中我学习了很多。从一开始简陋的hexo框架到现在这个看起来更加自由的页面...
+                </p>
+                <p>
+                  一直都是一个比较内向不被人在意人类,所以能看到这个博客的都是真爱,太感动了喵呜呜。
+                </p>
+                <p>
+                  目前还是一个初学者,能写的内容也就是acm错题了(其实cp也是苦手555).不过目前在努力学习中,争取产出更高效的内容
+                </p>
+              </div>
               <div className="soft-divider" />
             </div>
 
             <section className="border-y py-7" style={{ borderColor: "var(--owl-border)" }}>
               <div className="mb-5 flex items-center justify-between gap-4">
                 <h3 className="text-sm font-semibold uppercase tracking-normal" style={{ color: "var(--owl-text)" }}>
-                  Interests
+                  Tags
                 </h3>
                 <span className="text-xs" style={{ color: "var(--owl-textMuted)" }}>
-                  可能了解
+                  标签//可能了解
                 </span>
               </div>
               <div className="flex flex-wrap gap-2.5">

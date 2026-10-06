@@ -9,7 +9,7 @@ export const dynamic = "force-static";
 
 export default async function HomePage() {
   const posts = await getAllPosts();
-  const featuredPosts = posts.slice(0, 6);
+  const featuredPosts = posts.slice(0, 12);
   const visibleCategories = CATEGORY_GROUPS.slice(0, 5);
   const categoryCounts = Object.fromEntries(
     CATEGORY_GROUPS.map((group) => [group.name, posts.filter((post) => post.category === group.name).length])

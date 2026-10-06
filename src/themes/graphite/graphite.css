@@ -388,13 +388,82 @@ body.theme-graphite {
 .theme-graphite .home-category-grid .home-category-link:hover { background: var(--owl-bgCard); }
 .theme-graphite .home-category-grid .home-category-link strong { color: var(--accent-strong); font-family: var(--font-mono); }
 
-/* Archive and article headers share the same restrained grid. */
-.theme-graphite .posts-cover { min-height: 244px; padding-bottom: 35px; border-bottom: 1px solid var(--owl-border); }
+/* One illustration continues beneath the frosted archive band. */
+.theme-graphite .posts-page {
+  position: relative;
+  isolation: isolate;
+  background: var(--owl-bg);
+}
+
+.theme-graphite .posts-scenery {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.theme-graphite .posts-scenery img {
+  display: block;
+  width: 100%;
+  height: 660px;
+  object-fit: cover;
+  object-position: center 55%;
+  mask-image: linear-gradient(#000 54%, transparent 100%);
+  -webkit-mask-image: linear-gradient(#000 54%, transparent 100%);
+}
+
+.theme-graphite .posts-cover {
+  min-height: 360px;
+  padding-bottom: 42px;
+  border-bottom: 0;
+  background: transparent;
+}
+
+.theme-graphite .posts-cover-image { position: absolute; inset: 0; z-index: -2; }
+.theme-graphite .posts-cover-image img { object-fit: cover; object-position: center 56%; }
+.theme-graphite .posts-cover-shade {
+  display: block;
+  background:
+    linear-gradient(to bottom, transparent 55%, color-mix(in srgb, var(--owl-bg) 62%, transparent)),
+    linear-gradient(90deg, rgba(4, 15, 18, 0.4), rgba(4, 15, 18, 0.04) 72%);
+}
+
+.theme-graphite .posts-cover-content { text-shadow: 0 2px 14px rgba(0, 0, 0, 0.55); }
+.theme-graphite .posts-cover-content p { color: #e0eeea; }
+.theme-graphite .posts-cover h1 { color: #fff; }
+
+.theme-graphite .posts-reading-band {
+  position: relative;
+  isolation: isolate;
+}
+
+.theme-graphite .posts-reading-band::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: -1;
+  height: 470px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--owl-bg) 62%, transparent), var(--owl-bg) 470px);
+  backdrop-filter: blur(14px) saturate(0.8);
+  -webkit-backdrop-filter: blur(14px) saturate(0.8);
+}
+
+.theme-graphite .posts-category-tabs button:hover,
+.theme-graphite .posts-category-tabs button.is-active,
+.theme-graphite .posts-search-field .cyber-input,
+.theme-graphite .posts-control-bar > button {
+  background: color-mix(in srgb, var(--owl-bgCard) 76%, transparent);
+}
+
+.theme-graphite .posts-content { animation: none; }
+
 .theme-graphite .article-cover { min-height: 290px; padding-bottom: 38px; border-bottom: 1px solid var(--owl-border); }
-.theme-graphite .posts-cover-content p,
 .theme-graphite .article-cover-content > p { color: var(--owl-textMuted); font-family: var(--font-body); font-size: 12px; letter-spacing: 0; }
-.theme-graphite .posts-cover h1,
 .theme-graphite .article-cover .article-title { color: var(--owl-text); font-size: 36px; font-weight: 650; letter-spacing: 0; }
+.theme-graphite .posts-cover-content p { font-family: var(--font-body); font-size: 12px; letter-spacing: 0; }
+.theme-graphite .posts-cover h1 { font-size: 36px; font-weight: 650; }
 .theme-graphite .article-cover .article-title { max-width: 930px; letter-spacing: 0; }
 .theme-graphite .posts-cover h1 { letter-spacing: 0; }
 .theme-graphite .article-back-link { color: var(--owl-textMuted); }
@@ -602,7 +671,10 @@ body.theme-graphite {
   .theme-graphite .home-category-layout { gap: 28px; }
   .theme-graphite .home-category-grid { grid-template-columns: 1fr; }
   .theme-graphite .home-category-grid .home-category-link:nth-child(odd) { border-right: 0; }
-  .theme-graphite .posts-cover { min-height: 220px; padding-bottom: 32px; }
+  .theme-graphite .posts-cover { min-height: 300px; padding-bottom: 32px; }
+  .theme-graphite .posts-cover-image img { object-position: 48% 58%; }
+  .theme-graphite .posts-scenery img { height: 600px; object-position: 50% center; }
+  .theme-graphite .posts-reading-band::before { height: 390px; background: linear-gradient(to bottom, color-mix(in srgb, var(--owl-bg) 68%, transparent), var(--owl-bg) 390px); }
   .theme-graphite .article-cover { min-height: 280px; padding-bottom: 36px; }
   .theme-graphite .posts-cover h1,
   .theme-graphite .article-cover .article-title { font-size: 32px; }
