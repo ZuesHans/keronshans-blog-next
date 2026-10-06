@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { PageTitleChanger } from "@/components/PageTitleChanger";
 import Navigation from "@/components/Navigation";
 import { getTheme } from "@/themes/registry";
+import { ViewTransitions } from "next-view-transitions";
 
 export const metadata: Metadata = {
   title: "Keronshans",
@@ -19,14 +20,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
-      <body className={`font-body transition-colors duration-300 min-h-screen ${getTheme().className}`}>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <PageTitleChanger />
-          <Navigation />
-          <main className="pt-16">{children}</main>
-        </ThemeProvider>
-      </body>
-    </html>
+    <ViewTransitions>
+      <html lang="zh-CN" suppressHydrationWarning>
+        <body className={`font-body transition-colors duration-300 min-h-screen ${getTheme().className}`}>
+          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+            <PageTitleChanger />
+            <Navigation />
+            <main className="pt-16">{children}</main>
+          </ThemeProvider>
+        </body>
+      </html>
+    </ViewTransitions>
   );
 }

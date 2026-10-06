@@ -1,6 +1,6 @@
 import { getAllPosts, getPostById } from "@/lib/posts";
 import { notFound, permanentRedirect } from "next/navigation";
-import Link from "next/link";
+import { Link } from "next-view-transitions";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import PostInteraction from "./PostInteraction";
 import TableOfContents from "@/components/TableOfContents";

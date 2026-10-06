@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
-import Link from "next/link";
+import { Link } from "next-view-transitions";
+import { ChevronDown, Menu, Moon, Search, Sun, X } from "lucide-react";
 import SearchDialog from "@/components/SearchDialog";
 
 const PRIMARY_NAV_ITEMS = [
@@ -96,20 +97,12 @@ export default function Navigation() {
     setSearchOpen(true);
   };
 
-  const themeIcon = resolvedTheme === "dark" ? (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <circle cx="12" cy="12" r="5" />
-      <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-    </svg>
-  ) : (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-    </svg>
-  );
+  const onCover = pathname === "/" || pathname === "/about";
+  const themeIcon = resolvedTheme === "dark" ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />;
 
   return (
     <>
-      <nav className={`site-navigation ${scrolled ? "is-scrolled" : ""}`} aria-label="主要导航">
+      <nav className={`site-navigation ${scrolled ? "is-scrolled" : ""} ${onCover ? "is-on-cover" : ""}`} aria-label="主要导航">
         <div className="site-navigation-shell">
           <Link href="/" className="site-brand" onClick={() => handleNav("home")} aria-label="Keronshans 首页">
             <span className="site-brand-mark" aria-hidden="true">K</span>
@@ -132,9 +125,7 @@ export default function Navigation() {
                 aria-haspopup="menu"
               >
                 更多
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                  <path d="m7 10 5 5 5-5" />
-                </svg>
+                <ChevronDown size={14} aria-hidden="true" />
               </button>
               {moreOpen && (
                 <div className="site-more-popover" role="menu">
@@ -150,10 +141,7 @@ export default function Navigation() {
 
           <div className="site-navigation-actions">
             <button onClick={openSearch} className="site-icon-button" title="搜索" aria-label="搜索">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.3-4.3" />
-              </svg>
+              <Search size={18} aria-hidden="true" />
             </button>
             {mounted && (
               <button onClick={toggleTheme} className="site-icon-button" title="切换主题" aria-label="切换主题">
@@ -167,9 +155,7 @@ export default function Navigation() {
               aria-label={menuOpen ? "关闭菜单" : "打开菜单"}
               aria-expanded={menuOpen}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                {menuOpen ? <path d="M18 6L6 18M6 6l12 12" /> : <path d="M3 12h18M3 6h18M3 18h18" />}
-              </svg>
+              {menuOpen ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
             </button>
           </div>
         </div>

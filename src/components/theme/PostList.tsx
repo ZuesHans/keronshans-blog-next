@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { Link } from "next-view-transitions";
+import { ArrowUpRight } from "lucide-react";
 type PostListPost = { id: string; slug: string; title: string; date: string; tags: string[]; excerpt: string; category: string; pinned: boolean };
 
 export default function PostList({ posts }: { posts: readonly PostListPost[] }) {
@@ -20,7 +21,7 @@ export default function PostList({ posts }: { posts: readonly PostListPost[] }) 
               {post.excerpt && <p>{post.excerpt}</p>}
               {post.tags.length > 0 && <div className="theme-post-list-tags">{post.tags.slice(0, 5).map((tag) => <span key={tag}>#{tag}</span>)}</div>}
             </div>
-            <span className="theme-post-list-arrow" aria-hidden="true">→</span>
+            <span className="theme-post-list-arrow" aria-hidden="true"><ArrowUpRight size={17} /></span>
           </article>
         </Link>
       ))}
